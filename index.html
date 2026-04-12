@@ -281,10 +281,10 @@ textarea.input{resize:none;line-height:1.55;min-height:48px;max-height:120px;}
 /* ── TOGGLE ── */
 .toggle-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 0;}
 .toggle-label{font-size:14px;color:var(–textdim);}
-.toggle-pill{width:44px;height:24px;border-radius:12px;background:var(–border);border:2px solid var(–bordergold);position:relative;cursor:pointer;transition:all .25s;flex-shrink:0;display:inline-block;}
+.toggle-pill{width:48px;height:26px;border-radius:13px;background:var(–bg4);border:1px solid var(–bordergold);position:relative;cursor:pointer;transition:background .25s,border-color .25s;flex-shrink:0;display:block;}
 .toggle-pill.on{background:var(–golddim);border-color:var(–gold);}
-.toggle-knob{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(–textfaint);transition:all .25s;}
-.toggle-pill.on .toggle-knob{left:22px;background:var(–gold2);}
+.toggle-knob{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#6a6050;transition:left .25s,background .25s;}
+.toggle-pill.on .toggle-knob{left:25px;background:var(–gold2);}
 
 /* ── RESPONSIVE ── */
 @media(max-width:480px){
@@ -334,11 +334,11 @@ textarea.input{resize:none;line-height:1.55;min-height:48px;max-height:120px;}
   <!-- NAV -->
 
   <div class="nav-tabs">
-    <button class="nav-tab active" onclick="showScreen('forum')">⬡ Forum</button>
-    <button class="nav-tab" onclick="showScreen('oracle')">◎ Oracle</button>
-    <button class="nav-tab" onclick="showScreen('creative')">✦ Create</button>
-    <button class="nav-tab" onclick="showScreen('council')">⊕ Council</button>
-    <button class="nav-tab" onclick="showScreen('upload')">↑ Docs</button>
+    <button class="nav-tab active" id="nav-forum" onclick="showScreen('forum')">⬡ Forum</button>
+    <button class="nav-tab" id="nav-oracle" onclick="showScreen('oracle')">◎ Oracle</button>
+    <button class="nav-tab" id="nav-creative" onclick="showScreen('creative')">✦ Create</button>
+    <button class="nav-tab" id="nav-council" onclick="showScreen('council')">⊕ Council</button>
+    <button class="nav-tab" id="nav-upload" onclick="showScreen('upload')">↑ Docs</button>
   </div>
 
   <!-- ══ FORUM SCREEN ══ -->
@@ -646,8 +646,12 @@ let obSuggestedCouncil = [];
 const SCREEN_NAMES = ['forum','oracle','creative','council','upload'];
 function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach((t,i)=>t.classList.toggle('active', SCREEN_NAMES[i]===name));
-  document.getElementById('screen-'+name).classList.add('active');
+  SCREEN_NAMES.forEach(s=>{
+    const el=document.getElementById('nav-'+s);
+    if(el) el.classList.toggle('active', s===name);
+  });
+  const scr=document.getElementById('screen-'+name);
+  if(scr) scr.classList.add('active');
   currentScreen = name;
   if(name==='council') renderCouncilScreen();
 }
@@ -912,14 +916,21 @@ async function nextTurn(injected) {
 
 async function checkConvergence() {
   const hist=msgs.filter(m=>m.type==='speech').slice(-8).map(m=>`${m.speaker}: "${m.text}"`).join('\n');
-  const sys=`Analyze this council debate and score convergence 0-10. Respond ONLY with valid JSON: {"score":<number>,"reason":"<one sentence>"}. 0=total disagreement, 10=strong alignment.`;
+  // Use plain number response instead of JSON to avoid parsing failures
+  const sys=`Analyze this council debate and respond with ONLY a single integer from 0 to 10 representing convergence. Nothing else. No explanation. Just the number. 0=total disagreement, 10=strong alignment on a shared insight.`;
   try {
-    const raw=await callClaude(sys,'Recent debate:\n'+hist,200);
-    const parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());
-    convergenceScore=parsed.score||0;
-    if(convergenceScore>=7&&!protoTriggered){converging=true;appendSys('forumMessages','Claude detects convergence — synthesizing');await triggerPrototype();}
-    else if(convergenceScore>=5) converging=true;
-  } catch(e){}
+    const raw=await callClaude(sys,'Recent debate:\n'+hist,20);
+    const score=parseInt(raw.trim().replace(/\D/g,''),10);
+    if(isNaN(score)) return;
+    convergenceScore=Math.min(10,Math.max(0,score));
+    if(convergenceScore>=7&&!protoTriggered){
+      converging=true;
+      appendSys('forumMessages','Claude detects convergence — synthesizing');
+      await triggerPrototype();
+    } else if(convergenceScore>=5){
+      converging=true;
+    }
+  } catch(e){} // Silent fail — convergence check is best-effort
 }
 
 async function triggerPrototype() {
@@ -1256,50 +1267,57 @@ async function obGenerate(){
   const allNames=BASE_COUNCIL.map(m=>m.name);
   const vertNames=Object.values(VERTICALS).flatMap(v=>v.thinkers);
   const allAvailable=[...new Set([...allNames,...vertNames])];
-  const sys=`Based on a user's answers to onboarding questions, curate a council of 5-8 thinkers.
 
-Available thinkers: ${allAvailable.join(', ')}
+  // Step 1: Get a plain comma-separated list of names — much more reliable than JSON
+  const sys1=`Based on a user's answers, select 5-8 thinkers for their council from this list: ${allAvailable.join(', ')}.
 
-You may suggest up to 2 additional thinkers NOT on the list if clearly relevant.
+You may add up to 2 thinkers not on the list if clearly relevant.
 
-IMPORTANT: Respond with ONLY a raw JSON object. No markdown fences, no explanation, no text before or after. Just the JSON.
+Reply with ONLY a comma-separated list of names. Nothing else. No explanation. No punctuation except commas.
+Example: Buddha, Alan Watts, Carl Jung, Rosa Luxemburg`;
 
-Example format:
-{"council":[{"name":"Buddha","era":"5th c. BCE","domain":"liberation and suffering","reason":"Relevant because..."}],"note":"This council focuses on..."}`;
+  // Step 2: Get a one-sentence description
+  const sys2=`Based on a user's profile, write ONE sentence describing the character of their curated council. Be evocative and specific. No preamble.`;
+
   try {
-    const raw=await callClaude(sys,`User answers:\n${qa}`,1000);
-    // Robust JSON extraction — find first { to last }
-    const firstBrace=raw.indexOf('{');
-    const lastBrace=raw.lastIndexOf('}');
-    if(firstBrace===-1||lastBrace===-1) throw new Error('No JSON found');
-    const jsonStr=raw.substring(firstBrace,lastBrace+1);
-    const parsed=JSON.parse(jsonStr);
-    obSuggestedCouncil=parsed.council||[];
-    if(obSuggestedCouncil.length===0) throw new Error('Empty council');
-    const note=parsed.note||'';
+    const [namesRaw, noteRaw] = await Promise.all([
+      callClaude(sys1, `User answers:\n${qa}`, 200),
+      callClaude(sys2, `User answers:\n${qa}`, 100)
+    ]);
+
+    // Parse the comma-separated names
+    const names = namesRaw.split(',').map(n=>n.trim()).filter(n=>n.length>0&&n.length<60);
+    if(names.length===0) throw new Error('No names returned');
+
+    // Build council objects
+    obSuggestedCouncil = names.map(name=>{
+      const inBase=BASE_COUNCIL.find(m=>m.name.toLowerCase()===name.toLowerCase());
+      const inVert=Object.entries(VERTICALS).flatMap(([k,v])=>v.thinkers.map(t=>({name:t,vertical:k}))).find(t=>t.name.toLowerCase()===name.toLowerCase());
+      if(inBase) return {name:inBase.name,era:inBase.era,domain:inBase.domain,reason:''};
+      if(inVert) return {name,era:'',domain:VERTICALS[inVert.vertical].label+' thinker',reason:''};
+      return {name,era:'',domain:'Custom thinker',reason:''};
+    });
+
+    const note=noteRaw.trim();
     document.getElementById('obResult').style.display='block';
     const preview=document.getElementById('obCouncilPreview');
     preview.innerHTML='';
     if(note){
       const n=document.createElement('p');
       n.style.cssText='font-size:13px;color:var(--textdim);font-style:italic;margin-bottom:10px;line-height:1.5;width:100%';
-      n.textContent=note;preview.appendChild(n);
+      n.textContent=note; preview.appendChild(n);
     }
     obSuggestedCouncil.forEach(m=>{
       const chip=document.createElement('div');
-      chip.className='chip';chip.textContent=m.name;chip.title=m.reason||m.domain||'';
+      chip.className='chip'; chip.textContent=m.name;
       preview.appendChild(chip);
     });
     document.getElementById('obApplyBtn').style.display='inline-flex';
-    obAsk(`Your council of ${obSuggestedCouncil.length} is ready. Hit "Apply This Council" to use it, or close to configure manually.`);
-    const chat=document.getElementById('obChat');
-    chat.scrollTop=chat.scrollHeight;
+    obAsk(`Your council of ${obSuggestedCouncil.length} thinkers is ready. Hit "Apply This Council" below, or close to configure manually.`);
+    document.getElementById('obChat').scrollTop=99999;
   } catch(e){
-    obAsk(`I had trouble generating your council (${e.message}). Please close and configure manually in the Council tab, or try again.`);
-    document.getElementById('obInputArea').style.display='flex';
-    document.getElementById('obSendBtn').disabled=false;
-    obStep=0; obHistory=[];
-    obAsk(OB_QUESTIONS[0]);
+    obAsk(`Something went wrong: ${e.message}. Please close and configure your council manually in the Council tab.`);
+    document.getElementById('obApplyBtn').style.display='none';
   }
 }
 
