@@ -281,10 +281,10 @@ textarea.input{resize:none;line-height:1.55;min-height:48px;max-height:120px;}
 /* ── TOGGLE ── */
 .toggle-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 0;}
 .toggle-label{font-size:14px;color:var(–textdim);}
-.toggle-pill{width:38px;height:20px;border-radius:10px;background:var(–border);border:1px solid var(–bordergold);position:relative;cursor:pointer;transition:all .2s;flex-shrink:0;}
+.toggle-pill{width:44px;height:24px;border-radius:12px;background:var(–border);border:2px solid var(–bordergold);position:relative;cursor:pointer;transition:all .25s;flex-shrink:0;display:inline-block;}
 .toggle-pill.on{background:var(–golddim);border-color:var(–gold);}
-.toggle-pill::after{content:’’;position:absolute;top:3px;left:3px;width:12px;height:12px;border-radius:50%;background:var(–textfaint);transition:all .2s;}
-.toggle-pill.on::after{left:21px;background:var(–gold2);}
+.toggle-knob{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(–textfaint);transition:all .25s;}
+.toggle-pill.on .toggle-knob{left:22px;background:var(–gold2);}
 
 /* ── RESPONSIVE ── */
 @media(max-width:480px){
@@ -338,7 +338,7 @@ textarea.input{resize:none;line-height:1.55;min-height:48px;max-height:120px;}
     <button class="nav-tab" onclick="showScreen('oracle')">◎ Oracle</button>
     <button class="nav-tab" onclick="showScreen('creative')">✦ Create</button>
     <button class="nav-tab" onclick="showScreen('council')">⊕ Council</button>
-    <button class="nav-tab" onclick="showScreen('upload')">↑ Documents</button>
+    <button class="nav-tab" onclick="showScreen('upload')">↑ Docs</button>
   </div>
 
   <!-- ══ FORUM SCREEN ══ -->
@@ -490,7 +490,7 @@ textarea.input{resize:none;line-height:1.55;min-height:48px;max-height:120px;}
             <div style="font-size:14px;color:var(--text);margin-bottom:2px">Auto-select thinkers</div>
             <div style="font-size:12px;color:var(--textfaint);font-style:italic">Council selects the most relevant voices per problem</div>
           </div>
-          <div class="toggle-pill on" id="autoToggle" onclick="toggleAutoMode()"></div>
+          <div class="toggle-pill on" id="autoToggle" onclick="toggleAutoMode()"><div class="toggle-knob"></div></div>
         </div>
         <div id="manualCouncilPanel" style="display:none">
           <!-- Verticals -->
@@ -643,11 +643,11 @@ let obSuggestedCouncil = [];
 // ════════════════════════════════════════════
 // SCREENS
 // ════════════════════════════════════════════
+const SCREEN_NAMES = ['forum','oracle','creative','council','upload'];
 function showScreen(name) {
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach((t,i)=>t.classList.toggle('active', SCREEN_NAMES[i]===name));
   document.getElementById('screen-'+name).classList.add('active');
-  document.querySelectorAll('.nav-tab').forEach(t=>{ if(t.textContent.toLowerCase().includes(name.slice(0,3))) t.classList.add('active'); });
   currentScreen = name;
   if(name==='council') renderCouncilScreen();
 }
@@ -664,9 +664,16 @@ function getActiveCouncil() {
   return all.filter((_,i)=>selectedIndices.has(i));
 }
 
+function setToggle(el, isOn) {
+  el.classList.toggle('on', isOn);
+  if (!el.querySelector('.toggle-knob')) {
+    const k = document.createElement('div'); k.className='toggle-knob'; el.appendChild(k);
+  }
+}
+
 function toggleAutoMode() {
   manualMode = !manualMode;
-  document.getElementById('autoToggle').classList.toggle('on',!manualMode);
+  setToggle(document.getElementById('autoToggle'), !manualMode);
   document.getElementById('manualCouncilPanel').style.display = manualMode?'block':'none';
   document.getElementById('autoCouncilBanner').style.display = manualMode?'none':'flex';
   if(manualMode && selectedIndices.size===0) allThinkers().forEach((_,i)=>selectedIndices.add(i));
@@ -1249,32 +1256,51 @@ async function obGenerate(){
   const allNames=BASE_COUNCIL.map(m=>m.name);
   const vertNames=Object.values(VERTICALS).flatMap(v=>v.thinkers);
   const allAvailable=[...new Set([...allNames,...vertNames])];
-  const sys=`Based on a user's answers to onboarding questions, curate a council of 5-8 thinkers from the available list.
+  const sys=`Based on a user's answers to onboarding questions, curate a council of 5-8 thinkers.
 
 Available thinkers: ${allAvailable.join(', ')}
 
-You may also suggest up to 2 additional thinkers NOT on the list if they are clearly relevant.
+You may suggest up to 2 additional thinkers NOT on the list if clearly relevant.
 
-Respond ONLY with valid JSON — no markdown, no explanation:
-{"council":[{"name":"...","era":"...","domain":"...","reason":"one sentence why"}],"note":"one sentence describing the overall council's character"}`;
+IMPORTANT: Respond with ONLY a raw JSON object. No markdown fences, no explanation, no text before or after. Just the JSON.
+
+Example format:
+{"council":[{"name":"Buddha","era":"5th c. BCE","domain":"liberation and suffering","reason":"Relevant because..."}],"note":"This council focuses on..."}`;
   try {
-    const raw=await callClaude(sys,`User answers:\n${qa}`,800);
-    const parsed=JSON.parse(raw.replace(/```json|```/g,'').trim());
+    const raw=await callClaude(sys,`User answers:\n${qa}`,1000);
+    // Robust JSON extraction — find first { to last }
+    const firstBrace=raw.indexOf('{');
+    const lastBrace=raw.lastIndexOf('}');
+    if(firstBrace===-1||lastBrace===-1) throw new Error('No JSON found');
+    const jsonStr=raw.substring(firstBrace,lastBrace+1);
+    const parsed=JSON.parse(jsonStr);
     obSuggestedCouncil=parsed.council||[];
+    if(obSuggestedCouncil.length===0) throw new Error('Empty council');
     const note=parsed.note||'';
     document.getElementById('obResult').style.display='block';
     const preview=document.getElementById('obCouncilPreview');
     preview.innerHTML='';
-    if(note){const n=document.createElement('p');n.style.cssText='font-size:13px;color:var(--textdim);font-style:italic;margin-bottom:10px;line-height:1.5;width:100%';n.textContent=note;preview.appendChild(n);}
+    if(note){
+      const n=document.createElement('p');
+      n.style.cssText='font-size:13px;color:var(--textdim);font-style:italic;margin-bottom:10px;line-height:1.5;width:100%';
+      n.textContent=note;preview.appendChild(n);
+    }
     obSuggestedCouncil.forEach(m=>{
       const chip=document.createElement('div');
-      chip.className='chip';chip.textContent=m.name;chip.title=m.reason;
+      chip.className='chip';chip.textContent=m.name;chip.title=m.reason||m.domain||'';
       preview.appendChild(chip);
     });
     document.getElementById('obApplyBtn').style.display='inline-flex';
+    obAsk(`Your council of ${obSuggestedCouncil.length} is ready. Hit "Apply This Council" to use it, or close to configure manually.`);
     const chat=document.getElementById('obChat');
     chat.scrollTop=chat.scrollHeight;
-  } catch(e){obAsk('I had trouble generating a council. You can configure one manually in the Council tab.');}
+  } catch(e){
+    obAsk(`I had trouble generating your council (${e.message}). Please close and configure manually in the Council tab, or try again.`);
+    document.getElementById('obInputArea').style.display='flex';
+    document.getElementById('obSendBtn').disabled=false;
+    obStep=0; obHistory=[];
+    obAsk(OB_QUESTIONS[0]);
+  }
 }
 
 function applyOnboarding(){
@@ -1288,7 +1314,7 @@ function applyOnboarding(){
   // Switch to manual mode and select only suggested thinkers
   manualMode=true;
   selectedIndices.clear();
-  document.getElementById('autoToggle').classList.remove('on');
+  setToggle(document.getElementById('autoToggle'), false);
   document.getElementById('manualCouncilPanel').style.display='block';
   document.getElementById('autoCouncilBanner').style.display='none';
   const all=allThinkers();
@@ -1516,7 +1542,7 @@ function loadPreset(name) {
   selectedVerticals = new Set(preset.selectedVerticals || []);
   activePresetName = name;
   // Sync toggle UI
-  document.getElementById('autoToggle').classList.toggle('on', !manualMode);
+  setToggle(document.getElementById('autoToggle'), !manualMode);
   document.getElementById('manualCouncilPanel').style.display = manualMode ? 'block' : 'none';
   document.getElementById('autoCouncilBanner').style.display = manualMode ? 'none' : 'flex';
   renderCouncilScreen();
@@ -1566,12 +1592,11 @@ function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrol
 // ════════════════════════════════════════════
 function init() {
   loadState();
-  // If no saved state, select all by default
   if (selectedIndices.size === 0) {
     allThinkers().forEach((_, i) => selectedIndices.add(i));
   }
   // Sync toggle UI to loaded state
-  document.getElementById('autoToggle').classList.toggle('on', !manualMode);
+  setToggle(document.getElementById('autoToggle'), !manualMode);
   document.getElementById('manualCouncilPanel').style.display = manualMode ? 'block' : 'none';
   document.getElementById('autoCouncilBanner').style.display = manualMode ? 'none' : 'flex';
   renderCouncilScreen();
