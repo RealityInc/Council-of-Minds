@@ -4,200 +4,235 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Council of Minds</title>
+<title>The World Game</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300;1,400&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <style>
 :root {
-  --bg: #080705;
-  --bg2: #0f0d09;
-  --bg3: #171410;
-  --bg4: #1e1a14;
-  --gold: #c9a84c;
-  --gold2: #e8c97a;
-  --golddim: #7a6330;
-  --golddark: #352d18;
-  --ember: #c94a1a;
-  --ember2: #e06030;
-  --jade: #2a7a5a;
-  --jade2: #3aaa7a;
-  --violet: #7060c0;
-  --violet2: #a090e0;
-  --smoke: #8a8070;
-  --text: #ede5d5;
-  --textdim: #9a9080;
-  --textfaint: #5a5448;
-  --border: #1e1a14;
-  --bordergold: #332c1a;
-  --radius: 8px;
-  --radius-sm: 4px;
+  --bg:#080705;--bg2:#0f0d09;--bg3:#171410;--bg4:#1e1a14;
+  --gold:#c9a84c;--gold2:#e8c97a;--golddim:#7a6330;--golddark:#352d18;
+  --ember:#c94a1a;--ember2:#e06030;
+  --jade:#2a7a5a;--jade2:#3aaa7a;
+  --violet:#7060c0;--violet2:#a090e0;
+  --smoke:#8a8070;--text:#ede5d5;--textdim:#9a9080;--textfaint:#5a5448;
+  --border:#1e1a14;--bordergold:#332c1a;
+  --r:8px;--rsm:4px;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 html{font-size:16px;}
 body{background:var(--bg);color:var(--text);font-family:'Crimson Pro',Georgia,serif;min-height:100vh;overflow-x:hidden;}
 body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 80% 60% at 20% 90%,rgba(201,168,76,.04) 0%,transparent 60%),radial-gradient(ellipse 60% 80% at 80% 10%,rgba(201,74,26,.03) 0%,transparent 60%);pointer-events:none;z-index:0;}
 .grain{position:fixed;inset:0;pointer-events:none;z-index:1;opacity:.02;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
-.app{position:relative;z-index:2;max-width:800px;margin:0 auto;padding:0 16px 80px;}
+.app{position:relative;z-index:2;max-width:820px;margin:0 auto;padding:0 16px 80px;}
+.screen{display:none;}.screen.active{display:block;}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:16px;}
+.card-hdr{padding:13px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.card-title{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--golddim);text-transform:uppercase;}
+.card-body{padding:18px;}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 20px;border-radius:var(--rsm);font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border:1px solid;transition:all .2s;white-space:nowrap;}
+.btn-primary{background:var(--golddark);border-color:var(--golddim);color:var(--gold2);}
+.btn-primary:hover:not(:disabled){background:rgba(201,168,76,.12);border-color:var(--gold);box-shadow:0 0 16px rgba(201,168,76,.1);}
+.btn-ghost{background:transparent;border-color:var(--bordergold);color:var(--textdim);}
+.btn-ghost:hover:not(:disabled){border-color:var(--golddim);color:var(--text);}
+.btn-jade{background:transparent;border-color:var(--jade);color:var(--jade2);}
+.btn-jade:hover:not(:disabled){background:rgba(42,122,90,.08);}
+.btn-ember{background:transparent;border-color:rgba(201,74,26,.4);color:var(--ember2);}
+.btn-violet{background:transparent;border-color:rgba(112,96,192,.4);color:var(--violet2);}
+.btn-violet:hover:not(:disabled){background:rgba(112,96,192,.07);}
+.btn-danger{background:transparent;border-color:var(--border);color:var(--textfaint);}
+.btn:disabled{opacity:.35;cursor:not-allowed;}
+.btn-sm{padding:6px 14px;font-size:9px;}
+.btn-full{width:100%;}
+.btn-running{border-color:var(--ember)!important;color:var(--ember2)!important;}
+.sdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.sdot-idle{background:var(--textfaint);}
+.sdot-active{background:var(--gold);box-shadow:0 0 8px var(--gold);animation:pulse 2s ease-in-out infinite;}
+.sdot-converge{background:var(--jade2);box-shadow:0 0 8px var(--jade2);animation:pulse 2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.input{width:100%;background:var(--bg);border:1px solid var(--bordergold);border-radius:var(--rsm);color:var(--text);font-family:'Crimson Pro',serif;font-size:16px;padding:10px 14px;outline:none;transition:border-color .2s;}
+.input:focus{border-color:var(--golddim);}
+.input::placeholder{color:var(--textfaint);font-style:italic;}
+.input-sm{font-size:13px;padding:7px 10px;}
+textarea.input{resize:none;line-height:1.55;min-height:48px;max-height:120px;}
+.messages{padding:18px;min-height:280px;max-height:500px;overflow-y:auto;display:flex;flex-direction:column;gap:18px;scrollbar-width:thin;scrollbar-color:var(--bordergold) transparent;}
+.messages::-webkit-scrollbar{width:3px;}
+.messages::-webkit-scrollbar-thumb{background:var(--bordergold);}
+.msg{animation:fadeUp .3s ease forwards;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.msg-sys{text-align:center;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--textfaint);letter-spacing:2px;padding:4px 0;}
+.msg-speech .spk{display:flex;align-items:baseline;gap:8px;margin-bottom:6px;flex-wrap:wrap;}
+.spk-name{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:1px;color:var(--gold);}
+.spk-name.cn-claude{color:var(--ember2);}
+.spk-name.cn-jung{color:var(--violet2);}
+.spk-name.cn-custom{color:var(--jade2);}
+.spk-era{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--textfaint);}
+.msg-body{font-size:16px;line-height:1.75;color:var(--text);border-left:2px solid var(--bordergold);padding-left:14px;}
+.msg-body.cn-claude{border-left-color:rgba(201,74,26,.35);}
+.msg-body.cn-jung{border-left-color:rgba(112,96,192,.35);}
+.msg-consensus{padding:16px 18px;background:rgba(201,168,76,.04);border:1px solid var(--golddim);border-radius:var(--rsm);}
+.consensus-lbl{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:3px;color:var(--golddim);text-transform:uppercase;margin-bottom:7px;}
+.consensus-txt{font-size:16px;line-height:1.75;color:var(--gold2);font-style:italic;}
+.msg-prototype{padding:18px;background:rgba(42,122,90,.05);border:1px solid var(--jade);border-radius:var(--rsm);}
+.proto-lbl{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:3px;color:var(--jade2);text-transform:uppercase;margin-bottom:4px;}
+.proto-type{font-family:'Cinzel',serif;font-size:13px;color:var(--jade2);margin-bottom:12px;letter-spacing:1px;}
+.proto-body{font-size:15px;line-height:1.85;color:var(--text);white-space:pre-wrap;}
+.msg-creative{padding:18px;background:rgba(112,96,192,.05);border:1px solid var(--violet);border-radius:var(--rsm);}
+.creative-lbl{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:3px;color:var(--violet2);text-transform:uppercase;margin-bottom:4px;}
+.creative-type{font-family:'Cinzel',serif;font-size:13px;color:var(--violet2);margin-bottom:12px;letter-spacing:1px;}
+.creative-body{font-size:16px;line-height:2;color:var(--text);white-space:pre-wrap;font-style:italic;}
+.creative-voice{margin-bottom:20px;}
+.creative-voice-name{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--violet2);margin-bottom:8px;}
+.thinking{display:flex;align-items:center;gap:10px;padding:8px 0;color:var(--textdim);font-style:italic;font-size:14px;}
+.dots{display:flex;gap:4px;}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--golddim);animation:blink 1.2s ease-in-out infinite;display:inline-block;}
+.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:.15}40%{opacity:1}}
+.input-area{padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px;align-items:flex-end;background:var(--bg2);}
+.forum-ctrl{padding:10px 18px;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+.ctrl-l{display:flex;align-items:center;gap:8px;}
+.ctrl-r{display:flex;gap:6px;flex-wrap:wrap;}
+.turn-ct{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--textfaint);letter-spacing:1px;}
+.conv-badge{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--jade2);border:1px solid var(--jade);border-radius:20px;padding:2px 8px;}
+.error-toast{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ember2);padding:8px 14px;border:1px solid rgba(201,74,26,.3);border-radius:var(--rsm);margin:6px 18px;animation:fadeUp .3s ease;}
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:220px;gap:10px;color:var(--textfaint);font-style:italic;font-size:14px;text-align:center;padding:24px;}
+.empty-glyph{font-size:32px;opacity:.2;font-style:normal;}
+.section-label{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:3px;color:var(--textfaint);text-transform:uppercase;margin-bottom:10px;}
+.chip{padding:4px 10px;border:1px solid var(--bordergold);border-radius:20px;font-size:11px;color:var(--textdim);background:var(--bg2);font-style:italic;transition:all .2s;white-space:nowrap;cursor:default;}
+.chip.active-speaker{border-color:var(--gold);color:var(--gold2);background:rgba(201,168,76,.07);box-shadow:0 0 8px rgba(201,168,76,.1);}
+.chip.is-claude{border-color:rgba(201,74,26,.4);color:#d07050;}
+.chip.is-jung{border-color:rgba(112,96,192,.4);color:var(--violet2);}
+.chip.is-custom{border-color:rgba(42,122,90,.4);color:var(--jade2);}
+.chip-row{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px;}
 
-/* ── SCREENS ── */
-.screen{display:none;}
-.screen.active{display:block;}
-
-/* ── HEADER ── */
-.site-header{text-align:center;padding:40px 0 28px;border-bottom:1px solid var(–bordergold);margin-bottom:0;position:relative;}
+/* ── SITE HEADER ── */
+.site-header{text-align:center;padding:36px 0 24px;border-bottom:1px solid var(–bordergold);margin-bottom:0;position:relative;}
 .site-header::after{content:’’;position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);width:80px;height:1px;background:var(–gold);box-shadow:0 0 12px var(–gold);}
 .eyebrow{font-family:‘JetBrains Mono’,monospace;font-size:9px;letter-spacing:5px;color:var(–golddim);text-transform:uppercase;margin-bottom:10px;}
 .site-title{font-family:‘Cinzel’,serif;font-size:clamp(28px,6vw,52px);font-weight:900;color:var(–gold2);letter-spacing:3px;line-height:1.05;text-shadow:0 0 60px rgba(201,168,76,.25);}
 .site-sub{font-size:15px;color:var(–smoke);font-style:italic;margin-top:8px;}
 
-/* ── NAV TABS ── */
-.nav-tabs{display:flex;border-bottom:1px solid var(–bordergold);margin-bottom:0;overflow-x:auto;scrollbar-width:none;}
+/* ── NAV ── */
+.nav-tabs{display:flex;border-bottom:1px solid var(–bordergold);overflow-x:auto;scrollbar-width:none;}
 .nav-tabs::-webkit-scrollbar{display:none;}
-.nav-tab{padding:14px 20px;font-family:‘JetBrains Mono’,monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(–textdim);cursor:pointer;border:none;background:transparent;white-space:nowrap;position:relative;transition:color .2s;flex-shrink:0;}
+.nav-tab{padding:12px 16px;font-family:‘JetBrains Mono’,monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(–textdim);cursor:pointer;border:none;background:transparent;white-space:nowrap;position:relative;transition:color .2s;flex-shrink:0;}
 .nav-tab.active{color:var(–gold2);}
 .nav-tab.active::after{content:’’;position:absolute;bottom:-1px;left:0;right:0;height:1px;background:var(–gold);box-shadow:0 0 8px var(–gold);}
 .nav-tab:hover:not(.active){color:var(–text);}
 
-/* ── CARDS ── */
-.card{background:var(–bg2);border:1px solid var(–border);border-radius:var(–radius);overflow:hidden;margin-bottom:16px;}
-.card-header{padding:14px 18px;border-bottom:1px solid var(–border);display:flex;align-items:center;justify-content:space-between;gap:10px;}
-.card-title{font-family:‘JetBrains Mono’,monospace;font-size:9px;letter-spacing:3px;color:var(–golddim);text-transform:uppercase;}
-.card-body{padding:18px;}
+/* ── ENTRY SCREEN ── */
+.entry-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:24px 0 16px;}
+@media(max-width:500px){.entry-grid{grid-template-columns:1fr;}}
+.entry-door{padding:24px 20px;border:1px solid var(–bordergold);border-radius:var(–r);cursor:pointer;transition:all .25s;background:var(–bg2);position:relative;overflow:hidden;}
+.entry-door::before{content:’’;position:absolute;inset:0;opacity:0;transition:opacity .25s;}
+.entry-door:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,.3);}
+.entry-door.door-world:hover{border-color:var(–jade2);}.entry-door.door-world::before{background:rgba(42,122,90,.04);}
+.entry-door.door-oracle:hover{border-color:var(–violet2);}.entry-door.door-oracle::before{background:rgba(112,96,192,.04);}
+.entry-door.door-create:hover{border-color:var(–ember2);}.entry-door.door-create::before{background:rgba(201,74,26,.04);}
+.entry-door.door-forum:hover{border-color:var(–gold);}.entry-door.door-forum::before{background:rgba(201,168,76,.04);}
+.entry-door:hover::before{opacity:1;}
+.door-icon{font-size:28px;margin-bottom:12px;display:block;}
+.door-question{font-family:‘Cinzel’,serif;font-size:15px;color:var(–text);margin-bottom:8px;line-height:1.3;}
+.door-desc{font-size:13px;color:var(–textdim);font-style:italic;line-height:1.5;}
+.door-arrow{position:absolute;bottom:16px;right:16px;font-family:‘JetBrains Mono’,monospace;font-size:10px;color:var(–textfaint);transition:color .2s;}
+.entry-door:hover .door-arrow{color:var(–gold);}
+.entry-footer{text-align:center;padding:8px 0 4px;}
+.entry-footer-link{font-family:‘JetBrains Mono’,monospace;font-size:9px;letter-spacing:2px;color:var(–textfaint);text-transform:uppercase;cursor:pointer;border-bottom:1px solid var(–bordergold);padding-bottom:2px;transition:color .2s;}
+.entry-footer-link:hover{color:var(–gold);}
 
-/* ── BUTTONS ── */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 20px;border-radius:var(–radius-sm);font-family:‘JetBrains Mono’,monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border:1px solid;transition:all .2s;white-space:nowrap;}
-.btn-primary{background:var(–golddark);border-color:var(–golddim);color:var(–gold2);}
-.btn-primary:hover:not(:disabled){background:rgba(201,168,76,.12);border-color:var(–gold);box-shadow:0 0 16px rgba(201,168,76,.1);}
-.btn-ghost{background:transparent;border-color:var(–bordergold);color:var(–textdim);}
-.btn-ghost:hover:not(:disabled){border-color:var(–golddim);color:var(–text);}
-.btn-jade{background:transparent;border-color:var(–jade);color:var(–jade2);}
-.btn-jade:hover:not(:disabled){background:rgba(42,122,90,.08);}
-.btn-ember{background:transparent;border-color:rgba(201,74,26,.4);color:var(–ember2);}
-.btn-ember:hover:not(:disabled){background:rgba(201,74,26,.06);}
-.btn-danger{background:transparent;border-color:var(–border);color:var(–textfaint);}
-.btn:disabled{opacity:.35;cursor:not-allowed;}
-.btn-sm{padding:6px 14px;font-size:9px;}
-.btn-full{width:100%;}
-.btn-running{border-color:var(–ember)!important;color:var(–ember2)!important;}
+/* ── WORLD GAME ── */
+.wg-layout{display:grid;grid-template-columns:300px 1fr;gap:16px;align-items:start;}
+@media(max-width:680px){.wg-layout{grid-template-columns:1fr;}}
+.wg-map-wrap{background:var(–bg2);border:1px solid var(–border);border-radius:var(–r);overflow:hidden;}
+.wg-map-hdr{padding:10px 14px;border-bottom:1px solid var(–border);font-family:‘JetBrains Mono’,monospace;font-size:9px;letter-spacing:2px;color:var(–golddim);text-transform:uppercase;}
+#worldMap{width:100%;display:block;cursor:pointer;}
+.country{fill:#1e1a14;stroke:#2e2820;stroke-width:0.5;transition:fill .2s;}
+.country:hover{fill:#2e2820;}
+.country.selected{fill:rgba(201,168,76,.15);stroke:var(–gold);}
+.country.high{fill:rgba(42,122,90,.3);}
+.country.med{fill:rgba(201,168,76,.2);}
+.country.low{fill:rgba(201,74,26,.2);}
+.wg-region-label{padding:8px 14px;font-size:12px;color:var(–textdim);font-style:italic;border-bottom:1px solid var(–border);min-height:32px;}
+.wg-panel{display:flex;flex-direction:column;gap:12px;}
+.wg-metrics{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:4px;}
+.metric-card{background:var(–bg2);border:1px solid var(–border);border-radius:var(–rsm);padding:10px 12px;}
+.metric-label{font-family:‘JetBrains Mono’,monospace;font-size:8px;letter-spacing:1px;color:var(–textfaint);text-transform:uppercase;margin-bottom:6px;}
+.metric-value{font-family:‘Cinzel’,serif;font-size:20px;font-weight:700;margin-bottom:4px;}
+.metric-bar{height:3px;border-radius:2px;background:var(–border);overflow:hidden;}
+.metric-fill{height:100%;border-radius:2px;transition:width .6s ease;}
+.metric-card.flourishing .metric-value{color:var(–jade2);}
+.metric-card.flourishing .metric-fill{background:var(–jade2);}
+.metric-card.ecological .metric-value{color:var(–gold2);}
+.metric-card.ecological .metric-fill{background:var(–gold2);}
+.metric-card.stability .metric-value{color:var(–violet2);}
+.metric-card.stability .metric-fill{background:var(–violet2);}
+.slider-section{background:var(–bg2);border:1px solid var(–border);border-radius:var(–r);overflow:hidden;}
+.slider-section-hdr{padding:10px 14px;border-bottom:1px solid var(–border);display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;}
+.slider-section-title{font-family:‘JetBrains Mono’,monospace;font-size:9px;letter-spacing:2px;color:var(–golddim);text-transform:uppercase;}
+.slider-section-arrow{font-size:10px;color:var(–textfaint);transition:transform .2s;}
+.slider-section.collapsed .slider-section-arrow{transform:rotate(-90deg);}
+.slider-section-body{padding:12px 14px;display:flex;flex-direction:column;gap:10px;}
+.slider-section.collapsed .slider-section-body{display:none;}
+.slider-row{display:flex;flex-direction:column;gap:4px;}
+.slider-labels{display:flex;justify-content:space-between;align-items:center;}
+.slider-name{font-size:12px;color:var(–textdim);}
+.slider-val{font-family:‘JetBrains Mono’,monospace;font-size:10px;color:var(–gold);}
+input[type=range]{width:100%;-webkit-appearance:none;height:3px;border-radius:2px;background:var(–bordergold);outline:none;cursor:pointer;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(–gold);cursor:pointer;transition:transform .15s;}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
+.wg-actions{display:flex;gap:8px;flex-wrap:wrap;}
+.time-row{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(–bg2);border:1px solid var(–border);border-radius:var(–rsm);}
+.time-label{font-family:‘JetBrains Mono’,monospace;font-size:9px;color:var(–textfaint);white-space:nowrap;}
+.time-val{font-family:‘JetBrains Mono’,monospace;font-size:10px;color:var(–gold);white-space:nowrap;}
+.resource-panel{background:var(–bg2);border:1px solid var(–jade);border-radius:var(–rsm);padding:12px 14px;}
+.resource-lbl{font-family:‘JetBrains Mono’,monospace;font-size:8px;letter-spacing:2px;color:var(–jade2);text-transform:uppercase;margin-bottom:8px;}
+.resource-stats{display:flex;gap:16px;flex-wrap:wrap;}
+.resource-stat{font-family:‘JetBrains Mono’,monospace;font-size:10px;color:var(–textdim);}
+.resource-stat span{color:var(–jade2);}
 
-/* ── STATUS DOT ── */
-.sdot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
-.sdot-idle{background:var(–textfaint);}
-.sdot-active{background:var(–gold);box-shadow:0 0 8px var(–gold);animation:pulse 2s ease-in-out infinite;}
-.sdot-converge{background:var(–jade2);box-shadow:0 0 8px var(–jade2);animation:pulse 2s ease-in-out infinite;}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-
-/* ── INPUTS ── */
-.input{width:100%;background:var(–bg);border:1px solid var(–bordergold);border-radius:var(–radius-sm);color:var(–text);font-family:‘Crimson Pro’,serif;font-size:16px;padding:10px 14px;outline:none;transition:border-color .2s;}
-.input:focus{border-color:var(–golddim);}
-.input::placeholder{color:var(–textfaint);font-style:italic;}
-.input-sm{font-size:13px;padding:7px 10px;}
-textarea.input{resize:none;line-height:1.55;min-height:48px;max-height:120px;}
-
-/* ── TAGS / CHIPS ── */
-.chip-row{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px;}
-.chip{padding:4px 10px;border:1px solid var(–bordergold);border-radius:20px;font-size:11px;color:var(–textdim);background:var(–bg2);font-style:italic;transition:all .2s;white-space:nowrap;cursor:default;}
-.chip.active-speaker{border-color:var(–gold);color:var(–gold2);background:rgba(201,168,76,.07);box-shadow:0 0 8px rgba(201,168,76,.1);}
-.chip.is-claude{border-color:rgba(201,74,26,.4);color:#d07050;}
-.chip.is-claude.active-speaker{border-color:var(–ember2);color:var(–ember2);background:rgba(201,74,26,.07);}
-.chip.is-jung{border-color:rgba(112,96,192,.4);color:var(–violet2);}
-.chip.is-jung.active-speaker{border-color:var(–violet2);background:rgba(112,96,192,.07);}
-.chip.is-custom{border-color:rgba(42,122,90,.4);color:var(–jade2);}
-.chip.is-custom.active-speaker{border-color:var(–jade2);background:rgba(42,122,90,.07);}
-.chip.inactive{opacity:.2;text-decoration:line-through;}
-
-/* ── MESSAGES ── */
-.messages{padding:18px;min-height:320px;max-height:520px;overflow-y:auto;display:flex;flex-direction:column;gap:18px;scrollbar-width:thin;scrollbar-color:var(–bordergold) transparent;}
-.messages::-webkit-scrollbar{width:3px;}
-.messages::-webkit-scrollbar-thumb{background:var(–bordergold);}
-.msg{animation:fadeUp .3s ease forwards;}
-@keyframes fadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
-.msg-sys{text-align:center;font-family:‘JetBrains Mono’,monospace;font-size:9px;color:var(–textfaint);letter-spacing:2px;padding:4px 0;}
-.msg-speech .spk{display:flex;align-items:baseline;gap:8px;margin-bottom:6px;flex-wrap:wrap;}
-.spk-name{font-family:‘JetBrains Mono’,monospace;font-size:11px;letter-spacing:1px;color:var(–gold);}
-.spk-name.cn-claude{color:var(–ember2);}
-.spk-name.cn-jung{color:var(–violet2);}
-.spk-name.cn-custom{color:var(–jade2);}
-.spk-era{font-family:‘JetBrains Mono’,monospace;font-size:9px;color:var(–textfaint);}
-.msg-body{font-size:16px;line-height:1.75;color:var(–text);border-left:2px solid var(–bordergold);padding-left:14px;}
-.msg-body.cn-claude{border-left-color:rgba(201,74,26,.35);}
-.msg-body.cn-jung{border-left-color:rgba(112,96,192,.35);}
-.msg-body.cn-custom{border-left-color:rgba(42,122,90,.35);}
-
-/* Consensus */
-.msg-consensus{padding:16px 18px;background:rgba(201,168,76,.04);border:1px solid var(–golddim);border-radius:var(–radius-sm);}
-.consensus-lbl{font-family:‘JetBrains Mono’,monospace;font-size:8px;letter-spacing:3px;color:var(–golddim);text-transform:uppercase;margin-bottom:7px;}
-.consensus-txt{font-size:16px;line-height:1.75;color:var(–gold2);font-style:italic;}
-
-/* Prototype */
-.msg-prototype{padding:18px;background:rgba(42,122,90,.05);border:1px solid var(–jade);border-radius:var(–radius-sm);}
-.proto-lbl{font-family:‘JetBrains Mono’,monospace;font-size:8px;letter-spacing:3px;color:var(–jade2);text-transform:uppercase;margin-bottom:4px;}
-.proto-type{font-family:‘Cinzel’,serif;font-size:13px;color:var(–jade2);margin-bottom:12px;letter-spacing:1px;}
-.proto-body{font-size:15px;line-height:1.85;color:var(–text);white-space:pre-wrap;}
-
-/* Creative */
-.msg-creative{padding:18px;background:rgba(112,96,192,.05);border:1px solid var(–violet);border-radius:var(–radius-sm);}
-.creative-lbl{font-family:‘JetBrains Mono’,monospace;font-size:8px;letter-spacing:3px;color:var(–violet2);text-transform:uppercase;margin-bottom:4px;}
-.creative-type{font-family:‘Cinzel’,serif;font-size:13px;color:var(–violet2);margin-bottom:12px;letter-spacing:1px;}
-.creative-body{font-size:16px;line-height:2;color:var(–text);white-space:pre-wrap;font-style:italic;}
-.creative-voice{margin-bottom:20px;}
-.creative-voice-name{font-family:‘JetBrains Mono’,monospace;font-size:9px;letter-spacing:2px;color:var(–violet2);margin-bottom:8px;}
-.creative-synthesis{margin-top:20px;padding-top:16px;border-top:1px solid rgba(112,96,192,.2);}
-.creative-synthesis-lbl{font-family:‘JetBrains Mono’,monospace;font-size:8px;letter-spacing:3px;color:var(–violet2);margin-bottom:10px;}
-
-/* Thinking */
-.thinking{display:flex;align-items:center;gap:10px;padding:8px 0;color:var(–textdim);font-style:italic;font-size:14px;}
-.dots{display:flex;gap:4px;}
-.dot{width:5px;height:5px;border-radius:50%;background:var(–golddim);animation:blink 1.2s ease-in-out infinite;display:inline-block;}
-.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
-@keyframes blink{0%,80%,100%{opacity:.15}40%{opacity:1}}
-
-/* ── FORUM SCREEN ── */
-.forum-layout{display:flex;flex-direction:column;gap:0;}
-.debate-start{padding:32px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:16px;}
-.debate-start-glyph{font-size:36px;opacity:.2;}
-.debate-start-title{font-family:‘Cinzel’,serif;font-size:18px;color:var(–gold2);letter-spacing:2px;}
-.debate-start-sub{font-size:15px;color:var(–textdim);font-style:italic;max-width:360px;line-height:1.6;}
-.debate-input-row{width:100%;max-width:480px;display:flex;flex-direction:column;gap:10px;}
-.mode-pills{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;}
-.mode-pill{padding:7px 16px;border-radius:20px;font-family:‘JetBrains Mono’,monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border:1px solid var(–bordergold);color:var(–textdim);background:transparent;transition:all .2s;}
-.mode-pill.active{border-color:var(–gold);color:var(–gold2);background:rgba(201,168,76,.07);}
-.mode-pill.creative-pill.active{border-color:var(–violet2);color:var(–violet2);background:rgba(112,96,192,.07);}
-
-/* Active debate header */
-.debate-banner{padding:12px 18px;background:rgba(201,168,76,.03);border-bottom:1px solid var(–border);display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
-.debate-banner-problem{flex:1;}
-.debate-banner-label{font-family:‘JetBrains Mono’,monospace;font-size:8px;letter-spacing:2px;color:var(–golddim);text-transform:uppercase;margin-bottom:3px;}
-.debate-banner-text{font-size:14px;color:var(–textdim);font-style:italic;line-height:1.4;}
-.debate-banner-mode{font-family:‘JetBrains Mono’,monospace;font-size:8px;color:var(–textfaint);letter-spacing:1px;padding:3px 8px;border:1px solid var(–border);border-radius:20px;white-space:nowrap;flex-shrink:0;}
-.debate-banner-mode.creative{color:var(–violet2);border-color:rgba(112,96,192,.3);}
-
-/* Forum controls */
-.forum-controls{padding:12px 18px;border-top:1px solid var(–border);display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;}
-.forum-controls-left{display:flex;align-items:center;gap:8px;}
-.turn-count{font-family:‘JetBrains Mono’,monospace;font-size:9px;color:var(–textfaint);letter-spacing:1px;}
-.converge-badge{font-family:‘JetBrains Mono’,monospace;font-size:8px;color:var(–jade2);border:1px solid var(–jade);border-radius:20px;padding:2px 8px;}
-.forum-controls-right{display:flex;gap:6px;flex-wrap:wrap;}
-
-/* Input area */
-.input-area{padding:12px 16px;border-top:1px solid var(–border);display:flex;gap:8px;align-items:flex-end;background:var(–bg2);}
-.input-area textarea{flex:1;}
-
-/* Doc banner */
-.doc-context-banner{padding:10px 18px;background:rgba(112,96,192,.05);border-bottom:1px solid rgba(112,96,192,.2);display:flex;align-items:center;gap:8px;font-size:12px;color:var(–violet2);font-style:italic;}
-.doc-context-banner span{font-family:‘JetBrains Mono’,monospace;font-size:8px;letter-spacing:2px;color:rgba(160,144,224,.6);font-style:normal;}
+/* ── GALLERY ── */
+.gallery-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media(max-width:500px){.gallery-grid{grid-template-columns:1fr;}}
+.gallery-card{background:var(–bg2);border:1px solid var(–border);border-radius:var(–r);overflow:hidden;cursor:pointer;transition:all .2s;}
+.gallery-card:hover{border-color:var(–bordergold);transform:translateY(-1px);}
+.gallery-card-hdr{padding:10px 14px;border-bottom:1px solid var(–border);display:flex;align-items:center;justify-content:space-between;}
+.gallery-type{font-family:‘JetBrains Mono’,monospace;font-size:8px;letter-spacing:2px;text-transform:uppercase;}
+.gallery-type.creative{color:var(–violet2);}
+.gallery-type.debate{color:var(–gold);}
+.gallery-type.scenario{color:var(–jade2);}
+.gallery-type.insight{color:var(–ember2);}
+.gallery-card-body{padding:14px;}
+.gallery-title{font-family:‘Cinzel’,serif;font-size:14px;color:var(–text);margin-bottom:6px;line-height:1.3;}
+.gallery-excerpt{font-size:13px;color:var(–textdim);font-style:italic;line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+.gallery-card-footer{padding:8px 14px;border-top:1px solid var(–border);display:flex;align-items:center;justify-content:space-between;}
+.gallery-meta{font-family:‘JetBrains Mono’,monospace;font-size:8px;color:var(–textfaint);}
+.gallery-actions{display:flex;gap:8px;}
+.gallery-action{font-family:‘JetBrains Mono’,monospace;font-size:9px;color:var(–textfaint);cursor:pointer;transition:color .2s;border:none;background:none;padding:0;}
+.gallery-action:hover{color:var(–gold);}
+.share-modal-overlay{position:fixed;inset:0;background:rgba(8,7,5,.85);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
+.share-modal-overlay.hidden{display:none;}
+.share-modal{background:var(–bg2);border:1px solid var(–bordergold);border-radius:var(–r);max-width:480px;width:100%;padding:24px;}
+.share-modal-title{font-family:‘Cinzel’,serif;font-size:18px;color:var(–gold2);margin-bottom:6px;}
+.share-modal-sub{font-size:13px;color:var(–textdim);font-style:italic;margin-bottom:16px;}
+.share-type-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.share-type-btn{padding:6px 14px;border-radius:20px;border:1px solid var(–bordergold);font-family:‘JetBrains Mono’,monospace;font-size:9px;letter-spacing:1px;color:var(–textdim);cursor:pointer;background:transparent;transition:all .2s;}
+.share-type-btn.active{border-color:var(–gold);color:var(–gold2);background:rgba(201,168,76,.07);}
+.share-modal-footer{display:flex;justify-content:space-between;gap:10px;margin-top:16px;}
 
 /* ── COUNCIL SCREEN ── */
-.verticals-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
-.vertical-tag{padding:6px 14px;border-radius:20px;border:1px solid var(–bordergold);font-family:‘JetBrains Mono’,monospace;font-size:9px;letter-spacing:1px;color:var(–textdim);cursor:pointer;transition:all .2s;text-transform:uppercase;}
-.vertical-tag:hover{border-color:var(–golddim);color:var(–text);}
-.vertical-tag.active{border-color:var(–gold);color:var(–gold2);background:rgba(201,168,76,.07);}
-.vertical-tag.creative-tag.active{border-color:var(–violet2);color:var(–violet2);background:rgba(112,96,192,.07);}
-.thinker-list{display:flex;flex-direction:column;gap:4px;max-height:320px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(–bordergold) transparent;margin-bottom:12px;}
-.thinker-row{display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid var(–border);border-radius:var(–radius-sm);cursor:pointer;transition:all .15s;}
-.thinker-row:hover{border-color:var(–bordergold);background:rgba(201,168,76,.02);}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 0;margin-bottom:14px;}
+.toggle-pill{width:48px;height:26px;border-radius:13px;background:var(–bg4);border:1px solid var(–bordergold);position:relative;cursor:pointer;transition:background .25s,border-color .25s;flex-shrink:0;display:block;}
+.toggle-pill.on{background:var(–golddim);border-color:var(–gold);}
+.toggle-knob{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#6a6050;transition:left .25s,background .25s;}
+.toggle-pill.on .toggle-knob{left:25px;background:var(–gold2);}
+.verticals-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+.vert-tag{padding:6px 14px;border-radius:20px;border:1px solid var(–bordergold);font-family:‘JetBrains Mono’,monospace;font-size:9px;letter-spacing:1px;color:var(–textdim);cursor:pointer;transition:all .2s;text-transform:uppercase;}
+.vert-tag:hover{border-color:var(–golddim);color:var(–text);}
+.vert-tag.active{border-color:var(–gold);color:var(–gold2);background:rgba(201,168,76,.07);}
+.thinker-list{display:flex;flex-direction:column;gap:4px;max-height:300px;overflow-y:auto;margin-bottom:12px;scrollbar-width:thin;}
+.thinker-row{display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid var(–border);border-radius:var(–rsm);cursor:pointer;transition:all .15s;}
+.thinker-row:hover{border-color:var(–bordergold);}
 .thinker-row.selected{border-color:var(–golddim);background:rgba(201,168,76,.04);}
-.thinker-check{width:16px;height:16px;border-radius:3px;border:1px solid var(–bordergold);display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;transition:all .15s;color:transparent;}
+.thinker-check{width:16px;height:16px;border-radius:3px;border:1px solid var(–bordergold);display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;color:transparent;}
 .thinker-row.selected .thinker-check{background:var(–golddim);border-color:var(–gold);color:var(–gold2);}
 .thinker-name{font-size:14px;color:var(–textdim);flex:1;font-style:italic;}
 .thinker-row.selected .thinker-name{color:var(–text);}
@@ -205,110 +240,83 @@ textarea.input{resize:none;line-height:1.55;min-height:48px;max-height:120px;}
 .thinker-row.is-claude .thinker-name{color:#d07050;}
 .thinker-row.is-jung .thinker-name{color:var(–violet2);}
 .thinker-row.is-custom .thinker-name{color:var(–jade2);}
-.thinker-remove{font-size:11px;color:var(–textfaint);cursor:pointer;padding:2px 5px;border-radius:3px;}
-.thinker-remove:hover{color:var(–ember2);}
-.add-thinker-section{border-top:1px solid var(–border);padding-top:14px;margin-top:4px;}
-.add-thinker-title{font-family:‘JetBrains Mono’,monospace;font-size:9px;letter-spacing:2px;color:var(–textfaint);text-transform:uppercase;margin-bottom:10px;}
-.add-thinker-fields{display:flex;flex-direction:column;gap:7px;}
-
-/* ── PRESETS ── */
-.preset-row{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
-.preset-item{display:flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid var(–border);border-radius:var(–radius-sm);transition:all .15s;}
+.add-thinker{border-top:1px solid var(–border);padding-top:14px;margin-top:4px;}
+.preset-row{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;}
+.preset-item{display:flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid var(–border);border-radius:var(–rsm);}
 .preset-item:hover{border-color:var(–bordergold);}
-.preset-item.active-preset{border-color:var(–gold);background:rgba(201,168,76,.04);}
 .preset-name{flex:1;font-size:13px;color:var(–textdim);font-style:italic;}
-.preset-item.active-preset .preset-name{color:var(–gold2);}
-.preset-count{font-family:‘JetBrains Mono’,monospace;font-size:9px;color:var(–textfaint);}
-.preset-actions{display:flex;gap:4px;}
-.preset-load{font-family:‘JetBrains Mono’,monospace;font-size:8px;letter-spacing:1px;color:var(–golddim);cursor:pointer;padding:3px 7px;border:1px solid var(–bordergold);border-radius:2px;transition:all .15s;}
-.preset-load:hover{color:var(–gold);border-color:var(–gold);}
-.preset-del{font-size:10px;color:var(–textfaint);cursor:pointer;padding:3px 6px;border:1px solid transparent;border-radius:2px;transition:all .15s;}
-.preset-del:hover{color:var(–ember2);border-color:rgba(201,74,26,.3);}
-.save-preset-row{display:flex;gap:6px;}
-.saved-indicator{font-family:‘JetBrains Mono’,monospace;font-size:8px;color:var(–jade2);letter-spacing:1px;padding:3px 8px;border:1px solid var(–jade);border-radius:20px;animation:fadeUp .3s ease;}
-.auto-mode-banner{padding:12px 14px;background:rgba(201,168,76,.03);border:1px solid var(–bordergold);border-radius:var(–radius-sm);font-size:13px;color:var(–textdim);display:flex;align-items:center;gap:10px;margin-bottom:12px;}
-.auto-mode-banner span{font-family:‘JetBrains Mono’,monospace;font-size:8px;letter-spacing:2px;color:var(–golddim);}
+.preset-load{font-family:‘JetBrains Mono’,monospace;font-size:8px;letter-spacing:1px;color:var(–golddim);cursor:pointer;padding:3px 7px;border:1px solid var(–bordergold);border-radius:2px;}
+.preset-del{font-size:10px;color:var(–textfaint);cursor:pointer;padding:3px 6px;}
+.auto-banner{padding:12px 14px;background:rgba(201,168,76,.03);border:1px solid var(–bordergold);border-radius:var(–rsm);font-size:13px;color:var(–textdim);display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;}
+.auto-banner-label{font-family:‘JetBrains Mono’,monospace;font-size:8px;letter-spacing:2px;color:var(–golddim);flex-shrink:0;padding-top:2px;}
+.saved-indicator{font-family:‘JetBrains Mono’,monospace;font-size:8px;color:var(–jade2);letter-spacing:1px;padding:3px 8px;border:1px solid var(–jade);border-radius:20px;}
 
-/* ── ONBOARDING MODAL ── */
-.modal-overlay{position:fixed;inset:0;background:rgba(8,7,5,.85);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
+/* ── UPLOAD ── */
+.upload-zone{border:1px dashed var(–bordergold);border-radius:var(–r);padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;}
+.upload-zone:hover,.upload-zone.drag{border-color:var(–golddim);background:rgba(201,168,76,.03);}
+.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;}
+.doc-card{padding:14px 16px;background:var(–bg2);border:1px solid var(–bordergold);border-radius:var(–rsm);margin-top:10px;}
+.doc-card-name{font-family:‘JetBrains Mono’,monospace;font-size:10px;color:var(–gold2);letter-spacing:1px;margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.doc-card-meta{font-size:12px;color:var(–textfaint);margin-bottom:10px;}
+.doc-card-actions{display:flex;gap:6px;}
+
+/* ── OB MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(8,7,5,.88);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
 .modal-overlay.hidden{display:none;}
-.modal{background:var(–bg2);border:1px solid var(–bordergold);border-radius:var(–radius);max-width:520px;width:100%;max-height:80vh;overflow-y:auto;position:relative;}
-.modal-header{padding:20px 22px 14px;border-bottom:1px solid var(–border);}
-.modal-title{font-family:‘Cinzel’,serif;font-size:18px;color:var(–gold2);letter-spacing:2px;margin-bottom:4px;}
+.modal{background:var(–bg2);border:1px solid var(–bordergold);border-radius:var(–r);max-width:520px;width:100%;max-height:82vh;overflow-y:auto;}
+.modal-hdr{padding:20px 22px 14px;border-bottom:1px solid var(–border);}
+.modal-title{font-family:‘Cinzel’,serif;font-size:18px;color:var(–gold2);margin-bottom:4px;}
 .modal-sub{font-size:13px;color:var(–textdim);font-style:italic;}
 .modal-body{padding:20px 22px;}
 .modal-footer{padding:14px 22px;border-top:1px solid var(–border);display:flex;justify-content:space-between;gap:10px;}
-.ob-chat{display:flex;flex-direction:column;gap:12px;margin-bottom:16px;max-height:280px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(–bordergold) transparent;}
-.ob-msg-ai{background:rgba(201,168,76,.04);border:1px solid var(–bordergold);border-radius:var(–radius-sm);padding:12px 14px;font-size:15px;line-height:1.65;color:var(–text);}
-.ob-msg-user{background:rgba(42,122,90,.04);border:1px solid rgba(42,122,90,.2);border-radius:var(–radius-sm);padding:12px 14px;font-size:15px;line-height:1.65;color:var(–text);text-align:right;}
-.ob-result{padding:14px;background:rgba(201,168,76,.03);border:1px solid var(–bordergold);border-radius:var(–radius-sm);margin-top:10px;}
+.ob-chat{display:flex;flex-direction:column;gap:12px;margin-bottom:16px;max-height:260px;overflow-y:auto;}
+.ob-msg-ai{background:rgba(201,168,76,.04);border:1px solid var(–bordergold);border-radius:var(–rsm);padding:12px 14px;font-size:15px;line-height:1.65;color:var(–text);}
+.ob-msg-user{background:rgba(42,122,90,.04);border:1px solid rgba(42,122,90,.2);border-radius:var(–rsm);padding:12px 14px;font-size:15px;line-height:1.65;color:var(–text);text-align:right;}
+.ob-result{padding:14px;background:rgba(201,168,76,.03);border:1px solid var(–bordergold);border-radius:var(–rsm);margin-top:10px;}
 .ob-result-title{font-family:‘JetBrains Mono’,monospace;font-size:8px;letter-spacing:3px;color:var(–golddim);text-transform:uppercase;margin-bottom:8px;}
 .ob-council-preview{display:flex;flex-wrap:wrap;gap:5px;}
-
-/* ── UPLOAD SCREEN ── */
-.upload-zone{border:1px dashed var(–bordergold);border-radius:var(–radius);padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;margin-bottom:12px;}
-.upload-zone:hover,.upload-zone.drag{border-color:var(–golddim);background:rgba(201,168,76,.03);}
-.upload-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;}
-.upload-icon{font-size:28px;opacity:.3;margin-bottom:8px;}
-.upload-label{font-family:‘JetBrains Mono’,monospace;font-size:10px;letter-spacing:2px;color:var(–textdim);text-transform:uppercase;}
-.upload-sub{font-size:12px;color:var(–textfaint);margin-top:4px;font-style:italic;}
-.doc-card{padding:14px 16px;background:var(–bg2);border:1px solid var(–bordergold);border-radius:var(–radius-sm);margin-bottom:10px;}
-.doc-card-name{font-family:‘JetBrains Mono’,monospace;font-size:10px;color:var(–gold2);letter-spacing:1px;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.doc-card-meta{font-size:12px;color:var(–textfaint);margin-bottom:10px;}
-.doc-card-actions{display:flex;gap:6px;}
-.processing-msg{font-family:‘JetBrains Mono’,monospace;font-size:9px;letter-spacing:2px;color:var(–golddim);text-align:center;padding:12px 0;}
-
-/* ── CREATIVE SCREEN ── */
-.creative-brief{display:flex;flex-direction:column;gap:10px;}
-.form-label{font-family:‘JetBrains Mono’,monospace;font-size:9px;letter-spacing:2px;color:var(–textfaint);text-transform:uppercase;margin-bottom:5px;}
-.form-group{margin-bottom:14px;}
-.select-input{width:100%;background:var(–bg);border:1px solid var(–bordergold);border-radius:var(–radius-sm);color:var(–text);font-family:‘Crimson Pro’,serif;font-size:15px;padding:10px 14px;outline:none;appearance:none;}
-.select-input:focus{border-color:var(–golddim);}
-
-/* ── ERROR ── */
-.error-toast{font-family:‘JetBrains Mono’,monospace;font-size:10px;color:var(–ember2);padding:8px 14px;border:1px solid rgba(201,74,26,.3);border-radius:var(–radius-sm);margin:6px 18px;animation:fadeUp .3s ease;}
-
-/* ── EMPTY ── */
-.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:240px;gap:10px;color:var(–textfaint);font-style:italic;font-size:14px;text-align:center;padding:24px;}
-.empty-glyph{font-size:32px;opacity:.2;font-style:normal;}
-
-/* ── SECTION LABEL ── */
-.section-label{font-family:‘JetBrains Mono’,monospace;font-size:9px;letter-spacing:3px;color:var(–textfaint);text-transform:uppercase;margin-bottom:10px;}
-
-/* ── DIVIDER ── */
-.divider{border:none;border-top:1px solid var(–border);margin:16px 0;}
-
-/* ── TOGGLE ── */
-.toggle-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 0;}
-.toggle-label{font-size:14px;color:var(–textdim);}
-.toggle-pill{width:48px;height:26px;border-radius:13px;background:var(–bg4);border:1px solid var(–bordergold);position:relative;cursor:pointer;transition:background .25s,border-color .25s;flex-shrink:0;display:block;}
-.toggle-pill.on{background:var(–golddim);border-color:var(–gold);}
-.toggle-knob{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#6a6050;transition:left .25s,background .25s;}
-.toggle-pill.on .toggle-knob{left:25px;background:var(–gold2);}
-
-/* ── RESPONSIVE ── */
-@media(max-width:480px){
-.site-title{letter-spacing:1px;}
-.forum-controls-right{gap:4px;}
-.btn-sm{padding:5px 10px;font-size:8px;}
-}
 </style>
 
 </head>
 <body>
 <div class="grain"></div>
 
+<!-- SHARE MODAL -->
+
+<div class="share-modal-overlay hidden" id="shareModal">
+  <div class="share-modal">
+    <div class="share-modal-title">Share to Gallery</div>
+    <div class="share-modal-sub">Your work will be visible to the community</div>
+    <div class="share-type-row" id="shareTypeRow">
+      <button class="share-type-btn active" onclick="setShareType('creative',this)">✦ Creative</button>
+      <button class="share-type-btn" onclick="setShareType('debate',this)">⬡ Debate</button>
+      <button class="share-type-btn" onclick="setShareType('insight',this)">◎ Insight</button>
+    </div>
+    <div class="section-label">Title</div>
+    <input class="input input-sm" id="shareTitle" placeholder="Give your piece a title…" style="margin-bottom:10px">
+    <div class="section-label">Anonymous?</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+      <div class="toggle-pill on" id="anonToggle" onclick="this.classList.toggle('on')"><div class="toggle-knob"></div></div>
+      <span style="font-size:13px;color:var(--textdim)">Share anonymously</span>
+    </div>
+    <div class="share-modal-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closeShareModal()">Cancel</button>
+      <button class="btn btn-primary btn-sm" onclick="confirmShare()">Share</button>
+    </div>
+  </div>
+</div>
+
 <!-- ONBOARDING MODAL -->
 
 <div class="modal-overlay hidden" id="obModal">
   <div class="modal">
-    <div class="modal-header">
+    <div class="modal-hdr">
       <div class="modal-title">Build Your Council</div>
       <div class="modal-sub">A few questions to curate the right minds for you</div>
     </div>
     <div class="modal-body">
       <div class="ob-chat" id="obChat"></div>
-      <div id="obInputArea" style="display:flex;gap:8px;">
+      <div id="obInputArea" style="display:flex;gap:8px">
         <textarea class="input" id="obInput" placeholder="Your answer…" rows="2" onkeydown="obKey(event)" oninput="autoResize(this)"></textarea>
         <button class="btn btn-primary btn-sm" onclick="obSend()" id="obSendBtn" style="align-self:flex-end;height:40px">Send</button>
       </div>
@@ -326,148 +334,275 @@ textarea.input{resize:none;line-height:1.55;min-height:48px;max-height:120px;}
 
 <div class="app">
   <div class="site-header">
-    <div class="eyebrow">Autonomous Wisdom Forum</div>
-    <div class="site-title">Council of Minds</div>
-    <div class="site-sub">Assemble the right minds. Debate the right problems.</div>
+    <div class="eyebrow">The Livingry Foundation</div>
+    <div class="site-title">The World Game</div>
+    <div class="site-sub">Make the world work for everyone</div>
   </div>
 
-  <!-- NAV -->
-
-  <div class="nav-tabs">
-    <button class="nav-tab active" id="nav-forum" onclick="showScreen('forum')">⬡ Forum</button>
+  <div class="nav-tabs" id="navTabs">
+    <button class="nav-tab active" id="nav-entry" onclick="showScreen('entry')">⌂ Home</button>
+    <button class="nav-tab" id="nav-world" onclick="showScreen('world')">🌍 World Game</button>
     <button class="nav-tab" id="nav-oracle" onclick="showScreen('oracle')">◎ Oracle</button>
-    <button class="nav-tab" id="nav-creative" onclick="showScreen('creative')">✦ Create</button>
+    <button class="nav-tab" id="nav-create" onclick="showScreen('create')">✦ Create</button>
+    <button class="nav-tab" id="nav-forum" onclick="showScreen('forum')">⬡ Forum</button>
+    <button class="nav-tab" id="nav-gallery" onclick="showScreen('gallery')">⊞ Gallery</button>
     <button class="nav-tab" id="nav-council" onclick="showScreen('council')">⊕ Council</button>
     <button class="nav-tab" id="nav-upload" onclick="showScreen('upload')">↑ Docs</button>
   </div>
 
-  <!-- ══ FORUM SCREEN ══ -->
+  <!-- ══ ENTRY ══ -->
 
-  <div class="screen active" id="screen-forum">
-    <div class="card" style="margin-top:16px">
-      <div class="card-header">
-        <span class="card-title" id="forumCardTitle">Forum</span>
-        <div class="sdot sdot-idle" id="forumDot"></div>
+  <div class="screen active" id="screen-entry">
+    <div class="entry-grid">
+      <div class="entry-door door-world" onclick="showScreen('world')">
+        <span class="door-icon">🌍</span>
+        <div class="door-question">What's happening in the world?</div>
+        <div class="door-desc">Model scenarios, understand resource flows, simulate a better world</div>
+        <div class="door-arrow">→</div>
       </div>
-
-```
-  <!-- Start state -->
-  <div id="forumStart" class="debate-start">
-    <div class="debate-start-glyph">⬡</div>
-    <div class="debate-start-title">Convene the Council</div>
-    <div class="debate-start-sub">What problem, question, or tension should the council debate?</div>
-    <div class="debate-input-row">
-      <textarea class="input" id="forumProblemInput" placeholder="Describe the problem or question…" rows="3" oninput="autoResize(this)"></textarea>
-      <div class="mode-pills">
-        <div class="mode-pill active" onclick="setForumMode('debate',this)">⬡ Debate</div>
-        <div class="mode-pill" onclick="setForumMode('solve',this)">◈ Solve</div>
-        <div class="mode-pill" onclick="setForumMode('explore',this)">◉ Explore</div>
+      <div class="entry-door door-oracle" onclick="showScreen('oracle')">
+        <span class="door-icon">🪞</span>
+        <div class="door-question">I need help with something</div>
+        <div class="door-desc">Bring your real questions. Receive wisdom from across the ages</div>
+        <div class="door-arrow">→</div>
       </div>
-      <button class="btn btn-primary btn-full" onclick="startDebate()">Convene the Council</button>
-      <button class="btn btn-ghost btn-full btn-sm" onclick="openOnboarding()">✦ Curate my council first</button>
+      <div class="entry-door door-create" onclick="showScreen('create')">
+        <span class="door-icon">✦</span>
+        <div class="door-question">I want to make something</div>
+        <div class="door-desc">Poetry, lyrics, manifestos — art that holds the weight of ideas</div>
+        <div class="door-arrow">→</div>
+      </div>
+      <div class="entry-door door-forum" onclick="showScreen('forum')">
+        <span class="door-icon">⬡</span>
+        <div class="door-question">I want to think through a big idea</div>
+        <div class="door-desc">Let great minds debate your question and reach a synthesis</div>
+        <div class="door-arrow">→</div>
+      </div>
+    </div>
+    <div class="entry-footer">
+      <span class="entry-footer-link" onclick="showScreen('council')">⊕ Meet the great minds →</span>
     </div>
   </div>
 
-  <!-- Active debate -->
-  <div id="forumActive" style="display:none">
-    <div class="debate-banner">
-      <div class="debate-banner-problem">
-        <div class="debate-banner-label">Debating</div>
-        <div class="debate-banner-text" id="bannerProblem"></div>
+  <!-- ══ WORLD GAME ══ -->
+
+  <div class="screen" id="screen-world">
+    <div style="padding:16px 0 12px">
+      <div class="section-label">World Game — Resource Modeling</div>
+      <div class="wg-metrics">
+        <div class="metric-card flourishing">
+          <div class="metric-label">Flourishing</div>
+          <div class="metric-value" id="metFl">62</div>
+          <div class="metric-bar"><div class="metric-fill" id="fillFl" style="width:62%"></div></div>
+        </div>
+        <div class="metric-card ecological">
+          <div class="metric-label">Ecological</div>
+          <div class="metric-value" id="metEc">48</div>
+          <div class="metric-bar"><div class="metric-fill" id="fillEc" style="width:48%"></div></div>
+        </div>
+        <div class="metric-card stability">
+          <div class="metric-label">Stability</div>
+          <div class="metric-value" id="metSt">55</div>
+          <div class="metric-bar"><div class="metric-fill" id="fillSt" style="width:55%"></div></div>
+        </div>
       </div>
-      <div class="debate-banner-mode" id="bannerMode">Debate</div>
-    </div>
-    <div id="docContextBanner" class="doc-context-banner" style="display:none">
-      <span>Document</span> <span id="docBannerName" style="font-style:italic;color:var(--violet2);font-family:'Crimson Pro',serif;font-size:12px;letter-spacing:0"></span>
-    </div>
-    <!-- Active council chips -->
-    <div style="padding:12px 18px 0">
-      <div class="section-label">Active Council</div>
-      <div class="chip-row" id="forumChips"></div>
-    </div>
-    <div class="messages" id="forumMessages"></div>
-    <div id="convergenceBar" style="display:none;padding:8px 18px;">
-      <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(42,122,90,.06);border:1px solid var(--jade);border-radius:var(--radius-sm);">
-        <div class="sdot sdot-converge"></div>
-        <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--jade2);letter-spacing:1px">Council converging — synthesis imminent</span>
+      <div class="wg-layout">
+        <div>
+          <div class="wg-map-wrap">
+            <div class="wg-map-hdr">Planetary View</div>
+            <svg id="worldMap" viewBox="0 0 360 180" xmlns="http://www.w3.org/2000/svg">
+              <!-- Simplified world regions as polygons -->
+              <rect class="country" id="r-na" x="20" y="20" width="80" height="60" rx="4" onclick="selectRegion('North America')" title="North America"/>
+              <rect class="country" id="r-sa" x="60" y="90" width="50" height="65" rx="4" onclick="selectRegion('South America')" title="South America"/>
+              <rect class="country high" id="r-eu" x="140" y="15" width="60" height="50" rx="4" onclick="selectRegion('Europe')" title="Europe"/>
+              <rect class="country med" id="r-af" x="130" y="75" width="65" height="75" rx="4" onclick="selectRegion('Africa')" title="Africa"/>
+              <rect class="country" id="r-me" x="190" y="40" width="45" height="40" rx="4" onclick="selectRegion('Middle East')" title="Middle East"/>
+              <rect class="country high" id="r-as" x="230" y="20" width="90" height="70" rx="4" onclick="selectRegion('Asia')" title="Asia"/>
+              <rect class="country med" id="r-sa2" x="270" y="100" width="50" height="55" rx="4" onclick="selectRegion('Southeast Asia')" title="Southeast Asia"/>
+              <rect class="country" id="r-oc" x="290" y="120" width="55" height="40" rx="4" onclick="selectRegion('Oceania')" title="Oceania"/>
+              <!-- Labels -->
+              <text x="60" y="55" fill="#9a9080" font-size="7" text-anchor="middle" pointer-events="none">N. America</text>
+              <text x="85" y="128" fill="#9a9080" font-size="7" text-anchor="middle" pointer-events="none">S. America</text>
+              <text x="170" y="44" fill="#9a9080" font-size="7" text-anchor="middle" pointer-events="none">Europe</text>
+              <text x="162" y="116" fill="#9a9080" font-size="7" text-anchor="middle" pointer-events="none">Africa</text>
+              <text x="212" y="63" fill="#9a9080" font-size="7" text-anchor="middle" pointer-events="none">M. East</text>
+              <text x="275" y="58" fill="#9a9080" font-size="7" text-anchor="middle" pointer-events="none">Asia</text>
+              <text x="295" y="130" fill="#9a9080" font-size="7" text-anchor="middle" pointer-events="none">SE Asia</text>
+              <text x="317" y="143" fill="#9a9080" font-size="7" text-anchor="middle" pointer-events="none">Oceania</text>
+            </svg>
+            <div class="wg-region-label" id="regionLabel">Click a region to focus</div>
+          </div>
+          <div class="time-row" style="margin-top:10px">
+            <span class="time-label">Time horizon:</span>
+            <input type="range" min="0" max="2" step="1" value="0" id="timeSlider" oninput="updateTime(this.value)" style="flex:1">
+            <span class="time-val" id="timeVal">Current (2026)</span>
+          </div>
+          <div class="resource-panel" style="margin-top:10px">
+            <div class="resource-lbl">Session Resource Cost</div>
+            <div class="resource-stats">
+              <div class="resource-stat">Energy: <span id="resCost">0.003 kWh</span></div>
+              <div class="resource-stat">Water: <span id="resCostW">0.8L</span></div>
+              <div class="resource-stat">CO₂: <span id="resCostC">1.2g</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="wg-panel">
+          <div class="wg-actions">
+            <button class="btn btn-ghost btn-sm" onclick="askCouncilAboutScenario()">⬡ Ask the Council</button>
+            <button class="btn btn-violet btn-sm" onclick="generateArtFromScenario()">✦ Generate Art</button>
+            <button class="btn btn-jade btn-sm" onclick="shareScenario()">Share Scenario</button>
+          </div>
+          <!-- Energy -->
+          <div class="slider-section" id="ss-energy">
+            <div class="slider-section-hdr" onclick="toggleSection('energy')">
+              <span class="slider-section-title">Energy</span>
+              <span class="slider-section-arrow">▼</span>
+            </div>
+            <div class="slider-section-body">
+              <div class="slider-row">
+                <div class="slider-labels"><span class="slider-name">Renewable share</span><span class="slider-val" id="sv-renewable">32%</span></div>
+                <input type="range" min="0" max="100" value="32" id="sl-renewable" oninput="updateSlider('renewable',this.value,'%');recalcMetrics()">
+              </div>
+              <div class="slider-row">
+                <div class="slider-labels"><span class="slider-name">Energy access equity</span><span class="slider-val" id="sv-access">78%</span></div>
+                <input type="range" min="0" max="100" value="78" id="sl-access" oninput="updateSlider('access',this.value,'%');recalcMetrics()">
+              </div>
+            </div>
+          </div>
+          <!-- Food & Water -->
+          <div class="slider-section" id="ss-food">
+            <div class="slider-section-hdr" onclick="toggleSection('food')">
+              <span class="slider-section-title">Food & Water</span>
+              <span class="slider-section-arrow">▼</span>
+            </div>
+            <div class="slider-section-body">
+              <div class="slider-row">
+                <div class="slider-labels"><span class="slider-name">Food distribution efficiency</span><span class="slider-val" id="sv-food">61%</span></div>
+                <input type="range" min="0" max="100" value="61" id="sl-food" oninput="updateSlider('food',this.value,'%');recalcMetrics()">
+              </div>
+              <div class="slider-row">
+                <div class="slider-labels"><span class="slider-name">Water access equity</span><span class="slider-val" id="sv-water">71%</span></div>
+                <input type="range" min="0" max="100" value="71" id="sl-water" oninput="updateSlider('water',this.value,'%');recalcMetrics()">
+              </div>
+            </div>
+          </div>
+          <!-- Economic -->
+          <div class="slider-section collapsed" id="ss-econ">
+            <div class="slider-section-hdr" onclick="toggleSection('econ')">
+              <span class="slider-section-title">Economic</span>
+              <span class="slider-section-arrow">▼</span>
+            </div>
+            <div class="slider-section-body">
+              <div class="slider-row">
+                <div class="slider-labels"><span class="slider-name">Wealth distribution equity</span><span class="slider-val" id="sv-wealth">34%</span></div>
+                <input type="range" min="0" max="100" value="34" id="sl-wealth" oninput="updateSlider('wealth',this.value,'%');recalcMetrics()">
+              </div>
+              <div class="slider-row">
+                <div class="slider-labels"><span class="slider-name">Killingry → Livingry redirect</span><span class="slider-val" id="sv-kl">8%</span></div>
+                <input type="range" min="0" max="100" value="8" id="sl-kl" oninput="updateSlider('kl',this.value,'%');recalcMetrics()">
+              </div>
+            </div>
+          </div>
+          <!-- Ecological -->
+          <div class="slider-section collapsed" id="ss-eco">
+            <div class="slider-section-hdr" onclick="toggleSection('eco')">
+              <span class="slider-section-title">Ecological</span>
+              <span class="slider-section-arrow">▼</span>
+            </div>
+            <div class="slider-section-body">
+              <div class="slider-row">
+                <div class="slider-labels"><span class="slider-name">Protected land area</span><span class="slider-val" id="sv-land">17%</span></div>
+                <input type="range" min="0" max="100" value="17" id="sl-land" oninput="updateSlider('land',this.value,'%');recalcMetrics()">
+              </div>
+              <div class="slider-row">
+                <div class="slider-labels"><span class="slider-name">Carbon sequestration investment</span><span class="slider-val" id="sv-carbon">12%</span></div>
+                <input type="range" min="0" max="100" value="12" id="sl-carbon" oninput="updateSlider('carbon',this.value,'%');recalcMetrics()">
+              </div>
+            </div>
+          </div>
+          <!-- Governance -->
+          <div class="slider-section collapsed" id="ss-gov">
+            <div class="slider-section-hdr" onclick="toggleSection('gov')">
+              <span class="slider-section-title">Governance</span>
+              <span class="slider-section-arrow">▼</span>
+            </div>
+            <div class="slider-section-body">
+              <div class="slider-row">
+                <div class="slider-labels"><span class="slider-name">Conflict prevention investment</span><span class="slider-val" id="sv-conflict">18%</span></div>
+                <input type="range" min="0" max="100" value="18" id="sl-conflict" oninput="updateSlider('conflict',this.value,'%');recalcMetrics()">
+              </div>
+              <div class="slider-row">
+                <div class="slider-labels"><span class="slider-name">Governance quality index</span><span class="slider-val" id="sv-gov">52%</span></div>
+                <input type="range" min="0" max="100" value="52" id="sl-gov" oninput="updateSlider('gov',this.value,'%');recalcMetrics()">
+              </div>
+            </div>
+          </div>
+          <div id="wgInsight" style="display:none;margin-top:4px"></div>
+          <div id="wgError"></div>
+        </div>
       </div>
-    </div>
-    <div id="forumError"></div>
-    <div class="forum-controls">
-      <div class="forum-controls-left">
-        <span class="turn-count" id="turnCount">0 turns</span>
-        <span class="converge-badge" id="convergeBadge" style="display:none">◈ converging</span>
-      </div>
-      <div class="forum-controls-right">
-        <button class="btn btn-ghost btn-sm" onclick="downloadTranscript()">↓</button>
-        <button class="btn btn-jade btn-sm" id="synthesizeBtn" onclick="triggerPrototype()" disabled>◈ Synthesize</button>
-        <button class="btn btn-ghost btn-sm" id="nextBtn" onclick="nextTurn(null)">Next</button>
-        <button class="btn btn-ghost btn-sm" id="autoBtn" onclick="toggleAuto()">▶ Auto</button>
-        <button class="btn btn-danger btn-sm" onclick="resetForum()">Reset</button>
-      </div>
-    </div>
-    <div class="input-area">
-      <textarea class="input" id="forumInput" placeholder="Interject or add context…" rows="1" onkeydown="forumKey(event)" oninput="autoResize(this)"></textarea>
-      <button class="btn btn-primary btn-sm" id="forumSendBtn" onclick="forumSend()" style="height:40px;align-self:flex-end">Send</button>
     </div>
   </div>
-</div>
-```
 
-  </div>
-
-  <!-- ══ ORACLE SCREEN ══ -->
+  <!-- ══ ORACLE ══ -->
 
   <div class="screen" id="screen-oracle">
     <div class="card" style="margin-top:16px">
-      <div class="card-header">
-        <span class="card-title">Oracle — Distilled Consensus</span>
+      <div class="card-hdr">
+        <span class="card-title">Oracle — Distilled Wisdom</span>
         <div class="sdot sdot-idle" id="oracleDot"></div>
       </div>
       <div class="card-body">
-        <p style="font-size:15px;color:var(--textdim);font-style:italic;margin-bottom:16px;line-height:1.6">Ask the council anything. Receive the distilled wisdom of the most relevant voices, followed by a synthesis they would theoretically agree to.</p>
-        <div style="display:flex;gap:8px;margin-bottom:16px;align-items:flex-end">
-          <textarea class="input" id="oracleInput" placeholder="Your question for the council…" rows="3" onkeydown="oracleKey(event)" oninput="autoResize(this)" style="flex:1"></textarea>
-          <button class="btn btn-primary btn-sm" id="oracleSendBtn" onclick="oracleQuery()" style="height:40px;align-self:flex-end">Consult</button>
+        <p style="font-size:15px;color:var(--textdim);font-style:italic;margin-bottom:16px;line-height:1.6">Bring your real questions. Receive wisdom assembled from across the ages — private, specific, unhurried.</p>
+        <div style="display:flex;gap:8px;margin-bottom:10px;align-items:flex-end">
+          <textarea class="input" id="oracleInput" placeholder="What's on your mind? Describe your situation, question, or challenge…" rows="3" onkeydown="oracleKey(event)" oninput="autoResize(this)" style="flex:1"></textarea>
+          <button class="btn btn-primary btn-sm" id="oracleSendBtn" onclick="oracleQuery()" style="height:40px;align-self:flex-end">Ask</button>
         </div>
+        <p style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--textfaint);letter-spacing:1px">Oracle sessions are completely private — never stored, never shared, never analyzed.</p>
       </div>
       <div class="messages" id="oracleMessages" style="min-height:200px">
-        <div class="empty-state"><div class="empty-glyph">◎</div><div>The oracle awaits your question.</div></div>
+        <div class="empty-state"><div class="empty-glyph">◎</div><div>The oracle awaits.<br>Your question is safe here.</div></div>
+      </div>
+      <div style="padding:10px 18px;border-top:1px solid var(--border)">
+        <button class="btn btn-ghost btn-sm" onclick="showScreen('world')" style="font-size:8px">🌍 Take this to the World Game →</button>
       </div>
       <div id="oracleError"></div>
     </div>
   </div>
 
-  <!-- ══ CREATIVE SCREEN ══ -->
+  <!-- ══ CREATE ══ -->
 
-  <div class="screen" id="screen-creative">
+  <div class="screen" id="screen-create">
     <div class="card" style="margin-top:16px">
-      <div class="card-header">
+      <div class="card-hdr">
         <span class="card-title">Create — Poetry & Lyrics</span>
         <div class="sdot sdot-idle" id="creativeDot"></div>
       </div>
       <div class="card-body">
-        <div class="form-group">
-          <div class="form-label">Form</div>
-          <select class="select-input" id="creativeForm">
+        <div style="margin-bottom:12px">
+          <div class="section-label">Form</div>
+          <select class="input input-sm" id="creativeForm" style="font-family:'Crimson Pro',serif">
             <option value="poem">Poem</option>
             <option value="lyrics">Song Lyrics</option>
-            <option value="haiku_sequence">Haiku Sequence</option>
-            <option value="prose_poem">Prose Poem</option>
+            <option value="haiku sequence">Haiku Sequence</option>
+            <option value="prose poem">Prose Poem</option>
             <option value="elegy">Elegy</option>
             <option value="ode">Ode</option>
-            <option value="manifesto_poem">Manifesto Poem</option>
+            <option value="manifesto poem">Manifesto Poem</option>
           </select>
         </div>
-        <div class="form-group">
-          <div class="form-label">Theme or Subject</div>
-          <textarea class="input" id="creativeTheme" placeholder="What should the council write about? (e.g. 'the death of truth in the digital age', 'grief', 'a river at dawn'…)" rows="3" oninput="autoResize(this)"></textarea>
+        <div style="margin-bottom:12px">
+          <div class="section-label">Theme or Subject</div>
+          <textarea class="input" id="creativeTheme" placeholder="What should the council write about? e.g. 'the death of truth', 'grief', 'a river at dawn', 'the weight of what we're leaving our children'…" rows="3" oninput="autoResize(this)"></textarea>
         </div>
-        <div class="form-group">
-          <div class="form-label">Tone / Mood (optional)</div>
-          <input class="input input-sm" id="creativeTone" placeholder="e.g. melancholic, defiant, tender, ecstatic…">
+        <div style="margin-bottom:14px">
+          <div class="section-label">Tone / Mood (optional)</div>
+          <input class="input input-sm" id="creativeTone" placeholder="e.g. melancholic, defiant, tender, ecstatic, quietly furious…">
         </div>
-        <button class="btn btn-primary btn-full" onclick="triggerCreative()" id="creativeBtn">✦ Invoke the Council</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="triggerCreative()" id="creativeBtn" style="flex:1">✦ Invoke the Council</button>
+          <button class="btn btn-ghost btn-sm" onclick="generateArtFromScenario()">From World Game scenario</button>
+        </div>
       </div>
       <div class="messages" id="creativeMessages" style="min-height:200px">
         <div class="empty-state"><div class="empty-glyph">✦</div><div>Each voice will write,<br>then the council weaves one piece.</div></div>
@@ -476,28 +611,110 @@ textarea.input{resize:none;line-height:1.55;min-height:48px;max-height:120px;}
     </div>
   </div>
 
-  <!-- ══ COUNCIL SCREEN ══ -->
+  <!-- ══ FORUM ══ -->
+
+  <div class="screen" id="screen-forum">
+    <div class="card" style="margin-top:16px">
+      <div class="card-hdr">
+        <span class="card-title" id="forumCardTitle">Forum — Open Session</span>
+        <div class="sdot sdot-idle" id="forumDot"></div>
+      </div>
+      <div id="forumStart" style="padding:28px 20px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:14px">
+        <div style="font-size:28px;opacity:.2">⬡</div>
+        <div style="font-family:'Cinzel',serif;font-size:18px;color:var(--gold2)">Convene the Council</div>
+        <div style="font-size:15px;color:var(--textdim);font-style:italic;max-width:360px;line-height:1.6">What problem, question, or tension should the council debate?</div>
+        <div style="width:100%;max-width:480px;display:flex;flex-direction:column;gap:10px">
+          <textarea class="input" id="forumProblemInput" placeholder="Describe the problem or question…" rows="3" oninput="autoResize(this)"></textarea>
+          <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap" id="modePills">
+            <div style="padding:7px 16px;border-radius:20px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border:1px solid var(--gold);color:var(--gold2);background:rgba(201,168,76,.07)" onclick="setForumMode('debate',this)">⬡ Debate</div>
+            <div style="padding:7px 16px;border-radius:20px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border:1px solid var(--bordergold);color:var(--textdim);background:transparent" onclick="setForumMode('solve',this)">◈ Solve</div>
+            <div style="padding:7px 16px;border-radius:20px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;border:1px solid var(--bordergold);color:var(--textdim);background:transparent" onclick="setForumMode('explore',this)">◉ Explore</div>
+          </div>
+          <button class="btn btn-primary btn-full" onclick="startDebate()">Convene the Council</button>
+        </div>
+      </div>
+      <div id="forumActive" style="display:none">
+        <div style="padding:11px 18px;background:rgba(201,168,76,.03);border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;gap:10px">
+          <div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:2px;color:var(--golddim);margin-bottom:3px">DEBATING</div>
+            <div style="font-size:14px;color:var(--textdim);font-style:italic" id="bannerProblem"></div>
+          </div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--textfaint);padding:3px 8px;border:1px solid var(--border);border-radius:20px;white-space:nowrap;flex-shrink:0" id="bannerMode">Debate</div>
+        </div>
+        <div style="padding:10px 18px 0">
+          <div class="section-label">Active Council</div>
+          <div class="chip-row" id="forumChips"></div>
+        </div>
+        <div class="messages" id="forumMessages"></div>
+        <div id="convBar" style="display:none;padding:8px 18px">
+          <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:rgba(42,122,90,.06);border:1px solid var(--jade);border-radius:var(--rsm)">
+            <div class="sdot sdot-converge"></div>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--jade2);letter-spacing:1px">Council converging — synthesis imminent</span>
+          </div>
+        </div>
+        <div id="forumError"></div>
+        <div class="forum-ctrl">
+          <div class="ctrl-l">
+            <span class="turn-ct" id="turnCt">0 turns</span>
+            <span class="conv-badge" id="convBadge" style="display:none">◈ converging</span>
+          </div>
+          <div class="ctrl-r">
+            <button class="btn btn-ghost btn-sm" onclick="downloadTranscript()">↓</button>
+            <button class="btn btn-ghost btn-sm" onclick="shareFromForum()">Share</button>
+            <button class="btn btn-jade btn-sm" id="synthBtn" onclick="triggerPrototype()" disabled>◈ Synthesize</button>
+            <button class="btn btn-ghost btn-sm" id="nextBtn" onclick="nextTurn(null)">Next</button>
+            <button class="btn btn-ghost btn-sm" id="autoBtn" onclick="toggleAuto()">▶ Auto</button>
+            <button class="btn btn-danger btn-sm" onclick="resetForum()">Reset</button>
+          </div>
+        </div>
+        <div class="input-area">
+          <textarea class="input" id="forumInput" placeholder="Interject or add context…" rows="1" onkeydown="forumKey(event)" oninput="autoResize(this)"></textarea>
+          <button class="btn btn-primary btn-sm" id="forumSendBtn" onclick="forumSend()" style="height:40px;align-self:flex-end">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ GALLERY ══ -->
+
+  <div class="screen" id="screen-gallery">
+    <div style="padding:16px 0 12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div>
+        <div class="section-label">Community Gallery</div>
+        <div style="font-size:14px;color:var(--textdim);font-style:italic">What the council has helped people make and solve</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap" id="galleryFilters">
+        <button class="btn btn-ghost btn-sm" onclick="filterGallery('all',this)" style="border-color:var(--gold);color:var(--gold2)">All</button>
+        <button class="btn btn-ghost btn-sm" onclick="filterGallery('creative',this)">✦ Creative</button>
+        <button class="btn btn-ghost btn-sm" onclick="filterGallery('debate',this)">⬡ Debate</button>
+        <button class="btn btn-ghost btn-sm" onclick="filterGallery('scenario',this)">🌍 Scenario</button>
+        <button class="btn btn-ghost btn-sm" onclick="filterGallery('insight',this)">◎ Insight</button>
+      </div>
+    </div>
+    <div class="gallery-grid" id="galleryGrid"></div>
+    <div id="galleryEmpty" class="empty-state" style="display:none">
+      <div class="empty-glyph">⊞</div>
+      <div>No pieces here yet.<br>Share something from the Forum or Create tab.</div>
+    </div>
+  </div>
+
+  <!-- ══ COUNCIL ══ -->
 
   <div class="screen" id="screen-council">
     <div class="card" style="margin-top:16px">
-      <div class="card-header">
-        <span class="card-title">Council Configuration</span>
-      </div>
+      <div class="card-hdr"><span class="card-title">Council Configuration</span></div>
       <div class="card-body">
-        <!-- Auto toggle -->
-        <div class="toggle-row" style="margin-bottom:14px">
+        <div class="toggle-row">
           <div>
             <div style="font-size:14px;color:var(--text);margin-bottom:2px">Auto-select thinkers</div>
-            <div style="font-size:12px;color:var(--textfaint);font-style:italic">Council selects the most relevant voices per problem</div>
+            <div style="font-size:12px;color:var(--textfaint);font-style:italic">The council selects the most relevant voices per problem</div>
           </div>
           <div class="toggle-pill on" id="autoToggle" onclick="toggleAutoMode()"><div class="toggle-knob"></div></div>
         </div>
-        <div id="manualCouncilPanel" style="display:none">
-          <!-- Verticals -->
+        <div id="manualPanel" style="display:none">
           <div class="section-label">Verticals</div>
           <div class="verticals-row" id="verticalsRow"></div>
-          <hr class="divider">
-          <!-- Thinker list -->
+          <hr style="border:none;border-top:1px solid var(--border);margin:12px 0">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
             <div class="section-label" style="margin-bottom:0">Thinkers</div>
             <div style="display:flex;gap:6px">
@@ -506,10 +723,9 @@ textarea.input{resize:none;line-height:1.55;min-height:48px;max-height:120px;}
             </div>
           </div>
           <div class="thinker-list" id="thinkerList"></div>
-          <!-- Add custom -->
-          <div class="add-thinker-section">
-            <div class="add-thinker-title">Add a thinker</div>
-            <div class="add-thinker-fields">
+          <div class="add-thinker">
+            <div class="section-label">Add a thinker</div>
+            <div style="display:flex;flex-direction:column;gap:7px">
               <input class="input input-sm" id="newName" placeholder="Name (e.g. Hannah Arendt)">
               <input class="input input-sm" id="newEra" placeholder="Era (e.g. 1906–1975)">
               <input class="input input-sm" id="newDomain" placeholder="Key ideas & domain…">
@@ -517,62 +733,53 @@ textarea.input{resize:none;line-height:1.55;min-height:48px;max-height:120px;}
             </div>
           </div>
         </div>
-        <div id="autoCouncilBanner" class="auto-mode-banner">
-          <span>AUTO</span>
-          The council automatically selects the most relevant thinkers based on the problem, document, or question at hand. Switch to manual to curate your own roster.
+        <div class="auto-banner" id="autoBanner">
+          <span class="auto-banner-label">AUTO</span>
+          The council automatically selects the most relevant thinkers based on the problem at hand. Switch to manual to curate your own roster.
         </div>
-        <hr class="divider">
+        <hr style="border:none;border-top:1px solid var(--border);margin:14px 0">
+        <div class="section-label">Saved Councils</div>
+        <div class="preset-row" id="presetRow"></div>
+        <div style="display:flex;gap:8px;margin-bottom:6px">
+          <input class="input input-sm" id="presetNameInput" placeholder="Name this council…" style="flex:1">
+          <button class="btn btn-jade btn-sm" onclick="savePreset()">Save</button>
+        </div>
+        <div id="savedInd" style="display:none;margin-top:6px"></div>
+        <hr style="border:none;border-top:1px solid var(--border);margin:14px 0">
         <button class="btn btn-ghost btn-sm btn-full" onclick="openOnboarding()">✦ Run the AI questionnaire to build my council</button>
-
-```
-    <hr class="divider">
-    <!-- SAVED PRESETS -->
-    <div class="section-label">Saved Councils</div>
-    <div class="preset-row" id="presetRow">
-      <div style="font-size:12px;color:var(--textfaint);font-style:italic">No saved councils yet.</div>
+      </div>
     </div>
-    <div class="save-preset-row">
-      <input class="input input-sm" id="presetNameInput" placeholder="Name this council (e.g. My Philosophy Council)…" style="flex:1">
-      <button class="btn btn-jade btn-sm" onclick="savePreset()">Save</button>
-    </div>
-    <div id="savedIndicator" style="display:none;margin-top:8px"></div>
-  </div>
-</div>
-```
-
   </div>
 
-  <!-- ══ UPLOAD SCREEN ══ -->
+  <!-- ══ UPLOAD ══ -->
 
   <div class="screen" id="screen-upload">
     <div class="card" style="margin-top:16px">
-      <div class="card-header"><span class="card-title">Documents</span></div>
+      <div class="card-hdr"><span class="card-title">Documents</span></div>
       <div class="card-body">
         <div class="upload-zone" id="uploadZone"
           ondragover="event.preventDefault();this.classList.add('drag')"
           ondragleave="this.classList.remove('drag')"
           ondrop="handleDrop(event)">
           <input type="file" accept=".pdf,.txt,.md" onchange="handleFile(event)">
-          <div class="upload-icon">⬡</div>
-          <div class="upload-label">Drop or tap to upload</div>
-          <div class="upload-sub">PDF, TXT, or Markdown — up to 3,500 words</div>
+          <div style="font-size:28px;opacity:.3;margin-bottom:8px">⬡</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--textdim);text-transform:uppercase">Drop or tap to upload</div>
+          <div style="font-size:12px;color:var(--textfaint);margin-top:4px;font-style:italic">PDF, TXT, or Markdown — up to 3,500 words</div>
         </div>
-        <div class="processing-msg" id="uploadProcessing" style="display:none">Extracting text…</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--golddim);text-align:center;padding:10px 0;display:none" id="uploadProcessing">Extracting text…</div>
         <div id="docCard" style="display:none">
           <div class="doc-card">
             <div class="doc-card-name" id="docCardName"></div>
             <div class="doc-card-meta" id="docCardMeta"></div>
             <div class="doc-card-actions">
-              <button class="btn btn-primary btn-sm" onclick="useDocForum()">⬡ Forum Debate</button>
-              <button class="btn btn-ember btn-sm" onclick="useDocOracle()">◎ Oracle Review</button>
+              <button class="btn btn-primary btn-sm" onclick="useDocForum()">⬡ Forum</button>
+              <button class="btn btn-ember btn-sm" onclick="useDocOracle()">◎ Oracle</button>
               <button class="btn btn-danger btn-sm" onclick="clearDoc()">✕</button>
             </div>
           </div>
         </div>
         <div id="uploadError"></div>
-        <div style="margin-top:16px">
-          <p style="font-size:13px;color:var(--textfaint);font-style:italic;line-height:1.65">Upload a document and send it to the Forum for autonomous debate, or to the Oracle for a distilled council response. Works with research papers, articles, manifestos, books, reports.</p>
-        </div>
+        <p style="font-size:13px;color:var(--textfaint);font-style:italic;line-height:1.65;margin-top:14px">Upload a document for the council to debate in the Forum, or send to the Oracle for a distilled response.</p>
       </div>
     </div>
   </div>
@@ -580,648 +787,523 @@ textarea.input{resize:none;line-height:1.55;min-height:48px;max-height:120px;}
 </div><!-- /app -->
 
 <script>
-// ════════════════════════════════════════════
-// DATA
-// ════════════════════════════════════════════
+// ════════════ PDF.js ════════════
 if(typeof pdfjsLib!=='undefined') pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-const BASE_COUNCIL = [
-  {name:"Buddha",era:"5th c. BCE",domain:"suffering, liberation, impermanence, the middle way",vertical:"philosophy"},
-  {name:"Alan Watts",era:"1915–1973",domain:"Zen, ego dissolution, play, non-dualism",vertical:"philosophy"},
-  {name:"Jean Baudrillard",era:"1929–2007",domain:"simulation, hyperreality, signs, spectacle",vertical:"philosophy"},
-  {name:"Carroll Quigley",era:"1910–1977",domain:"civilizational cycles, institutional decay, tragedy and hope",vertical:"politics"},
-  {name:"Peter Dale Scott",era:"1929–",domain:"deep politics, parapolitics, hidden architecture of power",vertical:"politics"},
-  {name:"Israel Regardie",era:"1907–1985",domain:"Western esotericism, Kabbalah, Golden Dawn, psychological integration",vertical:"spirituality"},
-  {name:"Buckminster Fuller",era:"1895–1983",domain:"systems thinking, design science, doing more with less, spaceship earth",vertical:"science"},
-  {name:"Frantz Fanon",era:"1925–1961",domain:"decolonization, colonial violence, psychopathology of oppression",vertical:"politics"},
-  {name:"Bell Hooks",era:"1952–2021",domain:"intersectionality, love as politics, the margins as radical space",vertical:"education"},
-  {name:"Vandana Shiva",era:"1952–",domain:"ecofeminism, seed sovereignty, coloniality of knowledge",vertical:"ecology"},
-  {name:"Mao Zedong",era:"1893–1976",domain:"contradiction dialectics, mass mobilization, anti-institutionalism",vertical:"politics"},
-  {name:"Rosa Luxemburg",era:"1871–1919",domain:"democratic socialism, mass strike theory, anti-Leninist Marxism",vertical:"economics"},
-  {name:"Antonio Gramsci",era:"1891–1937",domain:"cultural hegemony, organic intellectuals, counter-hegemonic strategy",vertical:"politics"},
-  {name:"Emma Goldman",era:"1869–1940",domain:"anarcha-feminism, anti-statism, direct action",vertical:"politics"},
-  {name:"Carl Jung",era:"1875–1961",domain:"shadow, collective unconscious, archetypes, individuation",vertical:"psychology",isJung:true},
-  {name:"Claude",era:"Present",domain:"synthesis, present-day context, convergence detection",isClaude:true,vertical:"all"},
+// ════════════ COUNCIL DATA ════════════
+const BASE_COUNCIL=[
+  {name:"Buddha",era:"5th c. BCE",domain:"suffering, liberation, impermanence, the middle way"},
+  {name:"Alan Watts",era:"1915–1973",domain:"Zen, ego dissolution, play, non-dualism"},
+  {name:"Jean Baudrillard",era:"1929–2007",domain:"simulation, hyperreality, signs, spectacle"},
+  {name:"Carroll Quigley",era:"1910–1977",domain:"civilizational cycles, institutional decay"},
+  {name:"Peter Dale Scott",era:"1929–",domain:"deep politics, parapolitics, hidden power"},
+  {name:"Israel Regardie",era:"1907–1985",domain:"Western esotericism, Kabbalah, psychological integration"},
+  {name:"Buckminster Fuller",era:"1895–1983",domain:"systems thinking, design science, ephemeralization"},
+  {name:"Frantz Fanon",era:"1925–1961",domain:"decolonization, colonial violence, liberation psychology"},
+  {name:"Bell Hooks",era:"1952–2021",domain:"intersectionality, love as politics, the margins"},
+  {name:"Vandana Shiva",era:"1952–",domain:"ecofeminism, seed sovereignty, coloniality of knowledge"},
+  {name:"Mao Zedong",era:"1893–1976",domain:"contradiction dialectics, mass mobilization, anti-institutionalism"},
+  {name:"Rosa Luxemburg",era:"1871–1919",domain:"democratic socialism, mass strike, anti-Leninism"},
+  {name:"Antonio Gramsci",era:"1891–1937",domain:"cultural hegemony, organic intellectuals, civil society"},
+  {name:"Emma Goldman",era:"1869–1940",domain:"anarcha-feminism, anti-statism, direct action"},
+  {name:"Carl Jung",era:"1875–1961",domain:"shadow, collective unconscious, archetypes, individuation",isJung:true},
+  {name:"Claude",era:"Present",domain:"synthesis, present-day context, convergence detection",isClaude:true},
 ];
-
-const VERTICALS = {
-  philosophy:  {label:"Philosophy",  thinkers:["Socrates","Aristotle","Kant","Nietzsche","Simone de Beauvoir","Hannah Arendt","Albert Camus"]},
-  psychology:  {label:"Psychology",  thinkers:["Sigmund Freud","Erik Erikson","Abraham Maslow","John Bowlby","Jacques Lacan","Viktor Frankl","Wilhelm Reich"]},
-  education:   {label:"Education",   thinkers:["Maria Montessori","John Dewey","Lev Vygotsky","Jean Piaget","Paulo Freire","Rudolf Steiner","Ivan Illich"]},
-  ecology:     {label:"Ecology",     thinkers:["John Muir","Aldo Leopold","Rachel Carson","James Lovelock","Robin Wall Kimmerer","Murray Bookchin","David Abram"]},
-  economics:   {label:"Economics",   thinkers:["Karl Marx","John Maynard Keynes","Friedrich Hayek","E.F. Schumacher","Kate Raworth","Mariana Mazzucato","Henry George"]},
-  politics:    {label:"Politics",    thinkers:["Machiavelli","Thomas Paine","Alexis de Tocqueville","Hannah Arendt","Noam Chomsky","Sheldon Wolin","Giorgio Agamben"]},
-  spirituality:{label:"Spirituality",thinkers:["Rumi","Meister Eckhart","Ramana Maharshi","Thich Nhat Hanh","Thomas Merton","Simone Weil","Krishnamurti"]},
-  science:     {label:"Science",     thinkers:["Richard Feynman","David Bohm","Ilya Prigogine","Gregory Bateson","Lynn Margulis","Rupert Sheldrake","Fritjof Capra"]},
-  poetry:      {label:"Poetry",      thinkers:["Rumi","Pablo Neruda","Sylvia Plath","Langston Hughes","Wisława Szymborska","Derek Walcott","Adrienne Rich"],creative:true},
-  music:       {label:"Music",       thinkers:["John Cage","Brian Eno","Nina Simone","Leonard Cohen","Bob Dylan","Björk","Charles Mingus"],creative:true},
-  arts:        {label:"Visual Arts", thinkers:["Frida Kahlo","Jean-Michel Basquiat","Agnes Martin","Wassily Kandinsky","Louise Bourgeois","Joseph Beuys","Yoko Ono"],creative:true},
+const VERTICALS={
+  philosophy:{label:"Philosophy",thinkers:["Socrates","Kant","Nietzsche","Hannah Arendt","Simone de Beauvoir"]},
+  psychology:{label:"Psychology",thinkers:["Freud","Erik Erikson","Abraham Maslow","Viktor Frankl","Wilhelm Reich"]},
+  education:{label:"Education",thinkers:["Maria Montessori","John Dewey","Paulo Freire","Rudolf Steiner","Ivan Illich"]},
+  ecology:{label:"Ecology",thinkers:["Rachel Carson","Robin Wall Kimmerer","Murray Bookchin","James Lovelock"]},
+  economics:{label:"Economics",thinkers:["Karl Marx","John Maynard Keynes","E.F. Schumacher","Kate Raworth"]},
+  spirituality:{label:"Spirituality",thinkers:["Rumi","Thich Nhat Hanh","Krishnamurti","Simone Weil"]},
+  poetry:{label:"Poetry",thinkers:["Pablo Neruda","Sylvia Plath","Langston Hughes","Adrienne Rich","Rumi"],creative:true},
+  music:{label:"Music",thinkers:["John Cage","Nina Simone","Leonard Cohen","Bob Dylan","Brian Eno"],creative:true},
 };
 
-// State
-let customThinkers = [];
-let selectedVerticals = new Set();
-let manualMode = false;
-let selectedIndices = new Set();
-let activeProblem = null;
-let forumMode = 'debate';
-let msgs = [];
-let isLoading = false;
-let autoRunning = false;
-let autoTimer = null;
-let turnCount = 0;
-let lastSpeakerIdx = -1;
-let convergenceScore = 0;
-let protoTriggered = false;
-let converging = false;
-let uploadedDoc = null;
-let currentScreen = 'forum';
-let obHistory = [];
-let obStep = 0;
-let obSuggestedCouncil = [];
+// ════════════ STATE ════════════
+let customThinkers=[],selectedVerticals=new Set(),manualMode=false,selectedIndices=new Set();
+let activeProblem=null,forumMode='debate',msgs=[],isLoading=false;
+let autoRunning=false,autoTimer=null,turnCount=0,lastSpeakerIdx=-1;
+let convergenceScore=0,protoTriggered=false,converging=false;
+let uploadedDoc=null,obHistory=[],obStep=0,obSuggestedCouncil=[];
+let galleryItems=[],sharePayload=null,shareType='creative';
+let activePresetName=null;
+const STORAGE_KEY='worldgame_v1';
+const OB_QUESTIONS=[
+  "What brings you to The World Game today? Are you working through a personal challenge, exploring an idea, curious about the world, or something else?",
+  "What traditions, cultures, or schools of thought feel most alive or relevant to you?",
+  "Are there specific thinkers, artists, or leaders — from any era — who you admire or want to hear from?",
+  "What kind of output are you hoping for — insight, practical solutions, creative work, or something else?",
+];
 
-// ════════════════════════════════════════════
-// SCREENS
-// ════════════════════════════════════════════
-const SCREEN_NAMES = ['forum','oracle','creative','council','upload'];
-function showScreen(name) {
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  SCREEN_NAMES.forEach(s=>{
-    const el=document.getElementById('nav-'+s);
-    if(el) el.classList.toggle('active', s===name);
-  });
-  const scr=document.getElementById('screen-'+name);
-  if(scr) scr.classList.add('active');
-  currentScreen = name;
-  if(name==='council') renderCouncilScreen();
+// ════════════ API ════════════
+async function callClaude(system,user,maxTokens=1000){
+  const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system,user,maxTokens})});
+  if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error||'API error '+res.status);}
+  const d=await res.json();return d.text||'';
 }
 
-// ════════════════════════════════════════════
-// COUNCIL
-// ════════════════════════════════════════════
-function allThinkers() { return [...BASE_COUNCIL,...customThinkers]; }
+// ════════════ SCREENS ════════════
+const SCREENS=['entry','world','oracle','create','forum','gallery','council','upload'];
+function showScreen(name){
+  SCREENS.forEach(s=>{
+    document.getElementById('screen-'+s).classList.toggle('active',s===name);
+    const n=document.getElementById('nav-'+s);
+    if(n) n.classList.toggle('active',s===name);
+  });
+  if(name==='council') renderCouncilScreen();
+  if(name==='gallery') renderGallery();
+}
 
-function getActiveCouncil() {
-  const all = allThinkers();
+// ════════════ COUNCIL ════════════
+function allThinkers(){return[...BASE_COUNCIL,...customThinkers];}
+function getActiveCouncil(){
+  const all=allThinkers();
   if(!manualMode) return all;
   if(selectedIndices.size===0) return all;
   return all.filter((_,i)=>selectedIndices.has(i));
 }
-
-function setToggle(el, isOn) {
-  el.classList.toggle('on', isOn);
-  if (!el.querySelector('.toggle-knob')) {
-    const k = document.createElement('div'); k.className='toggle-knob'; el.appendChild(k);
-  }
+function setToggle(el,on){el.classList.toggle('on',on);if(!el.querySelector('.toggle-knob')){const k=document.createElement('div');k.className='toggle-knob';el.appendChild(k);}}
+function toggleAutoMode(){
+  manualMode=!manualMode;
+  setToggle(document.getElementById('autoToggle'),!manualMode);
+  document.getElementById('manualPanel').style.display=manualMode?'block':'none';
+  document.getElementById('autoBanner').style.display=manualMode?'none':'flex';
+  if(manualMode&&selectedIndices.size===0) allThinkers().forEach((_,i)=>selectedIndices.add(i));
+  renderCouncilScreen();saveState();
 }
-
-function toggleAutoMode() {
-  manualMode = !manualMode;
-  setToggle(document.getElementById('autoToggle'), !manualMode);
-  document.getElementById('manualCouncilPanel').style.display = manualMode?'block':'none';
-  document.getElementById('autoCouncilBanner').style.display = manualMode?'none':'flex';
-  if(manualMode && selectedIndices.size===0) allThinkers().forEach((_,i)=>selectedIndices.add(i));
-  renderCouncilScreen(); saveState();
+function renderCouncilScreen(){renderVerticals();renderThinkerList();renderPresets();}
+function renderVerticals(){
+  const r=document.getElementById('verticalsRow');if(!r)return;
+  r.innerHTML=Object.entries(VERTICALS).map(([k,v])=>`<div class="vert-tag${selectedVerticals.has(k)?' active':''}" onclick="toggleVertical('${k}')">${v.label}</div>`).join('');
 }
-
-function renderCouncilScreen() {
-  renderVerticals();
-  renderThinkerList();
-}
-
-function renderVerticals() {
-  const row = document.getElementById('verticalsRow');
-  if(!row) return;
-  row.innerHTML = Object.entries(VERTICALS).map(([k,v])=>
-    `<div class="vertical-tag${selectedVerticals.has(k)?' active':''}${v.creative?' creative-tag':''}" onclick="toggleVertical('${k}')">${v.label}</div>`
-  ).join('');
-}
-
-function toggleVertical(key) {
-  if(selectedVerticals.has(key)) { selectedVerticals.delete(key); }
-  else {
+function toggleVertical(key){
+  if(selectedVerticals.has(key)){selectedVerticals.delete(key);}
+  else{
     selectedVerticals.add(key);
-    VERTICALS[key].thinkers.forEach(name => {
-      if(!customThinkers.find(t=>t.name===name) && !BASE_COUNCIL.find(t=>t.name===name)) {
-        customThinkers.push({name, era:'', domain: VERTICALS[key].label+' thinker', vertical:key, isCustom:true});
-      }
+    VERTICALS[key].thinkers.forEach(name=>{
+      if(!customThinkers.find(t=>t.name===name)&&!BASE_COUNCIL.find(t=>t.name===name))
+        customThinkers.push({name,era:'',domain:VERTICALS[key].label+' thinker',isCustom:true,vertical:key});
     });
     if(manualMode) allThinkers().forEach((_,i)=>selectedIndices.add(i));
   }
-  renderCouncilScreen(); updateForumChips(); saveState();
+  renderCouncilScreen();updateForumChips();saveState();
 }
-
-function renderThinkerList() {
-  const list = document.getElementById('thinkerList');
-  if(!list) return;
-  const all = allThinkers();
-  list.innerHTML = all.map((m,i)=>{
-    const sel = selectedIndices.has(i);
-    let cls = '';
-    if(m.isClaude) cls='is-claude';
-    else if(m.isJung) cls='is-jung';
-    else if(m.isCustom) cls='is-custom';
-    const rm = m.isCustom ? `<span class="thinker-remove" onclick="event.stopPropagation();removeCustom(${i})">✕</span>` : '';
-    return `<div class="thinker-row${sel?' selected':''} ${cls}" onclick="toggleThinker(${i})">
-      <div class="thinker-check">${sel?'✓':''}</div>
-      <span class="thinker-name">${m.name}</span>
-      <span class="thinker-era">${m.era}</span>
-      ${rm}
-    </div>`;
+function renderThinkerList(){
+  const l=document.getElementById('thinkerList');if(!l)return;
+  const all=allThinkers();
+  l.innerHTML=all.map((m,i)=>{
+    const sel=selectedIndices.has(i);
+    const cls=m.isClaude?'is-claude':m.isJung?'is-jung':m.isCustom?'is-custom':'';
+    const rm=m.isCustom?`<span style="font-size:10px;color:var(--textfaint);cursor:pointer;padding:0 4px" onclick="event.stopPropagation();removeCustom(${i})">✕</span>`:'';
+    return`<div class="thinker-row${sel?' selected':''} ${cls}" onclick="toggleThinker(${i})"><div class="thinker-check">${sel?'✓':''}</div><span class="thinker-name">${m.name}</span><span class="thinker-era">${m.era}</span>${rm}</div>`;
   }).join('');
 }
-
-function toggleThinker(i) {
-  if(selectedIndices.has(i)) selectedIndices.delete(i); else selectedIndices.add(i);
-  renderThinkerList(); updateForumChips(); saveState();
-}
-function selectAll() { allThinkers().forEach((_,i)=>selectedIndices.add(i)); renderThinkerList(); updateForumChips(); saveState(); }
-function selectNone() { selectedIndices.clear(); renderThinkerList(); updateForumChips(); saveState(); }
-
-function addCustom() {
-  const name = document.getElementById('newName').value.trim();
+function toggleThinker(i){if(selectedIndices.has(i))selectedIndices.delete(i);else selectedIndices.add(i);renderThinkerList();updateForumChips();saveState();}
+function selectAll(){allThinkers().forEach((_,i)=>selectedIndices.add(i));renderThinkerList();updateForumChips();saveState();}
+function selectNone(){selectedIndices.clear();renderThinkerList();updateForumChips();saveState();}
+function addCustom(){
+  const name=document.getElementById('newName').value.trim();
   if(!name){showErr('forumError','Name required.');return;}
-  const era = document.getElementById('newEra').value.trim();
-  const domain = document.getElementById('newDomain').value.trim();
-  const idx = allThinkers().length;
+  const era=document.getElementById('newEra').value.trim();
+  const domain=document.getElementById('newDomain').value.trim();
+  const idx=allThinkers().length;
   customThinkers.push({name,era:era||'Unknown',domain:domain||'Custom thinker',isCustom:true,vertical:'custom'});
-  if(manualMode) selectedIndices.add(idx);
-  document.getElementById('newName').value='';
-  document.getElementById('newEra').value='';
-  document.getElementById('newDomain').value='';
-  renderThinkerList(); updateForumChips(); saveState();
+  if(manualMode)selectedIndices.add(idx);
+  document.getElementById('newName').value='';document.getElementById('newEra').value='';document.getElementById('newDomain').value='';
+  renderThinkerList();updateForumChips();saveState();
 }
-
-function removeCustom(idx) {
-  const ci = idx - BASE_COUNCIL.length;
-  if(ci<0) return;
+function removeCustom(idx){
+  const ci=idx-BASE_COUNCIL.length;if(ci<0)return;
   customThinkers.splice(ci,1);
-  const ns=new Set(); selectedIndices.forEach(i=>{if(i<idx)ns.add(i);else if(i>idx)ns.add(i-1);});
-  selectedIndices=ns;
-  renderThinkerList(); updateForumChips(); saveState();
+  const ns=new Set();selectedIndices.forEach(i=>{if(i<idx)ns.add(i);else if(i>idx)ns.add(i-1);});
+  selectedIndices=ns;renderThinkerList();updateForumChips();saveState();
 }
 
-// ════════════════════════════════════════════
-// FORUM CHIPS
-// ════════════════════════════════════════════
-function updateForumChips() {
-  const row = document.getElementById('forumChips');
-  if(!row) return;
-  const active = getActiveCouncil();
-  const all = allThinkers();
-  row.innerHTML = active.map(m=>{
-    const i = all.indexOf(m);
-    let cls = m.isClaude?'is-claude':m.isJung?'is-jung':m.isCustom?'is-custom':'';
-    return `<div class="chip ${cls}" id="fchip${i}" title="${m.domain}">${m.name}</div>`;
-  }).join('') + (!manualMode ? `<span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:1px;color:var(--golddim);padding:4px 8px;border:1px solid var(--bordergold);border-radius:20px">auto</span>` : '');
+// ════════════ FORUM CHIPS ════════════
+function updateForumChips(){
+  const row=document.getElementById('forumChips');if(!row)return;
+  const active=getActiveCouncil(),all=allThinkers();
+  row.innerHTML=active.map(m=>{
+    const i=all.indexOf(m);
+    const cls=m.isClaude?'is-claude':m.isJung?'is-jung':m.isCustom?'is-custom':'';
+    return`<div class="chip ${cls}" id="fchip${i}" title="${m.domain}">${m.name}</div>`;
+  }).join('')+(!manualMode?`<span style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:1px;color:var(--golddim);padding:4px 8px;border:1px solid var(--bordergold);border-radius:20px">auto</span>`:'');
 }
-
-function setActiveSpeaker(idx) {
+function setActiveSpeaker(idx){
   document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active-speaker'));
-  if(idx>=0) document.getElementById('fchip'+idx)?.classList.add('active-speaker');
+  if(idx>=0)document.getElementById('fchip'+idx)?.classList.add('active-speaker');
   lastSpeakerIdx=idx;
 }
 
-// ════════════════════════════════════════════
-// FORUM
-// ════════════════════════════════════════════
-function setForumMode(m, el) {
-  forumMode = m;
-  document.querySelectorAll('.mode-pill').forEach(p=>p.classList.remove('active'));
-  el.classList.add('active');
-}
-
-function startDebate() {
-  const val = document.getElementById('forumProblemInput').value.trim();
-  if(!val){showErr('forumError','Please describe the problem or question.');return;}
-  activeProblem = val;
-  msgs=[]; turnCount=0; convergenceScore=0; protoTriggered=false; converging=false;
-  document.getElementById('forumStart').style.display='none';
-  document.getElementById('forumActive').style.display='block';
-  document.getElementById('bannerProblem').textContent = val;
-  document.getElementById('bannerMode').textContent = forumMode.charAt(0).toUpperCase()+forumMode.slice(1);
-  document.getElementById('bannerMode').className = 'debate-banner-mode';
-  document.getElementById('docContextBanner').style.display='none';
-  clearMsgs('forumMessages');
-  updateForumChips();
-  updateUI();
-  appendSys('forumMessages',`The council convenes: "${val}"`);
-  nextTurn(null);
-}
-
-function resetForum() {
-  stopAuto();
-  activeProblem=null; msgs=[]; turnCount=0; convergenceScore=0; protoTriggered=false; converging=false;
-  document.getElementById('forumStart').style.display='flex';
-  document.getElementById('forumActive').style.display='none';
-  document.getElementById('forumProblemInput').value='';
-  updateUI();
-}
-
-function forumSend() {
-  const v = document.getElementById('forumInput').value.trim();
-  document.getElementById('forumInput').value='';
-  autoResize(document.getElementById('forumInput'));
-  nextTurn(v||null);
-}
-
-function forumKey(e){ if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();forumSend();} }
-
-// ════════════════════════════════════════════
-// SPEAKER SELECTION
-// ════════════════════════════════════════════
-function pickSpeaker() {
-  const active = getActiveCouncil();
-  const all = allThinkers();
-  const p = (activeProblem||'').toLowerCase();
-  const w = active.map(m=>({i:all.indexOf(m),m,w:1}));
+// ════════════ SPEAKER SELECTION ════════════
+function pickSpeaker(){
+  const active=getActiveCouncil(),all=allThinkers();
+  const p=(activeProblem||'').toLowerCase();
+  const w=active.map(m=>({i:all.indexOf(m),m,w:1}));
   const boost=(name,v)=>{const x=w.find(x=>x.m.name===name);if(x)x.w=v;};
-
   if(p.includes('climate')||p.includes('ecolog')||p.includes('food')){boost('Vandana Shiva',3);boost('Buckminster Fuller',3);boost('Buddha',2);}
   if(p.includes('democrac')||p.includes('institution')||p.includes('power')){boost('Carroll Quigley',3);boost('Peter Dale Scott',3);boost('Antonio Gramsci',3);}
   if(p.includes('wealth')||p.includes('capital')||p.includes('econom')){boost('Rosa Luxemburg',3);boost('Antonio Gramsci',2);boost('Emma Goldman',2);}
   if(p.includes('meaning')||p.includes('mental')||p.includes('spirit')){boost('Buddha',3);boost('Alan Watts',3);boost('Israel Regardie',3);boost('Carl Jung',3);}
-  if(p.includes('colonial')||p.includes('reparat')||p.includes('race')){boost('Frantz Fanon',3);boost('Bell Hooks',3);boost('Vandana Shiva',2);}
+  if(p.includes('colonial')||p.includes('race')||p.includes('justice')){boost('Frantz Fanon',3);boost('Bell Hooks',3);boost('Vandana Shiva',2);}
   if(p.includes('ai')||p.includes('technolog')||p.includes('simulat')){boost('Jean Baudrillard',3);boost('Buckminster Fuller',2);boost('Claude',3);}
-  if(p.includes('educat')||p.includes('child')||p.includes('learn')){boost('Bell Hooks',3);}
-  if(p.includes('war')||p.includes('nuclear')||p.includes('conflict')){boost('Carl Jung',3);boost('Peter Dale Scott',3);}
-
   w.forEach(x=>{if(x.m.isCustom)x.w=Math.max(x.w,2);});
   if(turnCount>4){const j=w.find(x=>x.m.isJung);if(j)j.w=Math.min(4,j.w+1);}
-  const cl=w.find(x=>x.m.isClaude);
-  if(convergenceScore>=5&&cl)cl.w=3;
+  const cl=w.find(x=>x.m.isClaude);if(convergenceScore>=5&&cl)cl.w=3;
   const last=w.find(x=>x.i===lastSpeakerIdx);if(last)last.w=0;
-
-  const total=w.reduce((s,x)=>s+x.w,0);
-  let r=Math.random()*total;
+  const total=w.reduce((s,x)=>s+x.w,0);let r=Math.random()*total;
   for(const x of w){r-=x.w;if(r<=0)return x.i;}
   return w[Math.floor(Math.random()*w.length)].i;
 }
 
-// ════════════════════════════════════════════
-// API
-// ════════════════════════════════════════════
-async function callClaude(system,user,maxTokens=1000) {
-  const res = await fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:maxTokens,system,messages:[{role:'user',content:user}]})
+// ════════════ FORUM ════════════
+function setForumMode(m,el){
+  forumMode=m;
+  document.querySelectorAll('#modePills > div').forEach(p=>{
+    p.style.borderColor='var(--bordergold)';p.style.color='var(--textdim)';p.style.background='transparent';
   });
-  if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error?.message||'API error '+res.status);}
-  const d=await res.json();
-  return d.content.map(b=>b.text||'').join('');
+  el.style.borderColor='var(--gold)';el.style.color='var(--gold2)';el.style.background='rgba(201,168,76,.07)';
 }
+function startDebate(){
+  const val=document.getElementById('forumProblemInput').value.trim();
+  if(!val){showErr('forumError','Please describe the problem or question.');return;}
+  activeProblem=val;msgs=[];turnCount=0;convergenceScore=0;protoTriggered=false;converging=false;
+  document.getElementById('forumStart').style.display='none';
+  document.getElementById('forumActive').style.display='block';
+  document.getElementById('bannerProblem').textContent=val;
+  document.getElementById('bannerMode').textContent=forumMode.charAt(0).toUpperCase()+forumMode.slice(1);
+  clearMsgs('forumMessages');updateForumChips();updateUI();
+  appendSys('forumMessages',`The council convenes: "${val}"`);
+  nextTurn(null);
+}
+function resetForum(){
+  stopAuto();activeProblem=null;msgs=[];turnCount=0;convergenceScore=0;protoTriggered=false;converging=false;
+  document.getElementById('forumStart').style.display='flex';
+  document.getElementById('forumActive').style.display='none';
+  document.getElementById('forumProblemInput').value='';updateUI();
+}
+function forumSend(){const v=document.getElementById('forumInput').value.trim();document.getElementById('forumInput').value='';autoResize(document.getElementById('forumInput'));nextTurn(v||null);}
+function forumKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();forumSend();}}
 
-// ════════════════════════════════════════════
-// FORUM TURNS
-// ════════════════════════════════════════════
-function buildForumSys(idx) {
-  const all=allThinkers(); const s=all[idx];
-  const active=getActiveCouncil();
+// ════════════ FORUM TURNS ════════════
+function buildForumSys(idx){
+  const all=allThinkers(),s=all[idx],active=getActiveCouncil();
   const hist=msgs.filter(m=>m.type==='speech').slice(-6).map(m=>`${m.speaker}: "${m.text}"`).join('\n');
-  const convHint=convergenceScore>=5?'\nNote: The council is converging. Consider whether you agree or want to challenge the emerging direction.':'';
-  const docCtx=uploadedDoc?`\nDOCUMENT IN REVIEW: "${uploadedDoc.name}"\n${uploadedDoc.text}\n`:'';
-  const modeHint=forumMode==='solve'?'\nFocus on actionable solutions.':forumMode==='explore'?'\nFocus on exploring the full complexity and nuance.':'\nFocus on debating core tensions and disagreements.';
-  return `You are ${s.name} (${s.era}), known for: ${s.domain}.
-
-Autonomous council forum on: "${activeProblem||'the state of the world'}".
-Council present: ${active.map(m=>m.name).join(', ')}.
-${docCtx}${hist?'Recent exchanges:\n'+hist+'\n':''}${modeHint}${convHint}
-
-Speak as ${s.name}. Specific, provocative, rigorous. 2-4 sentences. No preamble. First person.${s.isClaude?' As Claude: synthesize the voices, add present-day context, note convergence or tension.':''}${s.isJung?' As Jung: name what the council is avoiding or unconsciously enacting. Identify the shadow.':''}${s.isCustom?` Reason from ${s.name}'s known perspective and intellectual tradition.`:''}`;
+  const convHint=convergenceScore>=5?'\nNote: The council is converging. Consider whether you agree or challenge the direction.':'';
+  const docCtx=uploadedDoc?`\nDOCUMENT: "${uploadedDoc.name}"\n${uploadedDoc.text}\n`:'';
+  const modeHint=forumMode==='solve'?'\nFocus on actionable solutions.':forumMode==='explore'?'\nExplore full complexity.':'\nDebate core tensions.';
+  return`You are ${s.name} (${s.era}), known for: ${s.domain}.\n\nAutonomous council forum on: "${activeProblem||'the state of the world'}".\nCouncil: ${active.map(m=>m.name).join(', ')}.\n${docCtx}${hist?'Recent exchanges:\n'+hist+'\n':''}${modeHint}${convHint}\n\nSpeak as ${s.name}. Specific, provocative, rigorous. 2-4 sentences. No preamble.${s.isClaude?' As Claude: synthesize, add present-day context, note convergence.':''}${s.isJung?' As Jung: name what the council avoids or unconsciously enacts.':''}`;
 }
-
-async function nextTurn(injected) {
-  if(isLoading) return;
+async function nextTurn(injected){
+  if(isLoading)return;
   if(!activeProblem&&!injected){showErr('forumError','Set a problem first.');return;}
   setLoading(true,'forum');
-  const idx=pickSpeaker();
-  const s=allThinkers()[idx];
-  setActiveSpeaker(idx);
-  showThinking('forumMessages',s.name);
-  try {
-    const sys=buildForumSys(idx);
-    const prompt=injected?`A participant says: "${injected}". Respond in context.`:`Continue the discussion on "${activeProblem}". Build on or challenge what's been said.`;
-    const text=await callClaude(sys,prompt);
+  const idx=pickSpeaker(),s=allThinkers()[idx];
+  setActiveSpeaker(idx);showThinking('forumMessages',s.name);
+  try{
+    const text=await callClaude(buildForumSys(idx),injected?`A participant says: "${injected}". Respond in context.`:`Continue the discussion on "${activeProblem}".`);
     removeThinking('forumMessages');
     appendSpeech('forumMessages',s.name,s.era,text,!!s.isClaude,!!s.isJung,!!s.isCustom);
     msgs.push({type:'speech',speaker:s.name,era:s.era,text,isClaude:!!s.isClaude,isJung:!!s.isJung});
     turnCount++;
-    if(turnCount>0&&turnCount%4===0&&!protoTriggered) await checkConvergence();
+    if(turnCount>0&&turnCount%4===0&&!protoTriggered)await checkConvergence();
     updateUI();
-  } catch(e){removeThinking('forumMessages');showErr('forumError',e.message);}
-  setLoading(false,'forum');
-  setActiveSpeaker(-1);
+  }catch(e){removeThinking('forumMessages');showErr('forumError',e.message);}
+  setLoading(false,'forum');setActiveSpeaker(-1);
 }
-
-async function checkConvergence() {
+async function checkConvergence(){
   const hist=msgs.filter(m=>m.type==='speech').slice(-8).map(m=>`${m.speaker}: "${m.text}"`).join('\n');
-  // Use plain number response instead of JSON to avoid parsing failures
-  const sys=`Analyze this council debate and respond with ONLY a single integer from 0 to 10 representing convergence. Nothing else. No explanation. Just the number. 0=total disagreement, 10=strong alignment on a shared insight.`;
-  try {
+  const sys=`Analyze this council debate. Respond with ONLY a single integer 0-10 representing convergence. Nothing else. 0=total disagreement, 10=strong alignment.`;
+  try{
     const raw=await callClaude(sys,'Recent debate:\n'+hist,20);
     const score=parseInt(raw.trim().replace(/\D/g,''),10);
-    if(isNaN(score)) return;
+    if(isNaN(score))return;
     convergenceScore=Math.min(10,Math.max(0,score));
-    if(convergenceScore>=7&&!protoTriggered){
-      converging=true;
-      appendSys('forumMessages','Claude detects convergence — synthesizing');
-      await triggerPrototype();
-    } else if(convergenceScore>=5){
-      converging=true;
-    }
-  } catch(e){} // Silent fail — convergence check is best-effort
+    if(convergenceScore>=7&&!protoTriggered){converging=true;appendSys('forumMessages','Claude detects convergence — synthesizing');await triggerPrototype();}
+    else if(convergenceScore>=5)converging=true;
+  }catch(e){}
 }
-
-async function triggerPrototype() {
-  if(isLoading||protoTriggered) return;
-  protoTriggered=true;
-  setLoading(true,'forum');
-  const ci=allThinkers().findIndex(m=>m.isClaude);
-  setActiveSpeaker(ci);
-  showThinking('forumMessages','Claude — synthesizing');
+async function triggerPrototype(){
+  if(isLoading||protoTriggered)return;
+  protoTriggered=true;setLoading(true,'forum');
+  const ci=allThinkers().findIndex(m=>m.isClaude);setActiveSpeaker(ci);showThinking('forumMessages','Claude — synthesizing');
   const hist=msgs.filter(m=>m.type==='speech').map(m=>`${m.speaker}: "${m.text}"`).join('\n');
-  const sys=`You are Claude, synthesizer for a council that has debated: "${activeProblem}".
-Council: ${getActiveCouncil().map(m=>m.name).join(', ')}.
-
-Task:
-1. Write a 2-3 sentence SYNTHESIS of what the council has converged on.
-2. Choose the best PROTOTYPE format: "Policy Framework", "Implementation Plan", "Manifesto", "App Concept & Spec", "Research Agenda", "Declaration", or another fitting form.
-3. Write the prototype — substantive, specific, actionable, 300-500 words.
-
-Format EXACTLY:
-SYNTHESIS: <synthesis>
-PROTOTYPE_TYPE: <type>
-PROTOTYPE:
-<content>
-
-Draw on all council voices. Be specific.`;
-  try {
+  const sys=`You are Claude, synthesizer for a council debating: "${activeProblem}".\nCouncil: ${getActiveCouncil().map(m=>m.name).join(', ')}.\n\nTask:\n1. Write a 2-3 sentence SYNTHESIS.\n2. Choose best PROTOTYPE format.\n3. Write the prototype — 300-500 words, specific and actionable.\n\nFormat EXACTLY:\nSYNTHESIS: <synthesis>\nPROTOTYPE_TYPE: <type>\nPROTOTYPE:\n<content>`;
+  try{
     const text=await callClaude(sys,`Debate:\n${hist}\n\nSynthesize and build.`,1500);
     removeThinking('forumMessages');
     const sm=text.match(/SYNTHESIS:\s*([\s\S]*?)(?=PROTOTYPE_TYPE:)/);
     const tm=text.match(/PROTOTYPE_TYPE:\s*(.+)/);
     const pm=text.match(/PROTOTYPE:\s*([\s\S]*)/);
-    const syn=sm?sm[1].trim():'';
-    const ptype=tm?tm[1].trim():'Council Synthesis';
-    const proto=pm?pm[1].trim():text;
+    const syn=sm?sm[1].trim():'';const ptype=tm?tm[1].trim():'Council Synthesis';const proto=pm?pm[1].trim():text;
     if(syn){appendConsensus('forumMessages',syn);msgs.push({type:'consensus',text:syn});}
-    appendPrototype('forumMessages',ptype,proto);
-    msgs.push({type:'prototype',protoType:ptype,text:proto});
+    appendPrototype('forumMessages',ptype,proto);msgs.push({type:'prototype',protoType:ptype,text:proto});
     appendSys('forumMessages','The council has completed its work');
-  } catch(e){removeThinking('forumMessages');showErr('forumError',e.message);protoTriggered=false;}
-  setLoading(false,'forum');
-  setActiveSpeaker(-1);
-  converging=false;
-  updateUI();
+  }catch(e){removeThinking('forumMessages');showErr('forumError',e.message);protoTriggered=false;}
+  setLoading(false,'forum');setActiveSpeaker(-1);converging=false;updateUI();
 }
 
-// ════════════════════════════════════════════
-// ORACLE
-// ════════════════════════════════════════════
+// ════════════ ORACLE ════════════
 function oracleKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();oracleQuery();}}
-
-async function oracleQuery() {
+async function oracleQuery(){
   const q=document.getElementById('oracleInput').value.trim();
-  if(!q||isLoading) return;
-  setLoading(true,'oracle');
-  const container='oracleMessages';
-  clearMsgs(container);
-  appendSys(container,`You ask: "${q}"`);
-  const ci=allThinkers().findIndex(m=>m.isClaude);
-  setActiveSpeaker(ci);
-  showThinking(container,'The Council');
-  const sys=`You are facilitating the distilled wisdom of a council: ${getActiveCouncil().map(m=>m.name).join(', ')}.
-
-Question: "${q}"
-
-Select 3-4 most relevant members. Voice each (1-2 sentences). Then give CONSENSUS.
-
-Format EXACTLY:
-SPEAKER: [exact name]
-[perspective]
-
-SPEAKER: [exact name]
-[perspective]
-
-SPEAKER: [exact name]
-[perspective]
-
-CONSENSUS:
-[distilled wisdom — honest about unresolved tensions]
-
-Specific and surprising. No preamble.`;
-  try {
+  if(!q||isLoading)return;
+  setLoading(true,'oracle');clearMsgs('oracleMessages');
+  appendSys('oracleMessages',`You ask: "${q}"`);
+  const ci=allThinkers().findIndex(m=>m.isClaude);setActiveSpeaker(ci);showThinking('oracleMessages','The Council');
+  const sys=`You are facilitating wisdom for someone who has come with a real personal question or situation. Council available: ${getActiveCouncil().map(m=>m.name).join(', ')}.\n\nQuestion/situation: "${q}"\n\nSelect 3-4 most relevant voices. Voice each (1-2 sentences). Then give a CONSENSUS — distilled wisdom honest about unresolved tensions.\n\nFormat EXACTLY:\nSPEAKER: [exact name]\n[perspective]\n\nSPEAKER: [exact name]\n[perspective]\n\nSPEAKER: [exact name]\n[perspective]\n\nCONSENSUS:\n[distilled wisdom]\n\nBe specific to this person's actual situation. Warm, not academic.`;
+  try{
     const text=await callClaude(sys,q,1200);
-    removeThinking(container);
-    parseAndRenderOracle(container,text);
-  } catch(e){removeThinking(container);showErr('oracleError',e.message);}
-  setLoading(false,'oracle');
-  setActiveSpeaker(-1);
+    removeThinking('oracleMessages');parseAndRenderOracle('oracleMessages',text);
+  }catch(e){removeThinking('oracleMessages');showErr('oracleError',e.message);}
+  setLoading(false,'oracle');setActiveSpeaker(-1);
 }
-
-function parseAndRenderOracle(container,text) {
-  const lines=text.split('\n');
-  let i=0,consLines=[],inCons=false;
+function parseAndRenderOracle(container,text){
+  const lines=text.split('\n');let i=0,consLines=[],inCons=false;
   while(i<lines.length){
     const l=lines[i].trim();
     if(l.startsWith('SPEAKER:')){
-      const name=l.replace('SPEAKER:','').trim();
-      const buf=[];i++;
+      const name=l.replace('SPEAKER:','').trim();const buf=[];i++;
       while(i<lines.length&&!lines[i].trim().startsWith('SPEAKER:')&&!lines[i].trim().startsWith('CONSENSUS:')){if(lines[i].trim())buf.push(lines[i].trim());i++;}
       const m=allThinkers().find(m=>{const n=name.toLowerCase(),mn=m.name.toLowerCase();return mn.includes(n.split(' ')[0])||n.includes(mn.split(' ')[0]);});
-      if(m&&buf.length) appendSpeech(container,m.name,m.era,buf.join(' '),!!m.isClaude,!!m.isJung,!!m.isCustom);
-    } else if(l.startsWith('CONSENSUS:')){inCons=true;i++;}
+      if(m&&buf.length)appendSpeech(container,m.name,m.era,buf.join(' '),!!m.isClaude,!!m.isJung,!!m.isCustom);
+    }else if(l.startsWith('CONSENSUS:')){inCons=true;i++;}
     else if(inCons){if(l)consLines.push(l);i++;}
     else i++;
   }
-  if(consLines.length) appendConsensus(container,consLines.join(' '));
+  if(consLines.length)appendConsensus(container,consLines.join(' '));
 }
 
-// ════════════════════════════════════════════
-// CREATIVE
-// ════════════════════════════════════════════
-async function triggerCreative() {
+// ════════════ CREATIVE ════════════
+async function triggerCreative(){
   const theme=document.getElementById('creativeTheme').value.trim();
-  if(!theme){showErr('creativeError','Please describe the theme or subject.');return;}
-  if(isLoading) return;
+  if(!theme){showErr('creativeError','Please describe the theme.');return;}
+  if(isLoading)return;
   const form=document.getElementById('creativeForm').value;
   const tone=document.getElementById('creativeTone').value.trim();
-  const container='creativeMessages';
-  clearMsgs(container);
-  setLoading(true,'creative');
+  clearMsgs('creativeMessages');setLoading(true,'creative');
   document.getElementById('creativeDot').className='sdot sdot-active';
-
-  // Pick 3-5 creative voices from active council
   const active=getActiveCouncil();
-  const voices=active.slice(0,Math.min(active.length,5));
-  
-  appendSys(container,`The council writes: "${theme}"`);
-
-  // Each voice writes their piece
+  const voices=active.slice(0,Math.min(active.length,4));
+  appendSys('creativeMessages',`The council writes: "${theme}"`);
   const pieces=[];
   for(const voice of voices){
-    showThinking(container,voice.name);
-    const sys=`You are ${voice.name} (${voice.era}), known for: ${voice.domain}.
-
-Write a ${form} about: "${theme}"${tone?`, in a ${tone} tone`:''}.
-
-Write in your authentic voice and style — let your intellectual and spiritual perspective shape the form and content. 
-Be genuinely poetic and specific. Not generic. 8-20 lines.
-Respond with ONLY the ${form} — no title, no preamble, no explanation.`;
-    try {
-      const text=await callClaude(sys,`Write your ${form} about "${theme}".`,600);
-      removeThinking(container);
-      appendCreativeVoice(container,voice.name,text);
-      pieces.push({name:voice.name,text});
-    } catch(e){removeThinking(container);}
+    showThinking('creativeMessages',voice.name);
+    const sys=`You are ${voice.name} (${voice.era}), known for: ${voice.domain}.\n\nWrite a ${form} about: "${theme}"${tone?`, in a ${tone} tone`:''}.\n\nWrite in your authentic voice. Be genuinely poetic and specific. 8-20 lines.\nRespond with ONLY the ${form} — no title, no preamble.`;
+    try{const text=await callClaude(sys,`Write your ${form} about "${theme}".`,600);removeThinking('creativeMessages');appendCreativeVoice('creativeMessages',voice.name,text);pieces.push({name:voice.name,text});}
+    catch(e){removeThinking('creativeMessages');}
   }
-
-  // Collective synthesis
   if(pieces.length>0){
-    showThinking(container,'The Council — weaving');
+    showThinking('creativeMessages','The Council — weaving');
     const allPieces=pieces.map(p=>`${p.name}:\n${p.text}`).join('\n\n---\n\n');
-    const sys2=`You are synthesizing a collective ${form} from a council of thinkers.
-
-Each wrote their individual piece about: "${theme}"${tone?`, in a ${tone} tone`:''}.
-
-Their pieces:
-${allPieces}
-
-Now write a single unified ${form} that weaves together the essential images, tensions, and insights from all the voices into one coherent whole. 
-This is not a summary — it is a new creation that honors all the voices.
-Respond with ONLY the ${form}. No title, no preamble.`;
-    try {
-      const synth=await callClaude(sys2,`Create the collective ${form}.`,800);
-      removeThinking(container);
-      appendCreativeSynthesis(container,`Collective ${form.replace(/_/g,' ')}`,synth);
-    } catch(e){removeThinking(container);showErr('creativeError',e.message);}
+    const sys2=`Synthesize a collective ${form} from these voices, weaving their images and insights into one coherent whole. Not a summary — a new creation. Respond with ONLY the ${form}.`;
+    try{const synth=await callClaude(sys2,allPieces,800);removeThinking('creativeMessages');appendCreativeSynthesis('creativeMessages',`Collective ${form}`,synth);}
+    catch(e){removeThinking('creativeMessages');showErr('creativeError',e.message);}
   }
-
-  setLoading(false,'creative');
-  document.getElementById('creativeDot').className='sdot sdot-idle';
+  setLoading(false,'creative');document.getElementById('creativeDot').className='sdot sdot-idle';
+}
+function generateArtFromScenario(){
+  const theme=`the current World Game scenario — renewable energy at ${document.getElementById('sl-renewable').value}%, food distribution at ${document.getElementById('sl-food').value}%, ecological protection at ${document.getElementById('sl-land').value}%`;
+  document.getElementById('creativeTheme').value=theme;
+  showScreen('create');
 }
 
-// ════════════════════════════════════════════
-// ORACLE DOCUMENT
-// ════════════════════════════════════════════
-async function useDocOracle() {
-  if(!uploadedDoc) return;
-  showScreen('oracle');
-  setTimeout(async()=>{
-    const container='oracleMessages';
-    clearMsgs(container);
-    setLoading(true,'oracle');
-    const ci=allThinkers().findIndex(m=>m.isClaude);
-    setActiveSpeaker(ci);
-    appendSys(container,`Oracle reviewing: "${uploadedDoc.name}"`);
-    showThinking(container,'The Council');
-    const sys=`You are facilitating a council review of a document. Council: ${getActiveCouncil().map(m=>m.name).join(', ')}.
+// ════════════ WORLD GAME ════════════
+let selectedRegion='Global';
+function selectRegion(name){
+  selectedRegion=name;
+  document.getElementById('regionLabel').textContent=name+' — click sliders to model changes';
+  document.querySelectorAll('.country').forEach(c=>c.classList.remove('selected'));
+  const id='r-'+name.toLowerCase().replace(/ /g,'-').replace('north-america','na').replace('south-america','sa').replace('europe','eu').replace('africa','af').replace('middle-east','me').replace('southeast-asia','sa2').replace('oceania','oc').replace('asia','as');
+  document.getElementById(id)?.classList.add('selected');
+  recalcMetrics();
+}
+function toggleSection(id){document.getElementById('ss-'+id).classList.toggle('collapsed');}
+function updateSlider(id,val,unit){document.getElementById('sv-'+id).textContent=val+unit;}
+const TIMES=['Current (2026)','Near-term (2036)','Long-term (2051)'];
+function updateTime(v){document.getElementById('timeVal').textContent=TIMES[v];recalcMetrics();}
+function recalcMetrics(){
+  const renewable=+document.getElementById('sl-renewable').value;
+  const access=+document.getElementById('sl-access').value;
+  const food=+document.getElementById('sl-food').value;
+  const water=+document.getElementById('sl-water').value;
+  const wealth=+document.getElementById('sl-wealth').value;
+  const kl=+document.getElementById('sl-kl').value;
+  const land=+document.getElementById('sl-land').value;
+  const carbon=+document.getElementById('sl-carbon').value;
+  const conflict=+document.getElementById('sl-conflict').value;
+  const gov=+document.getElementById('sl-gov').value;
+  const timeBoost=+document.getElementById('timeSlider').value*5;
 
-Select 3-4 most relevant members given the document's content. Voice each (2-3 sentences). Then give a CONSENSUS on what the document gets right, misses, and what should be done.
+  const flourishing=Math.min(100,Math.round((access*0.2+food*0.2+water*0.15+wealth*0.25+gov*0.15+conflict*0.05)+timeBoost));
+  const ecological=Math.min(100,Math.round((renewable*0.3+land*0.3+carbon*0.2+(100-food*0.1)+kl*0.1)+timeBoost));
+  const stability=Math.min(100,Math.round((conflict*0.3+gov*0.3+wealth*0.2+access*0.1+kl*0.1)+timeBoost));
 
-Format EXACTLY:
-SPEAKER: [exact name]
-[perspective on the document]
+  ['Fl','Ec','St'].forEach((k,i)=>{
+    const v=[flourishing,ecological,stability][i];
+    document.getElementById('met'+k).textContent=v;
+    document.getElementById('fill'+k).style.width=v+'%';
+  });
 
-SPEAKER: [exact name]
-[perspective]
+  // Update map colors
+  const avg=(flourishing+ecological+stability)/3;
+  document.querySelectorAll('.country.selected').forEach(c=>{
+    c.classList.remove('high','med','low');
+    c.classList.add(avg>65?'high':avg>40?'med':'low');
+  });
 
-SPEAKER: [exact name]
-[perspective]
-
-CONSENSUS:
-[distilled council response]
-
-Be specific to the document's actual content.`;
-    try {
-      const text=await callClaude(sys,`DOCUMENT: "${uploadedDoc.name}"\n\n${uploadedDoc.text}`,1400);
-      removeThinking(container);
-      parseAndRenderOracle(container,text);
-    } catch(e){removeThinking(container);showErr('oracleError',e.message);}
-    setLoading(false,'oracle');
-    setActiveSpeaker(-1);
-  },100);
+  // Resource cost
+  const turns=msgs.filter(m=>m.type==='speech').length+1;
+  document.getElementById('resCost').textContent=(turns*0.003).toFixed(3)+' kWh';
+  document.getElementById('resCostW').textContent=(turns*0.8).toFixed(1)+'L';
+  document.getElementById('resCostC').textContent=(turns*1.2).toFixed(1)+'g';
+}
+async function askCouncilAboutScenario(){
+  const renewable=document.getElementById('sl-renewable').value;
+  const food=document.getElementById('sl-food').value;
+  const fl=document.getElementById('metFl').textContent;
+  const ec=document.getElementById('metEc').textContent;
+  const st=document.getElementById('metSt').textContent;
+  activeProblem=`World Game scenario — ${selectedRegion}: renewable energy ${renewable}%, food distribution ${food}%, flourishing index ${fl}/100, ecological health ${ec}/100, stability ${st}/100. What are the philosophical and ethical implications of this configuration?`;
+  document.getElementById('forumProblemInput').value=activeProblem;
+  showScreen('forum');setTimeout(()=>startDebate(),100);
+}
+async function shareScenario(){
+  const fl=document.getElementById('metFl').textContent;
+  const ec=document.getElementById('metEc').textContent;
+  const st=document.getElementById('metSt').textContent;
+  sharePayload={type:'scenario',content:`World Game Scenario — ${selectedRegion}\n\nRenewable Energy: ${document.getElementById('sl-renewable').value}%\nFood Distribution: ${document.getElementById('sl-food').value}%\nWater Access: ${document.getElementById('sl-water').value}%\nWealth Distribution: ${document.getElementById('sl-wealth').value}%\nKillingry→Livingry: ${document.getElementById('sl-kl').value}%\nProtected Land: ${document.getElementById('sl-land').value}%\n\nOutcomes:\nFlourishing: ${fl}/100\nEcological Health: ${ec}/100\nStability: ${st}/100`};
+  setShareType('scenario',null);openShareModal();
 }
 
-function useDocForum() {
-  if(!uploadedDoc) return;
-  activeProblem=`[Document] ${uploadedDoc.name}`;
-  msgs=[]; turnCount=0; convergenceScore=0; protoTriggered=false; converging=false;
+// ════════════ GALLERY ════════════
+function renderGallery(filter='all'){
+  const grid=document.getElementById('galleryGrid');
+  const empty=document.getElementById('galleryEmpty');
+  const items=filter==='all'?galleryItems:galleryItems.filter(i=>i.type===filter);
+  if(items.length===0){grid.innerHTML='';empty.style.display='flex';return;}
+  empty.style.display='none';
+  grid.innerHTML=items.map((item,idx)=>`
+    <div class="gallery-card" onclick="openGalleryItem(${idx})">
+      <div class="gallery-card-hdr">
+        <span class="gallery-type ${item.type}">${{creative:'✦ Creative',debate:'⬡ Debate',scenario:'🌍 Scenario',insight:'◎ Insight'}[item.type]||item.type}</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--textfaint)">${item.date}</span>
+      </div>
+      <div class="gallery-card-body">
+        <div class="gallery-title">${item.title}</div>
+        <div class="gallery-excerpt">${item.content}</div>
+      </div>
+      <div class="gallery-card-footer">
+        <span class="gallery-meta">${item.anon?'Anonymous':'Community'}</span>
+        <div class="gallery-actions">
+          <button class="gallery-action" onclick="event.stopPropagation();appreciateItem(${idx})">⬡ ${item.appreciations||0}</button>
+          <button class="gallery-action" onclick="event.stopPropagation();forkItem(${idx})">Fork →</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+function filterGallery(type,btn){
+  document.querySelectorAll('#galleryFilters .btn').forEach(b=>{b.style.borderColor='var(--bordergold)';b.style.color='var(--textdim)';});
+  if(btn){btn.style.borderColor='var(--gold)';btn.style.color='var(--gold2)';}
+  renderGallery(type);
+}
+function openGalleryItem(idx){
+  const item=galleryItems[idx];
+  if(!item)return;
+  activeProblem=item.title+': '+item.content.substring(0,200);
+  document.getElementById('forumProblemInput').value=activeProblem;
   showScreen('forum');
-  setTimeout(()=>{
-    document.getElementById('forumStart').style.display='none';
-    document.getElementById('forumActive').style.display='block';
-    document.getElementById('bannerProblem').textContent=uploadedDoc.name;
-    document.getElementById('bannerMode').textContent='Document Debate';
-    document.getElementById('docContextBanner').style.display='flex';
-    document.getElementById('docBannerName').textContent=uploadedDoc.name;
-    clearMsgs('forumMessages');
-    updateForumChips();
-    updateUI();
-    appendSys('forumMessages',`The council debates the ideas in: "${uploadedDoc.name}"`);
-    nextTurn(null);
-  },100);
+}
+function appreciateItem(idx){
+  galleryItems[idx].appreciations=(galleryItems[idx].appreciations||0)+1;
+  saveState();renderGallery();
+}
+function forkItem(idx){
+  const item=galleryItems[idx];
+  if(item.type==='creative'){document.getElementById('creativeTheme').value=item.title;showScreen('create');}
+  else{document.getElementById('forumProblemInput').value=item.title;showScreen('forum');}
 }
 
-// ════════════════════════════════════════════
-// UPLOAD
-// ════════════════════════════════════════════
+// ════════════ SHARE ════════════
+function shareFromForum(){
+  if(msgs.length===0){showErr('forumError','Nothing to share yet.');return;}
+  const last=msgs.filter(m=>m.type==='speech').slice(-3).map(m=>`${m.speaker}: ${m.text}`).join('\n\n');
+  const syn=msgs.find(m=>m.type==='consensus');
+  sharePayload={type:'debate',content:syn?syn.text:last};
+  setShareType('debate',null);openShareModal();
+}
+function shareCreativeOutput(){
+  const msgs_c=document.getElementById('creativeMessages');
+  const synth=msgs_c.querySelector('.msg-creative:last-child .creative-body');
+  if(!synth){return;}
+  sharePayload={type:'creative',content:synth.textContent};
+  setShareType('creative',null);openShareModal();
+}
+function openShareModal(){document.getElementById('shareModal').classList.remove('hidden');}
+function closeShareModal(){document.getElementById('shareModal').classList.add('hidden');}
+function setShareType(type,btn){
+  shareType=type;
+  document.querySelectorAll('.share-type-btn').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+}
+function confirmShare(){
+  const title=document.getElementById('shareTitle').value.trim()||'Untitled';
+  const anon=document.getElementById('anonToggle').classList.contains('on');
+  if(!sharePayload)return;
+  const item={id:Date.now(),type:sharePayload.type||shareType,title,content:sharePayload.content||'',anon,date:new Date().toLocaleDateString(),appreciations:0};
+  galleryItems.unshift(item);saveState();closeShareModal();
+  document.getElementById('shareTitle').value='';
+  showScreen('gallery');
+}
+
+// ════════════ UPLOAD ════════════
+let uploadedDoc=null;
 function handleDrop(e){e.preventDefault();document.getElementById('uploadZone').classList.remove('drag');const f=e.dataTransfer.files[0];if(f)processFile(f);}
 function handleFile(e){const f=e.target.files[0];if(f)processFile(f);}
-
-async function processFile(file) {
+async function processFile(file){
   const ext=file.name.split('.').pop().toLowerCase();
   if(!['pdf','txt','md'].includes(ext)){showErr('uploadError','Please upload PDF, TXT, or MD.');return;}
-  document.getElementById('uploadProcessing').style.display='block';
-  document.getElementById('docCard').style.display='none';
-  try {
+  document.getElementById('uploadProcessing').style.display='block';document.getElementById('docCard').style.display='none';
+  try{
     let text=ext==='pdf'?await extractPdf(file):await file.text();
-    const words=text.trim().split(/\s+/);
-    const trunc=words.length>3500;
-    uploadedDoc={name:file.name,text:words.slice(0,3500).join(' ')+(trunc?'\n\n[Truncated at 3500 words]':''),wordCount:Math.min(words.length,3500),truncated:trunc};
+    const words=text.trim().split(/\s+/),trunc=words.length>3500;
+    uploadedDoc={name:file.name,text:words.slice(0,3500).join(' ')+(trunc?'\n\n[Truncated]':''),wordCount:Math.min(words.length,3500),truncated:trunc};
     document.getElementById('docCardName').textContent=file.name;
     document.getElementById('docCardMeta').textContent=`${uploadedDoc.wordCount.toLocaleString()} words${trunc?' (truncated)':''}`;
-    document.getElementById('uploadProcessing').style.display='none';
-    document.getElementById('docCard').style.display='block';
-  } catch(e){
-    document.getElementById('uploadProcessing').style.display='none';
-    showErr('uploadError','Could not read file: '+e.message);
-  }
+    document.getElementById('uploadProcessing').style.display='none';document.getElementById('docCard').style.display='block';
+  }catch(e){document.getElementById('uploadProcessing').style.display='none';showErr('uploadError','Could not read file: '+e.message);}
 }
-
 async function extractPdf(file){
-  if(typeof pdfjsLib==='undefined') throw new Error('PDF.js not loaded');
-  const ab=await file.arrayBuffer();
-  const pdf=await pdfjsLib.getDocument({data:ab}).promise;
-  let t='';
-  for(let i=1;i<=Math.min(pdf.numPages,40);i++){
-    const p=await pdf.getPage(i);
-    const c=await p.getTextContent();
-    t+=c.items.map(x=>x.str).join(' ')+'\n';
-  }
+  if(typeof pdfjsLib==='undefined')throw new Error('PDF.js not loaded');
+  const ab=await file.arrayBuffer();const pdf=await pdfjsLib.getDocument({data:ab}).promise;
+  let t='';for(let i=1;i<=Math.min(pdf.numPages,40);i++){const p=await pdf.getPage(i);const c=await p.getTextContent();t+=c.items.map(x=>x.str).join(' ')+'\n';}
   return t;
 }
-
-function clearDoc(){
-  uploadedDoc=null;
-  document.getElementById('docCard').style.display='none';
-  document.getElementById('uploadZone').style.display='block';
-  const inp=document.querySelector('#uploadZone input');if(inp)inp.value='';
+function clearDoc(){uploadedDoc=null;document.getElementById('docCard').style.display='none';document.getElementById('uploadZone').style.display='block';}
+function useDocForum(){
+  if(!uploadedDoc)return;
+  activeProblem=`[Document] ${uploadedDoc.name}`;
+  document.getElementById('forumProblemInput').value=activeProblem;
+  showScreen('forum');setTimeout(()=>startDebate(),100);
+}
+async function useDocOracle(){
+  if(!uploadedDoc)return;
+  showScreen('oracle');
+  setTimeout(async()=>{
+    setLoading(true,'oracle');clearMsgs('oracleMessages');
+    const ci=allThinkers().findIndex(m=>m.isClaude);setActiveSpeaker(ci);
+    appendSys('oracleMessages',`Oracle reviewing: "${uploadedDoc.name}"`);showThinking('oracleMessages','The Council');
+    const sys=`You are facilitating a council review of a document. Council: ${getActiveCouncil().map(m=>m.name).join(', ')}.\n\nSelect 3-4 most relevant members. Voice each (2-3 sentences). Then CONSENSUS on what the document gets right, misses, and what should be done.\n\nFormat:\nSPEAKER: [name]\n[perspective]\n\nCONSENSUS:\n[response]`;
+    try{const text=await callClaude(sys,`DOCUMENT: "${uploadedDoc.name}"\n\n${uploadedDoc.text}`,1400);removeThinking('oracleMessages');parseAndRenderOracle('oracleMessages',text);}
+    catch(e){removeThinking('oracleMessages');showErr('oracleError',e.message);}
+    setLoading(false,'oracle');setActiveSpeaker(-1);
+  },100);
 }
 
-// ════════════════════════════════════════════
-// ONBOARDING
-// ════════════════════════════════════════════
-const OB_QUESTIONS=[
-  "What brings you to the Council of Minds today? Are you navigating a personal challenge, exploring an idea, seeking creative inspiration, or trying to understand the world better?",
-  "What traditions, cultures, or schools of thought feel most alive or relevant to you right now?",
-  "Are there specific thinkers, artists, or leaders — from any field or era — who you deeply admire or want to hear from?",
-  "What kind of output are you hoping for — insight and synthesis, practical solutions, creative work like poetry or lyrics, or something else?",
-];
-
+// ════════════ ONBOARDING ════════════
 function openOnboarding(){
-  obHistory=[]; obStep=0; obSuggestedCouncil=[];
+  obHistory=[];obStep=0;obSuggestedCouncil=[];
   document.getElementById('obChat').innerHTML='';
   document.getElementById('obResult').style.display='none';
   document.getElementById('obApplyBtn').style.display='none';
@@ -1229,396 +1311,197 @@ function openOnboarding(){
   document.getElementById('obModal').classList.remove('hidden');
   obAsk(OB_QUESTIONS[0]);
 }
-
 function closeOnboarding(){document.getElementById('obModal').classList.add('hidden');}
-
-function obAsk(q){
-  const chat=document.getElementById('obChat');
-  const el=document.createElement('div');
-  el.className='ob-msg-ai';el.textContent=q;
-  chat.appendChild(el);
-  chat.scrollTop=chat.scrollHeight;
-}
-
+function obAsk(q){const c=document.getElementById('obChat');const el=document.createElement('div');el.className='ob-msg-ai';el.textContent=q;c.appendChild(el);c.scrollTop=99999;}
 function obKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();obSend();}}
-
 async function obSend(){
-  const val=document.getElementById('obInput').value.trim();
-  if(!val) return;
+  const val=document.getElementById('obInput').value.trim();if(!val)return;
   document.getElementById('obInput').value='';
-  const chat=document.getElementById('obChat');
-  const el=document.createElement('div');
-  el.className='ob-msg-user';el.textContent=val;
-  chat.appendChild(el);chat.scrollTop=chat.scrollHeight;
-  obHistory.push({q:OB_QUESTIONS[obStep],a:val});
-  obStep++;
-  if(obStep<OB_QUESTIONS.length){
-    setTimeout(()=>obAsk(OB_QUESTIONS[obStep]),400);
-  } else {
-    document.getElementById('obInputArea').style.display='none';
-    obAsk('Thank you. Let me curate your council…');
-    document.getElementById('obSendBtn').disabled=true;
-    await obGenerate();
-  }
+  const c=document.getElementById('obChat');const el=document.createElement('div');el.className='ob-msg-user';el.textContent=val;c.appendChild(el);c.scrollTop=99999;
+  obHistory.push({q:OB_QUESTIONS[obStep],a:val});obStep++;
+  if(obStep<OB_QUESTIONS.length){setTimeout(()=>obAsk(OB_QUESTIONS[obStep]),400);}
+  else{document.getElementById('obInputArea').style.display='none';obAsk('Thank you. Curating your council…');document.getElementById('obSendBtn').disabled=true;await obGenerate();}
 }
-
 async function obGenerate(){
   const qa=obHistory.map(h=>`Q: ${h.q}\nA: ${h.a}`).join('\n\n');
-  const allNames=BASE_COUNCIL.map(m=>m.name);
-  const vertNames=Object.values(VERTICALS).flatMap(v=>v.thinkers);
-  const allAvailable=[...new Set([...allNames,...vertNames])];
-
-  // Step 1: Get a plain comma-separated list of names — much more reliable than JSON
-  const sys1=`Based on a user's answers, select 5-8 thinkers for their council from this list: ${allAvailable.join(', ')}.
-
-You may add up to 2 thinkers not on the list if clearly relevant.
-
-Reply with ONLY a comma-separated list of names. Nothing else. No explanation. No punctuation except commas.
-Example: Buddha, Alan Watts, Carl Jung, Rosa Luxemburg`;
-
-  // Step 2: Get a one-sentence description
-  const sys2=`Based on a user's profile, write ONE sentence describing the character of their curated council. Be evocative and specific. No preamble.`;
-
-  try {
-    const [namesRaw, noteRaw] = await Promise.all([
-      callClaude(sys1, `User answers:\n${qa}`, 200),
-      callClaude(sys2, `User answers:\n${qa}`, 100)
-    ]);
-
-    // Parse the comma-separated names
-    const names = namesRaw.split(',').map(n=>n.trim()).filter(n=>n.length>0&&n.length<60);
-    if(names.length===0) throw new Error('No names returned');
-
-    // Build council objects
-    obSuggestedCouncil = names.map(name=>{
+  const allNames=[...BASE_COUNCIL.map(m=>m.name),...Object.values(VERTICALS).flatMap(v=>v.thinkers)];
+  const unique=[...new Set(allNames)];
+  const sys1=`Based on these answers, select 5-8 thinkers for their council from: ${unique.join(', ')}. You may add up to 2 not on the list. Reply with ONLY a comma-separated list of names. Nothing else.`;
+  const sys2=`Based on these answers, write ONE sentence describing the character of their curated council. No preamble.`;
+  try{
+    const namesRaw=await callClaude(sys1,`User answers:\n${qa}`,200);
+    const noteRaw=await callClaude(sys2,`User answers:\n${qa}`,100);
+    const names=namesRaw.split(',').map(n=>n.trim()).filter(n=>n.length>0&&n.length<60);
+    if(names.length===0)throw new Error('No names returned');
+    obSuggestedCouncil=names.map(name=>{
       const inBase=BASE_COUNCIL.find(m=>m.name.toLowerCase()===name.toLowerCase());
-      const inVert=Object.entries(VERTICALS).flatMap(([k,v])=>v.thinkers.map(t=>({name:t,vertical:k}))).find(t=>t.name.toLowerCase()===name.toLowerCase());
-      if(inBase) return {name:inBase.name,era:inBase.era,domain:inBase.domain,reason:''};
-      if(inVert) return {name,era:'',domain:VERTICALS[inVert.vertical].label+' thinker',reason:''};
-      return {name,era:'',domain:'Custom thinker',reason:''};
+      if(inBase)return{name:inBase.name,era:inBase.era,domain:inBase.domain};
+      return{name,era:'',domain:'Curated thinker'};
     });
-
-    const note=noteRaw.trim();
     document.getElementById('obResult').style.display='block';
-    const preview=document.getElementById('obCouncilPreview');
-    preview.innerHTML='';
-    if(note){
-      const n=document.createElement('p');
-      n.style.cssText='font-size:13px;color:var(--textdim);font-style:italic;margin-bottom:10px;line-height:1.5;width:100%';
-      n.textContent=note; preview.appendChild(n);
-    }
-    obSuggestedCouncil.forEach(m=>{
-      const chip=document.createElement('div');
-      chip.className='chip'; chip.textContent=m.name;
-      preview.appendChild(chip);
-    });
+    const preview=document.getElementById('obCouncilPreview');preview.innerHTML='';
+    const note=noteRaw.trim();
+    if(note){const n=document.createElement('p');n.style.cssText='font-size:13px;color:var(--textdim);font-style:italic;margin-bottom:10px;line-height:1.5;width:100%';n.textContent=note;preview.appendChild(n);}
+    obSuggestedCouncil.forEach(m=>{const chip=document.createElement('div');chip.className='chip';chip.textContent=m.name;preview.appendChild(chip);});
     document.getElementById('obApplyBtn').style.display='inline-flex';
-    obAsk(`Your council of ${obSuggestedCouncil.length} thinkers is ready. Hit "Apply This Council" below, or close to configure manually.`);
+    obAsk(`Your council of ${obSuggestedCouncil.length} thinkers is ready. Hit "Apply" below.`);
     document.getElementById('obChat').scrollTop=99999;
-  } catch(e){
-    obAsk(`Something went wrong: ${e.message}. Please close and configure your council manually in the Council tab.`);
-    document.getElementById('obApplyBtn').style.display='none';
-  }
+  }catch(e){obAsk(`Something went wrong. Please close and configure manually in the Council tab.`);}
 }
-
 function applyOnboarding(){
-  // Add suggested thinkers as custom if not in base
   obSuggestedCouncil.forEach(m=>{
-    const inBase=BASE_COUNCIL.find(b=>b.name.toLowerCase()===m.name.toLowerCase());
-    if(!inBase&&!customThinkers.find(c=>c.name.toLowerCase()===m.name.toLowerCase())){
+    if(!BASE_COUNCIL.find(b=>b.name.toLowerCase()===m.name.toLowerCase())&&!customThinkers.find(c=>c.name.toLowerCase()===m.name.toLowerCase()))
       customThinkers.push({name:m.name,era:m.era||'',domain:m.domain||'',isCustom:true,vertical:'custom'});
-    }
   });
-  // Switch to manual mode and select only suggested thinkers
-  manualMode=true;
-  selectedIndices.clear();
-  setToggle(document.getElementById('autoToggle'), false);
-  document.getElementById('manualCouncilPanel').style.display='block';
-  document.getElementById('autoCouncilBanner').style.display='none';
+  manualMode=true;selectedIndices.clear();
+  setToggle(document.getElementById('autoToggle'),false);
+  document.getElementById('manualPanel').style.display='block';document.getElementById('autoBanner').style.display='none';
   const all=allThinkers();
-  obSuggestedCouncil.forEach(m=>{
-    const idx=all.findIndex(t=>t.name.toLowerCase()===m.name.toLowerCase());
-    if(idx>=0) selectedIndices.add(idx);
-  });
-  closeOnboarding();
-  renderCouncilScreen();
-  updateForumChips();
-  saveState();
+  obSuggestedCouncil.forEach(m=>{const idx=all.findIndex(t=>t.name.toLowerCase()===m.name.toLowerCase());if(idx>=0)selectedIndices.add(idx);});
+  closeOnboarding();renderCouncilScreen();updateForumChips();saveState();
 }
 
-// ════════════════════════════════════════════
-// MESSAGES
-// ════════════════════════════════════════════
-function clearMsgs(id){
-  const c=document.getElementById(id);
-  c.innerHTML='';
+// ════════════ PRESETS ════════════
+function loadStoredPresets(){try{const r=localStorage.getItem(STORAGE_KEY+'_presets');return r?JSON.parse(r):[];}catch(e){return[];}}
+function saveStoredPresets(p){try{localStorage.setItem(STORAGE_KEY+'_presets',JSON.stringify(p));}catch(e){}}
+function savePreset(){
+  const name=document.getElementById('presetNameInput').value.trim();
+  if(!name){showErr('forumError','Give your council a name.');return;}
+  const presets=loadStoredPresets();const existing=presets.findIndex(p=>p.name===name);
+  const preset={name,manualMode,selectedIndices:[...selectedIndices],customThinkers:[...customThinkers],selectedVerticals:[...selectedVerticals],savedAt:new Date().toLocaleDateString()};
+  if(existing>=0)presets[existing]=preset;else presets.push(preset);
+  saveStoredPresets(presets);activePresetName=name;
+  document.getElementById('presetNameInput').value='';
+  const ind=document.getElementById('savedInd');ind.style.display='block';ind.innerHTML=`<span class="saved-indicator">✓ Saved "${name}"</span>`;
+  setTimeout(()=>{ind.style.display='none';},2500);
+  renderPresets();saveState();
+}
+function loadPreset(name){
+  const preset=loadStoredPresets().find(p=>p.name===name);if(!preset)return;
+  customThinkers=preset.customThinkers||[];manualMode=preset.manualMode!==undefined?preset.manualMode:false;
+  selectedIndices=new Set(preset.selectedIndices||[]);selectedVerticals=new Set(preset.selectedVerticals||[]);
+  activePresetName=name;
+  setToggle(document.getElementById('autoToggle'),!manualMode);
+  document.getElementById('manualPanel').style.display=manualMode?'block':'none';
+  document.getElementById('autoBanner').style.display=manualMode?'none':'flex';
+  renderCouncilScreen();renderPresets();updateForumChips();saveState();
+}
+function deletePreset(name){
+  saveStoredPresets(loadStoredPresets().filter(p=>p.name!==name));
+  if(activePresetName===name)activePresetName=null;renderPresets();
+}
+function renderPresets(){
+  const row=document.getElementById('presetRow');if(!row)return;
+  const presets=loadStoredPresets();
+  if(presets.length===0){row.innerHTML=`<div style="font-size:12px;color:var(--textfaint);font-style:italic">No saved councils yet.</div>`;return;}
+  row.innerHTML=presets.map(p=>`<div class="preset-item${activePresetName===p.name?' active-preset':''}">
+    <div style="flex:1"><div class="preset-name">${p.name}</div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--textfaint)">${(p.selectedIndices||[]).length} thinkers · ${p.savedAt||''}</div></div>
+    <div style="display:flex;gap:4px"><div class="preset-load" onclick="loadPreset('${p.name.replace(/'/g,"\\'")}')">Load</div><div class="preset-del" onclick="deletePreset('${p.name.replace(/'/g,"\\'")}')">✕</div></div>
+  </div>`).join('');
 }
 
-function appendSys(id,text){
-  const c=document.getElementById(id);
-  const el=document.createElement('div');el.className='msg msg-sys';el.textContent='— '+text+' —';
-  c.appendChild(el);scrollC(id);
-}
-
+// ════════════ MESSAGES ════════════
+function clearMsgs(id){const c=document.getElementById(id);if(c)c.innerHTML='';}
+function appendSys(id,text){const c=document.getElementById(id);if(!c)return;const el=document.createElement('div');el.className='msg msg-sys';el.textContent='— '+text+' —';c.appendChild(el);scrollC(id);}
 function appendSpeech(id,name,era,text,isClaude,isJung,isCustom){
-  const c=document.getElementById(id);
+  const c=document.getElementById(id);if(!c)return;
   const el=document.createElement('div');el.className='msg msg-speech';
   const nc=isClaude?'cn-claude':isJung?'cn-jung':isCustom?'cn-custom':'';
   el.innerHTML=`<div class="spk"><span class="spk-name ${nc}">${name}</span><span class="spk-era">${era}</span></div><div class="msg-body ${nc}">${text}</div>`;
   c.appendChild(el);scrollC(id);
 }
-
-function appendConsensus(id,text){
-  const c=document.getElementById(id);
-  const el=document.createElement('div');el.className='msg msg-consensus';
-  el.innerHTML=`<div class="consensus-lbl">⬡ Council Synthesis</div><div class="consensus-txt">${text}</div>`;
-  c.appendChild(el);scrollC(id);
-}
-
-function appendPrototype(id,ptype,text){
-  const c=document.getElementById(id);
-  const el=document.createElement('div');el.className='msg msg-prototype';
-  el.innerHTML=`<div class="proto-lbl">◈ Council Prototype</div><div class="proto-type">${ptype}</div><div class="proto-body">${text}</div>`;
-  c.appendChild(el);scrollC(id);
-}
-
-function appendCreativeVoice(id,name,text){
-  const c=document.getElementById(id);
-  const el=document.createElement('div');el.className='msg msg-creative creative-voice';
-  el.innerHTML=`<div class="creative-lbl">✦ Voice</div><div class="creative-voice-name">${name}</div><div class="creative-body">${text}</div>`;
-  c.appendChild(el);scrollC(id);
-}
-
+function appendConsensus(id,text){const c=document.getElementById(id);if(!c)return;const el=document.createElement('div');el.className='msg msg-consensus';el.innerHTML=`<div class="consensus-lbl">⬡ Council Synthesis</div><div class="consensus-txt">${text}</div>`;c.appendChild(el);scrollC(id);}
+function appendPrototype(id,ptype,text){const c=document.getElementById(id);if(!c)return;const el=document.createElement('div');el.className='msg msg-prototype';el.innerHTML=`<div class="proto-lbl">◈ Council Prototype</div><div class="proto-type">${ptype}</div><div class="proto-body">${text}</div>`;c.appendChild(el);scrollC(id);}
+function appendCreativeVoice(id,name,text){const c=document.getElementById(id);if(!c)return;const el=document.createElement('div');el.className='msg msg-creative creative-voice';el.innerHTML=`<div class="creative-lbl">✦ Voice</div><div class="creative-voice-name">${name}</div><div class="creative-body">${text}</div>`;c.appendChild(el);scrollC(id);}
 function appendCreativeSynthesis(id,label,text){
-  const c=document.getElementById(id);
+  const c=document.getElementById(id);if(!c)return;
   const el=document.createElement('div');el.className='msg msg-creative';
-  el.innerHTML=`<div class="creative-lbl">✦ Collective Work</div><div class="creative-type">${label}</div><div class="creative-synthesis"><div class="creative-synthesis-lbl">The council writes as one</div><div class="creative-body">${text}</div></div>`;
+  el.innerHTML=`<div class="creative-lbl">✦ Collective Work</div><div class="creative-type">${label}</div><div style="margin-top:10px;padding-top:12px;border-top:1px solid rgba(112,96,192,.2)"><div style="font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:3px;color:var(--violet2);margin-bottom:10px">THE COUNCIL WRITES AS ONE</div><div class="creative-body">${text}</div></div>
+  <div style="padding-top:12px;margin-top:8px;border-top:1px solid var(--border);display:flex;gap:8px">
+    <button class="btn btn-ghost btn-sm" onclick="shareCreativeOutput()">Share to Gallery</button>
+  </div>`;
   c.appendChild(el);scrollC(id);
 }
-
-function showThinking(id,name){
-  const c=document.getElementById(id);
-  const el=document.createElement('div');el.className='thinking';el.id='think_'+id;
-  el.innerHTML=`<span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--golddim)">${name}</span><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>`;
-  c.appendChild(el);scrollC(id);
-}
-
+function showThinking(id,name){const c=document.getElementById(id);if(!c)return;const el=document.createElement('div');el.className='thinking';el.id='think_'+id;el.innerHTML=`<span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--golddim)">${name}</span><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>`;c.appendChild(el);scrollC(id);}
 function removeThinking(id){document.getElementById('think_'+id)?.remove();}
 function scrollC(id){const c=document.getElementById(id);if(c)c.scrollTop=c.scrollHeight;}
 
-function showErr(id,msg){
-  const el=document.getElementById(id);
-  if(!el) return;
-  el.innerHTML=`<div class="error-toast">${msg}</div>`;
-  setTimeout(()=>{if(el)el.innerHTML='';},6000);
-}
-
-// ════════════════════════════════════════════
-// UI STATE
-// ════════════════════════════════════════════
+// ════════════ UI STATE ════════════
 function setLoading(v,screen){
   isLoading=v;
-  const dotId={forum:'forumDot',oracle:'oracleDot',creative:'creativeDot'}[screen];
-  if(dotId){
-    const dot=document.getElementById(dotId);
-    if(dot) dot.className='sdot '+(v?'sdot-active':converging?'sdot-converge':'sdot-idle');
-  }
-  const sb=document.getElementById('forumSendBtn');if(sb)sb.disabled=v;
-  const nb=document.getElementById('nextBtn');if(nb)nb.disabled=v;
-  const ob=document.getElementById('oracleSendBtn');if(ob)ob.disabled=v;
-  const cb=document.getElementById('creativeBtn');if(cb)cb.disabled=v;
-  const synth=document.getElementById('synthesizeBtn');if(synth)synth.disabled=v||protoTriggered;
+  const dots={forum:'forumDot',oracle:'oracleDot',creative:'creativeDot'};
+  const dot=document.getElementById(dots[screen]);
+  if(dot)dot.className='sdot '+(v?'sdot-active':converging?'sdot-converge':'sdot-idle');
+  ['forumSendBtn','nextBtn','oracleSendBtn','creativeBtn'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=v;});
+  const sb=document.getElementById('synthBtn');if(sb)sb.disabled=v||protoTriggered;
 }
-
 function updateUI(){
-  const tc=document.getElementById('turnCount');if(tc)tc.textContent=turnCount+' turn'+(turnCount!==1?'s':'');
-  const cb=document.getElementById('convergeBadge');if(cb)cb.style.display=converging?'inline':'none';
-  const cvbar=document.getElementById('convergenceBar');if(cvbar)cvbar.style.display=converging&&!protoTriggered?'block':'none';
-  const synth=document.getElementById('synthesizeBtn');if(synth)synth.disabled=isLoading||protoTriggered;
+  const tc=document.getElementById('turnCt');if(tc)tc.textContent=turnCount+' turn'+(turnCount!==1?'s':'');
+  const cb=document.getElementById('convBadge');if(cb)cb.style.display=converging?'inline':'none';
+  const cvb=document.getElementById('convBar');if(cvb)cvb.style.display=converging&&!protoTriggered?'block':'none';
+  const sb=document.getElementById('synthBtn');if(sb)sb.disabled=isLoading||protoTriggered;
 }
+function showErr(id,msg){const el=document.getElementById(id);if(!el)return;el.innerHTML=`<div class="error-toast">${msg}</div>`;setTimeout(()=>{if(el)el.innerHTML='';},6000);}
 
-// ════════════════════════════════════════════
-// AUTO
-// ════════════════════════════════════════════
+// ════════════ AUTO ════════════
 function toggleAuto(){if(autoRunning)stopAuto();else startAuto();}
-function startAuto(){
-  if(!activeProblem){showErr('forumError','Set a problem first.');return;}
-  if(protoTriggered){showErr('forumError','Problem synthesized. Reset to continue.');return;}
-  autoRunning=true;
-  const btn=document.getElementById('autoBtn');if(btn){btn.textContent='■ Stop';btn.classList.add('btn-running');}
-  scheduleNext();
-}
-function stopAuto(){
-  autoRunning=false;clearTimeout(autoTimer);
-  const btn=document.getElementById('autoBtn');if(btn){btn.textContent='▶ Auto';btn.classList.remove('btn-running');}
-}
-function scheduleNext(){
-  if(!autoRunning||protoTriggered){stopAuto();return;}
-  autoTimer=setTimeout(async()=>{
-    if(!autoRunning||protoTriggered) return;
-    await nextTurn(null);
-    if(autoRunning&&!protoTriggered) scheduleNext(); else stopAuto();
-  },3800);
-}
+function startAuto(){if(!activeProblem){showErr('forumError','Set a problem first.');return;}if(protoTriggered){showErr('forumError','Problem synthesized. Reset to continue.');return;}autoRunning=true;const btn=document.getElementById('autoBtn');if(btn){btn.textContent='■ Stop';btn.classList.add('btn-running');}scheduleNext();}
+function stopAuto(){autoRunning=false;clearTimeout(autoTimer);const btn=document.getElementById('autoBtn');if(btn){btn.textContent='▶ Auto';btn.classList.remove('btn-running');}}
+function scheduleNext(){if(!autoRunning||protoTriggered){stopAuto();return;}autoTimer=setTimeout(async()=>{if(!autoRunning||protoTriggered)return;await nextTurn(null);if(autoRunning&&!protoTriggered)scheduleNext();else stopAuto();},3800);}
 
-// ════════════════════════════════════════════
-// DOWNLOAD
-// ════════════════════════════════════════════
+// ════════════ DOWNLOAD ════════════
 function downloadTranscript(){
   if(msgs.length===0){showErr('forumError','No transcript yet.');return;}
-  const lines=[`COUNCIL OF MINDS\nProblem: ${activeProblem||'General Session'}\nDate: ${new Date().toLocaleDateString()}\n${'─'.repeat(60)}\n`];
+  const lines=[`THE WORLD GAME\nTranscript — ${activeProblem||'General Session'}\n${new Date().toLocaleDateString()}\n${'─'.repeat(60)}\n`];
   msgs.forEach(m=>{
-    if(m.type==='sys') lines.push(`\n[${m.text}]\n`);
-    else if(m.type==='speech') lines.push(`\n${m.speaker.toUpperCase()} (${m.era})\n${m.text}\n`);
-    else if(m.type==='consensus') lines.push(`\n${'═'.repeat(60)}\nCOUNCIL SYNTHESIS\n${m.text}\n${'═'.repeat(60)}\n`);
-    else if(m.type==='prototype') lines.push(`\n${'═'.repeat(60)}\nPROTOTYPE: ${m.protoType}\n${'═'.repeat(60)}\n${m.text}\n`);
+    if(m.type==='sys')lines.push(`\n[${m.text}]\n`);
+    else if(m.type==='speech')lines.push(`\n${m.speaker.toUpperCase()} (${m.era})\n${m.text}\n`);
+    else if(m.type==='consensus')lines.push(`\n${'═'.repeat(60)}\nCOUNCIL SYNTHESIS\n${m.text}\n${'═'.repeat(60)}\n`);
+    else if(m.type==='prototype')lines.push(`\n${'═'.repeat(60)}\nPROTOTYPE: ${m.protoType}\n${'═'.repeat(60)}\n${m.text}\n`);
   });
   const blob=new Blob([lines.join('\n')],{type:'text/plain'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`council-${Date.now()}.txt`;a.click();
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`worldgame-${Date.now()}.txt`;a.click();
 }
 
-// ════════════════════════════════════════════
-// PERSISTENCE — localStorage
-// ════════════════════════════════════════════
-const STORAGE_KEY = 'council_of_minds_v5';
-
-function saveState() {
-  try {
-    const state = {
-      customThinkers,
-      manualMode,
-      selectedIndices: [...selectedIndices],
-      selectedVerticals: [...selectedVerticals],
-      presets: loadPresets(),
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch(e) {}
+// ════════════ PERSISTENCE ════════════
+function saveState(){
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify({customThinkers,manualMode,selectedIndices:[...selectedIndices],selectedVerticals:[...selectedVerticals],galleryItems}));}catch(e){}
+}
+function loadState(){
+  try{
+    const raw=localStorage.getItem(STORAGE_KEY);if(!raw)return;
+    const s=JSON.parse(raw);
+    if(s.customThinkers)customThinkers=s.customThinkers;
+    if(s.manualMode!==undefined)manualMode=s.manualMode;
+    if(s.selectedIndices)selectedIndices=new Set(s.selectedIndices);
+    if(s.selectedVerticals)selectedVerticals=new Set(s.selectedVerticals);
+    if(s.galleryItems)galleryItems=s.galleryItems;
+  }catch(e){}
 }
 
-function loadState() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-    const state = JSON.parse(raw);
-    if (state.customThinkers) customThinkers = state.customThinkers;
-    if (state.manualMode !== undefined) manualMode = state.manualMode;
-    if (state.selectedIndices) selectedIndices = new Set(state.selectedIndices);
-    if (state.selectedVerticals) selectedVerticals = new Set(state.selectedVerticals);
-  } catch(e) {}
-}
-
-function loadPresets() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY + '_presets');
-    return raw ? JSON.parse(raw) : [];
-  } catch(e) { return []; }
-}
-
-function savePresets(presets) {
-  try { localStorage.setItem(STORAGE_KEY + '_presets', JSON.stringify(presets)); } catch(e) {}
-}
-
-// ════════════════════════════════════════════
-// PRESETS
-// ════════════════════════════════════════════
-let activePresetName = null;
-
-function savePreset() {
-  const name = document.getElementById('presetNameInput').value.trim();
-  if (!name) { showErr('forumError', 'Give your council a name.'); return; }
-  const presets = loadPresets();
-  const existing = presets.findIndex(p => p.name === name);
-  const preset = {
-    name,
-    manualMode,
-    selectedIndices: [...selectedIndices],
-    customThinkers: [...customThinkers],
-    selectedVerticals: [...selectedVerticals],
-    savedAt: new Date().toLocaleDateString(),
-  };
-  if (existing >= 0) presets[existing] = preset;
-  else presets.push(preset);
-  savePresets(presets);
-  activePresetName = name;
-  document.getElementById('presetNameInput').value = '';
-  // Show saved indicator
-  const ind = document.getElementById('savedIndicator');
-  ind.style.display = 'block';
-  ind.innerHTML = `<span class="saved-indicator">✓ Saved "${name}"</span>`;
-  setTimeout(() => { ind.style.display = 'none'; }, 2500);
-  renderPresets();
-  saveState();
-}
-
-function loadPreset(name) {
-  const presets = loadPresets();
-  const preset = presets.find(p => p.name === name);
-  if (!preset) return;
-  customThinkers = preset.customThinkers || [];
-  manualMode = preset.manualMode !== undefined ? preset.manualMode : false;
-  selectedIndices = new Set(preset.selectedIndices || []);
-  selectedVerticals = new Set(preset.selectedVerticals || []);
-  activePresetName = name;
-  // Sync toggle UI
-  setToggle(document.getElementById('autoToggle'), !manualMode);
-  document.getElementById('manualCouncilPanel').style.display = manualMode ? 'block' : 'none';
-  document.getElementById('autoCouncilBanner').style.display = manualMode ? 'none' : 'flex';
-  renderCouncilScreen();
-  renderPresets();
-  updateForumChips();
-  saveState();
-}
-
-function deletePreset(name) {
-  const presets = loadPresets().filter(p => p.name !== name);
-  savePresets(presets);
-  if (activePresetName === name) activePresetName = null;
-  renderPresets();
-}
-
-function renderPresets() {
-  const row = document.getElementById('presetRow');
-  if (!row) return;
-  const presets = loadPresets();
-  if (presets.length === 0) {
-    row.innerHTML = `<div style="font-size:12px;color:var(--textfaint);font-style:italic">No saved councils yet.</div>`;
-    return;
-  }
-  row.innerHTML = presets.map(p => {
-    const isActive = activePresetName === p.name;
-    const count = (p.selectedIndices || []).length;
-    return `<div class="preset-item${isActive ? ' active-preset' : ''}">
-      <div>
-        <div class="preset-name">${p.name}</div>
-        <div class="preset-count">${count} thinker${count!==1?'s':''} · saved ${p.savedAt||''}</div>
-      </div>
-      <div class="preset-actions">
-        <div class="preset-load" onclick="loadPreset('${p.name.replace(/'/g,"\\'")}')">Load</div>
-        <div class="preset-del" onclick="deletePreset('${p.name.replace(/'/g,"\\'")}')">✕</div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-// ════════════════════════════════════════════
-// UTILS
-// ════════════════════════════════════════════
+// ════════════ UTILS ════════════
 function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';}
 
-// ════════════════════════════════════════════
-// INIT
-// ════════════════════════════════════════════
-function init() {
+// ════════════ INIT ════════════
+function init(){
   loadState();
-  if (selectedIndices.size === 0) {
-    allThinkers().forEach((_, i) => selectedIndices.add(i));
-  }
-  // Sync toggle UI to loaded state
-  setToggle(document.getElementById('autoToggle'), !manualMode);
-  document.getElementById('manualCouncilPanel').style.display = manualMode ? 'block' : 'none';
-  document.getElementById('autoCouncilBanner').style.display = manualMode ? 'none' : 'flex';
+  if(selectedIndices.size===0)allThinkers().forEach((_,i)=>selectedIndices.add(i));
+  setToggle(document.getElementById('autoToggle'),!manualMode);
+  document.getElementById('manualPanel').style.display=manualMode?'block':'none';
+  document.getElementById('autoBanner').style.display=manualMode?'none':'flex';
   renderCouncilScreen();
-  renderPresets();
+  recalcMetrics();
+  // Seed gallery with example items if empty
+  if(galleryItems.length===0){
+    galleryItems=[
+      {id:1,type:'creative',title:'On the Weight of Water',content:'The river does not ask permission\nto find its way to sea — it simply\ngoes, carrying what it carries,\nshaping what it shapes.\n\n— A collective poem on resource equity',anon:true,date:'Apr 2026',appreciations:12},
+      {id:2,type:'insight',title:'Fuller\'s Ephemeralization in the Age of AI',content:'We built a working World Game prototype in under an hour. The tools Fuller dreamed of have arrived — and they cost almost nothing to run. The question is no longer whether we can do more with less. The question is whether we will.',anon:false,date:'Apr 2026',appreciations:8},
+      {id:3,type:'debate',title:'Should AI replace human decision-making in resource allocation?',content:'The council debated whether algorithmic resource distribution, however optimal by measurable metrics, can substitute for human judgment in matters of distributive justice. Jung noted the shadow of optimization: efficiency without wisdom produces systems that are perfectly wrong.',anon:true,date:'Apr 2026',appreciations:15},
+      {id:4,type:'scenario',title:'100% Renewable + Universal Water Access by 2051',content:'World Game Scenario: Renewable Energy 100%, Water Access 100%, Food Distribution 85%, Protected Land 40%. Outcomes: Flourishing 94/100, Ecological Health 89/100, Stability 87/100. The model suggests this configuration is achievable within a 25-year horizon with current technology.',anon:false,date:'Apr 2026',appreciations:21},
+    ];
+    saveState();
+  }
+  renderGallery();
 }
 init();
 </script>
