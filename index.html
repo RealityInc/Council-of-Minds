@@ -122,7 +122,7 @@ textarea.input{resize:none;line-height:1.55;min-height:48px;max-height:120px;}
 /* ── ENTRY SCREEN ── */
 .entry-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:24px 0 16px;}
 @media(max-width:600px){.entry-grid{grid-template-columns:1fr;}}
-.entry-door{padding:24px 20px;border:1px solid var(–bordergold);border-radius:var(–r);cursor:pointer;transition:all .25s;background:var(–bg2);position:relative;overflow:hidden;-webkit-tap-highlight-color:rgba(201,168,76,.1);touch-action:manipulation;}
+.entry-door{padding:24px 20px;border:1px solid var(–bordergold);border-radius:var(–r);cursor:pointer;transition:all .25s;background:var(–bg2);position:relative;overflow:hidden;-webkit-tap-highlight-color:rgba(201,168,76,.1);touch-action:manipulation;text-align:left;width:100%;font-family:inherit;color:inherit;display:block;}
 .entry-door::before{content:’’;position:absolute;inset:0;opacity:0;transition:opacity .25s;pointer-events:none;}
 .entry-door:hover{box-shadow:0 8px 32px rgba(0,0,0,.3);}
 .entry-door.door-world:hover{border-color:var(–jade2);}.entry-door.door-world::before{background:rgba(42,122,90,.04);}
@@ -354,30 +354,30 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
 
   <div class="screen active" id="screen-entry">
     <div class="entry-grid">
-      <div class="entry-door door-world" onclick="showScreen('world')">
+      <button class="entry-door door-world" onclick="showScreen('world')">
         <span class="door-icon">🌍</span>
         <div class="door-question">What's happening in the world?</div>
         <div class="door-desc">Model scenarios, understand resource flows, simulate a better world</div>
         <div class="door-arrow">→</div>
-      </div>
-      <div class="entry-door door-oracle" onclick="showScreen('oracle')">
+      </button>
+      <button class="entry-door door-oracle" onclick="showScreen('oracle')">
         <span class="door-icon">🪞</span>
         <div class="door-question">I need help with something</div>
         <div class="door-desc">Bring your real questions. Receive wisdom from across the ages</div>
         <div class="door-arrow">→</div>
-      </div>
-      <div class="entry-door door-create" onclick="showScreen('create')">
+      </button>
+      <button class="entry-door door-create" onclick="showScreen('create')">
         <span class="door-icon">✦</span>
         <div class="door-question">I want to make something</div>
         <div class="door-desc">Poetry, lyrics, manifestos — art that holds the weight of ideas</div>
         <div class="door-arrow">→</div>
-      </div>
-      <div class="entry-door door-forum" onclick="showScreen('forum')">
+      </button>
+      <button class="entry-door door-forum" onclick="showScreen('forum')">
         <span class="door-icon">⬡</span>
         <div class="door-question">I want to think through a big idea</div>
         <div class="door-desc">Let great minds debate your question and reach a synthesis</div>
         <div class="door-arrow">→</div>
-      </div>
+      </button>
     </div>
     <div class="entry-footer">
       <span class="entry-footer-link" onclick="showScreen('council')">⊕ Meet the great minds →</span>
