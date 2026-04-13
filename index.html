@@ -917,21 +917,66 @@ var ISO3_TO_ISO2 = {
 };
 
 var NAME_TO_ISO2 = {
-  'UNITED STATES OF AMERICA':'US','UNITED STATES':'US','USA':'US',
-  'UNITED KINGDOM':'GB','UK':'GB','SOUTH KOREA':'KR','NORTH KOREA':'KP',
-  'RUSSIA':'RU','IRAN':'IR','TAIWAN':'TW','CZECHIA':'CZ','CZECH REPUBLIC':'CZ',
-  'IVORY COAST':'CI','DEMOCRATIC REPUBLIC OF THE CONGO':'CD','TANZANIA':'TZ',
-  'SOUTH AFRICA':'ZA','NEW ZEALAND':'NZ','REPUBLIC OF CONGO':'CG','VIETNAM':'VN',
-  'LAOS':'LA','SYRIA':'SY','BOLIVIA':'BO','VENEZUELA':'VE','MYANMAR':'MM'
+  'UNITED STATES OF AMERICA':'US','UNITED STATES':'US','USA':'US','U.S.A.':'US',
+  'UNITED KINGDOM':'GB','UK':'GB','GREAT BRITAIN':'GB',
+  'SOUTH KOREA':'KR','NORTH KOREA':'KP','KOREA, REP.':'KR','KOREA DEM REP':'KP',
+  'RUSSIA':'RU','RUSSIAN FEDERATION':'RU',
+  'IRAN':'IR','IRAN ISLAMIC REP':'IR',
+  'TAIWAN':'TW','TAIWAN, CHINA':'TW',
+  'CZECHIA':'CZ','CZECH REPUBLIC':'CZ',
+  'IVORY COAST':'CI',
+  'DEMOCRATIC REPUBLIC OF THE CONGO':'CD','DR CONGO':'CD','CONGO, DEM. REP.':'CD',
+  'REPUBLIC OF CONGO':'CG','CONGO':'CG',
+  'TANZANIA':'TZ','UNITED REPUBLIC OF TANZANIA':'TZ',
+  'SOUTH AFRICA':'ZA','VIETNAM':'VN','VIET NAM':'VN',
+  'LAOS':'LA',
+  'SYRIA':'SY','SYRIAN ARAB REPUBLIC':'SY',
+  'BOLIVIA':'BO','BOLIVIA PLURINATIONAL STATE':'BO',
+  'VENEZUELA':'VE','VENEZUELA RB':'VE',
+  'MYANMAR':'MM','BURMA':'MM',
+  'EGYPT':'EG','ARAB REPUBLIC OF EGYPT':'EG',
+  'ETHIOPIA':'ET','KENYA':'KE','NIGERIA':'NG','GHANA':'GH','TANZANIA':'TZ',
+  'SOUTH SUDAN':'SS','SUDAN':'SD','ANGOLA':'AO','MOZAMBIQUE':'MZ','ZAMBIA':'ZM',
+  'ZIMBABWE':'ZW','MADAGASCAR':'MG','CAMEROON':'CM','SENEGAL':'SN','MALI':'ML',
+  'BURKINA FASO':'BF','NIGER':'NE','GUINEA':'GN','UGANDA':'UG','MALAWI':'MW',
+  'ALGERIA':'DZ','MOROCCO':'MA','TUNISIA':'TN','LIBYA':'LY',
+  'SAUDI ARABIA':'SA','IRAQ':'IQ','YEMEN':'YE','JORDAN':'JO','LEBANON':'LB',
+  'ISRAEL':'IL','PALESTINE':'PS','STATE OF PALESTINE':'PS',
+  'UNITED ARAB EMIRATES':'AE','KUWAIT':'KW','QATAR':'QA','BAHRAIN':'BH','OMAN':'OM',
+  'AFGHANISTAN':'AF','PAKISTAN':'PK','BANGLADESH':'BD','SRI LANKA':'LK','NEPAL':'NP',
+  'THAILAND':'TH','MALAYSIA':'MY','INDONESIA':'ID','PHILIPPINES':'PH',
+  'SINGAPORE':'SG','CAMBODIA':'KH','MYANMAR':'MM',
+  'BRAZIL':'BR','ARGENTINA':'AR','CHILE':'CL','COLOMBIA':'CO','PERU':'PE',
+  'ECUADOR':'EC','BOLIVIA':'BO','PARAGUAY':'PY','URUGUAY':'UY',
+  'MEXICO':'MX','CUBA':'CU','GUATEMALA':'GT','HONDURAS':'HN',
+  'GERMANY':'DE','FRANCE':'FR','ITALY':'IT','SPAIN':'ES','PORTUGAL':'PT',
+  'NETHERLANDS':'NL','BELGIUM':'BE','SWITZERLAND':'CH','AUSTRIA':'AT',
+  'SWEDEN':'SE','NORWAY':'NO','DENMARK':'DK','FINLAND':'FI','ICELAND':'IS',
+  'POLAND':'PL','CZECHIA':'CZ','SLOVAKIA':'SK','HUNGARY':'HU','ROMANIA':'RO',
+  'BULGARIA':'BG','GREECE':'GR','CROATIA':'HR','SERBIA':'RS','UKRAINE':'UA',
+  'TURKEY':'TR','TURKIYE':'TR',
+  'CANADA':'CA','AUSTRALIA':'AU','NEW ZEALAND':'NZ','JAPAN':'JP',
+  'CHINA':'CN',"PEOPLES REPUBLIC OF CHINA":'CN',
+  'INDIA':'IN','KAZAKHSTAN':'KZ','UZBEKISTAN':'UZ'
 };
 
 function getISO2(props) {
-  var code = props.iso_a2 || props.ISO_A2 || props.ISO2 || '';
-  if (code && code !== '-99' && code.length === 2) return code.toUpperCase();
-  var code3 = props.iso_a3 || props.ISO_A3 || props.adm0_a3 || '';
+  // Try direct ISO2 fields first
+  var code = props.ISO_A2 || props.iso_a2 || props.ISO2 || props.iso2 || '';
+  if (code && code !== '-99' && code !== '-1' && code.length === 2) return code.toUpperCase();
+  // Try ISO3 conversion
+  var code3 = props.ISO_A3 || props.iso_a3 || props.adm0_a3 || props.ISO3 || '';
   if (code3 && ISO3_TO_ISO2[code3.toUpperCase()]) return ISO3_TO_ISO2[code3.toUpperCase()];
-  var name = (props.name || props.NAME || props.ADMIN || '').toUpperCase();
-  if (NAME_TO_ISO2[name]) return NAME_TO_ISO2[name];
+  // Try all name fields against lookup
+  var names = [
+    props.ADMIN || '', props.admin || '',
+    props.name || '', props.NAME || '',
+    props.NAME_LONG || '', props.FORMAL_EN || ''
+  ];
+  for (var i = 0; i < names.length; i++) {
+    var n = names[i].toUpperCase().trim();
+    if (n && NAME_TO_ISO2[n]) return NAME_TO_ISO2[n];
+  }
   return '';
 }
 
@@ -994,7 +1039,7 @@ function initWorldMap() {
 
 function loadCountryLayer() {
   setMapStatus('Loading country boundaries...');
-  fetch('https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson')
+  fetch('https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson')
     .then(function(r) { return r.json(); })
     .then(function(data) {
       if (countryLayer) { leafletMap.removeLayer(countryLayer); }
