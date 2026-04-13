@@ -185,48 +185,93 @@ textarea{resize:none;min-height:80px;}
 
 <div class="screen" id="screen-world">
   <div style="margin-bottom:14px">
-    <div style="font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:#8a8580;margin-bottom:12px">World Game — Resource Modeling</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">
-      <div class="card" style="padding:12px">
-        <div style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580;margin-bottom:4px">Flourishing</div>
-        <div style="font-size:28px;font-weight:700;color:#1a6b4a" id="metFl">62</div>
-        <div style="height:3px;background:#e8e4dc;border-radius:2px;margin-top:6px"><div id="fillFl" style="height:100%;background:#2a9060;border-radius:2px;width:62%;transition:width .5s"></div></div>
+    <div style="font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:#8a8580;margin-bottom:12px">World Game</div>
+
+```
+<!-- Metrics -->
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
+  <div class="card" style="padding:12px">
+    <div style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580;margin-bottom:4px">Flourishing</div>
+    <div style="font-size:28px;font-weight:700;color:#1a6b4a" id="metFl">62</div>
+    <div style="height:3px;background:#e8e4dc;border-radius:2px;margin-top:6px"><div id="fillFl" style="height:100%;background:#2a9060;border-radius:2px;width:62%;transition:width .5s"></div></div>
+  </div>
+  <div class="card" style="padding:12px">
+    <div style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580;margin-bottom:4px">Ecological</div>
+    <div style="font-size:28px;font-weight:700;color:#b8922a" id="metEc">48</div>
+    <div style="height:3px;background:#e8e4dc;border-radius:2px;margin-top:6px"><div id="fillEc" style="height:100%;background:#d4aa44;border-radius:2px;width:48%;transition:width .5s"></div></div>
+  </div>
+  <div class="card" style="padding:12px">
+    <div style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580;margin-bottom:4px">Stability</div>
+    <div style="font-size:28px;font-weight:700;color:#5040a0" id="metSt">55</div>
+    <div style="height:3px;background:#e8e4dc;border-radius:2px;margin-top:6px"><div id="fillSt" style="height:100%;background:#7060c0;border-radius:2px;width:55%;transition:width .5s"></div></div>
+  </div>
+</div>
+
+<!-- Map -->
+<div class="card" style="margin-bottom:12px">
+  <div style="padding:10px 14px;border-bottom:1px solid #e8e4dc;display:flex;justify-content:space-between;align-items:center">
+    <span style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580">Planetary View</span>
+    <span style="font-size:12px;color:#b8b4ae" id="regionLabel">Tap a region</span>
+  </div>
+  <canvas id="worldMap" width="700" height="380" style="display:block;width:100%;height:auto;background:#eef2f0;cursor:pointer"></canvas>
+</div>
+
+<!-- Sliders -->
+<div class="card">
+  <div style="padding:10px 14px;border-bottom:1px solid #e8e4dc">
+    <span style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580">Parameters</span>
+  </div>
+  <div style="padding:16px 20px;display:flex;flex-direction:column;gap:14px">
+    <div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:13px;color:#4a4640">Renewable energy</span>
+        <span style="font-size:13px;font-weight:600;color:#b8922a" id="sv-ren">32%</span>
       </div>
-      <div class="card" style="padding:12px">
-        <div style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580;margin-bottom:4px">Ecological</div>
-        <div style="font-size:28px;font-weight:700;color:#b8922a" id="metEc">48</div>
-        <div style="height:3px;background:#e8e4dc;border-radius:2px;margin-top:6px"><div id="fillEc" style="height:100%;background:#d4aa44;border-radius:2px;width:48%;transition:width .5s"></div></div>
-      </div>
-      <div class="card" style="padding:12px">
-        <div style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580;margin-bottom:4px">Stability</div>
-        <div style="font-size:28px;font-weight:700;color:#5040a0" id="metSt">55</div>
-        <div style="height:3px;background:#e8e4dc;border-radius:2px;margin-top:6px"><div id="fillSt" style="height:100%;background:#7060c0;border-radius:2px;width:55%;transition:width .5s"></div></div>
-      </div>
+      <input type="range" min="0" max="100" value="32" id="sl-ren" oninput="document.getElementById('sv-ren').textContent=this.value+'%';recalc()" style="width:100%;accent-color:#d4aa44">
     </div>
-    <div class="card">
-      <div class="card-hdr"><span class="card-title">Sliders</span></div>
-      <div style="padding:16px 20px;display:flex;flex-direction:column;gap:14px">
-        <div>
-          <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:13px;color:#4a4640">Renewable energy</span><span style="font-size:13px;font-weight:600;color:#b8922a" id="sv-ren">32%</span></div>
-          <input type="range" min="0" max="100" value="32" oninput="document.getElementById('sv-ren').textContent=this.value+'%';recalc()" style="width:100%;accent-color:#d4aa44">
-        </div>
-        <div>
-          <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:13px;color:#4a4640">Food distribution</span><span style="font-size:13px;font-weight:600;color:#b8922a" id="sv-food">61%</span></div>
-          <input type="range" min="0" max="100" value="61" id="sl-food" oninput="document.getElementById('sv-food').textContent=this.value+'%';recalc()" style="width:100%;accent-color:#d4aa44">
-        </div>
-        <div>
-          <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:13px;color:#4a4640">Killingry to Livingry</span><span style="font-size:13px;font-weight:600;color:#b8922a" id="sv-kl">8%</span></div>
-          <input type="range" min="0" max="100" value="8" id="sl-kl" oninput="document.getElementById('sv-kl').textContent=this.value+'%';recalc()" style="width:100%;accent-color:#d4aa44">
-        </div>
-        <div>
-          <div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:13px;color:#4a4640">Protected land</span><span style="font-size:13px;font-weight:600;color:#b8922a" id="sv-land">17%</span></div>
-          <input type="range" min="0" max="100" value="17" id="sl-land" oninput="document.getElementById('sv-land').textContent=this.value+'%';recalc()" style="width:100%;accent-color:#d4aa44">
-        </div>
+    <div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:13px;color:#4a4640">Food distribution</span>
+        <span style="font-size:13px;font-weight:600;color:#b8922a" id="sv-food">61%</span>
       </div>
-      <div style="padding:0 20px 16px;display:flex;gap:8px">
-        <button class="btn btn-outline" onclick="askCouncil()">Ask the Council</button>
-      </div>
+      <input type="range" min="0" max="100" value="61" id="sl-food" oninput="document.getElementById('sv-food').textContent=this.value+'%';recalc()" style="width:100%;accent-color:#d4aa44">
     </div>
+    <div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:13px;color:#4a4640">Killingry to Livingry</span>
+        <span style="font-size:13px;font-weight:600;color:#b8922a" id="sv-kl">8%</span>
+      </div>
+      <input type="range" min="0" max="100" value="8" id="sl-kl" oninput="document.getElementById('sv-kl').textContent=this.value+'%';recalc()" style="width:100%;accent-color:#d4aa44">
+    </div>
+    <div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:13px;color:#4a4640">Protected land</span>
+        <span style="font-size:13px;font-weight:600;color:#b8922a" id="sv-land">17%</span>
+      </div>
+      <input type="range" min="0" max="100" value="17" id="sl-land" oninput="document.getElementById('sv-land').textContent=this.value+'%';recalc()" style="width:100%;accent-color:#d4aa44">
+    </div>
+    <div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:13px;color:#4a4640">Water access</span>
+        <span style="font-size:13px;font-weight:600;color:#b8922a" id="sv-water">71%</span>
+      </div>
+      <input type="range" min="0" max="100" value="71" id="sl-water" oninput="document.getElementById('sv-water').textContent=this.value+'%';recalc()" style="width:100%;accent-color:#d4aa44">
+    </div>
+    <div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:13px;color:#4a4640">Wealth distribution</span>
+        <span style="font-size:13px;font-weight:600;color:#b8922a" id="sv-wealth">34%</span>
+      </div>
+      <input type="range" min="0" max="100" value="34" id="sl-wealth" oninput="document.getElementById('sv-wealth').textContent=this.value+'%';recalc()" style="width:100%;accent-color:#d4aa44">
+    </div>
+  </div>
+  <div style="padding:0 20px 16px;display:flex;gap:8px;flex-wrap:wrap">
+    <button class="btn btn-outline" onclick="askCouncil()">Ask the Council</button>
+    <button class="btn btn-outline" onclick="makeArt()">Make Art from This</button>
+  </div>
+</div>
+```
+
   </div>
 </div>
 
@@ -341,6 +386,15 @@ function show(name) {
   }
   window.scrollTo(0,0);
   if (name === 'council') renderCouncil();
+  if (name === 'gallery') renderGallery();
+  if (name === 'world') setTimeout(function() { drawMap(selectedRegion ? getRegionIdByName(selectedRegion) : null); }, 50);
+}
+
+function getRegionIdByName(name) {
+  for (var i = 0; i < REGIONS.length; i++) {
+    if (REGIONS[i].name === name) return REGIONS[i].id;
+  }
+  return null;
 }
 
 // ── API ──
@@ -688,15 +742,21 @@ function triggerCreate() {
 }
 
 // ── WORLD GAME ──
+function getSlider(id, def) {
+  var el = document.getElementById(id);
+  return el ? parseInt(el.value) || def : def;
+}
 function recalc() {
-  var ren = parseInt(document.querySelector('input[oninput*="sv-ren"]').value) || 32;
-  var food = parseInt(document.getElementById('sl-food').value) || 61;
-  var kl = parseInt(document.getElementById('sl-kl').value) || 8;
-  var land = parseInt(document.getElementById('sl-land').value) || 17;
+  var ren = getSlider('sl-ren', 32);
+  var food = getSlider('sl-food', 61);
+  var kl = getSlider('sl-kl', 8);
+  var land = getSlider('sl-land', 17);
+  var water = getSlider('sl-water', 71);
+  var wealth = getSlider('sl-wealth', 34);
 
-  var fl = Math.min(100, Math.round(food * 0.4 + kl * 0.3 + ren * 0.2 + land * 0.1));
-  var ec = Math.min(100, Math.round(ren * 0.4 + land * 0.4 + kl * 0.2));
-  var st = Math.min(100, Math.round(food * 0.3 + kl * 0.3 + ren * 0.2 + land * 0.2));
+  var fl = Math.min(100, Math.round(food*0.25 + water*0.2 + wealth*0.2 + kl*0.2 + ren*0.1 + land*0.05));
+  var ec = Math.min(100, Math.round(ren*0.4 + land*0.35 + kl*0.15 + (100-food*0.01)));
+  var st = Math.min(100, Math.round(food*0.25 + kl*0.25 + wealth*0.2 + ren*0.15 + water*0.15));
 
   document.getElementById('metFl').textContent = fl;
   document.getElementById('metEc').textContent = ec;
@@ -707,10 +767,23 @@ function recalc() {
 }
 
 function askCouncil() {
-  problem = 'The World Game scenario: renewable energy at ' + document.querySelector('input[oninput*="sv-ren"]').value + '%, food distribution at ' + document.getElementById('sl-food').value + '%. What are the implications?';
+  var ren = getSlider('sl-ren', 32);
+  var food = getSlider('sl-food', 61);
+  var fl = document.getElementById('metFl').textContent;
+  var ec = document.getElementById('metEc').textContent;
+  var region = selectedRegion ? selectedRegion + ': ' : '';
+  problem = 'World Game ' + region + 'renewable energy ' + ren + '%, food distribution ' + food + '%, flourishing ' + fl + '/100, ecological ' + ec + '/100. What are the philosophical and ethical implications?';
   document.getElementById('forumInput').value = problem;
   show('forum');
   setTimeout(startDebate, 100);
+}
+
+function makeArt() {
+  var ren = getSlider('sl-ren', 32);
+  var food = getSlider('sl-food', 61);
+  var theme = 'the current state of the world: renewable energy at ' + ren + '%, food distribution at ' + food + '%' + (selectedRegion ? ' in ' + selectedRegion : '');
+  document.getElementById('createTheme').value = theme;
+  show('create');
 }
 
 // ── GALLERY ──
@@ -781,6 +854,132 @@ function shareForumToGallery() {
 
 function shareCreateToGallery() {
   shareToGallery('creative', lastCreateTheme.substring(0, 60), lastCreateText.substring(0, 300));
+}
+
+// ── WORLD MAP ──
+var REGIONS = [
+  {id:'na', name:'N. America', color:'#2a9060',
+   pts:[[55,18],[95,14],[118,20],[125,32],[122,50],[112,65],[98,82],[82,98],[66,100],[48,90],[28,76],[14,58],[12,40],[28,24]]},
+  {id:'sa', name:'S. America', color:'#b8922a',
+   pts:[[82,98],[98,95],[112,100],[120,115],[124,135],[120,158],[112,178],[100,188],[86,184],[74,168],[68,148],[70,125],[76,108]]},
+  {id:'eu', name:'Europe', color:'#2a9060',
+   pts:[[155,18],[175,14],[198,16],[212,22],[220,34],[214,46],[202,52],[188,56],[172,52],[158,44],[148,32]]},
+  {id:'af', name:'Africa', color:'#d4aa44',
+   pts:[[158,52],[175,48],[198,50],[218,44],[228,58],[232,78],[228,100],[220,122],[212,144],[204,164],[194,174],[180,168],[168,152],[158,130],[150,108],[148,86],[150,66]]},
+  {id:'me', name:'Middle East', color:'#c04020',
+   pts:[[220,34],[240,30],[258,34],[268,46],[268,60],[258,68],[242,72],[228,68],[220,56]]},
+  {id:'as', name:'Asia', color:'#2a9060',
+   pts:[[220,16],[252,10],[288,8],[322,12],[352,18],[368,32],[372,50],[362,66],[342,72],[318,76],[294,78],[272,72],[258,68],[242,72],[228,68],[220,56],[220,34],[212,22],[220,16]]},
+  {id:'sea', name:'SE Asia', color:'#7060c0',
+   pts:[[294,78],[318,76],[338,84],[348,100],[342,115],[326,122],[308,118],[294,106],[290,92]]},
+  {id:'oc', name:'Oceania', color:'#5040a0',
+   pts:[[318,148],[344,140],[364,148],[372,162],[366,176],[350,182],[330,178],[316,166],[312,154]]}
+];
+
+var selectedRegion = null;
+
+function drawMap(highlightId) {
+  var canvas = document.getElementById('worldMap');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width, H = canvas.height;
+  var sx = W / 390, sy = H / 200;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Ocean
+  ctx.fillStyle = '#dde8e4';
+  ctx.fillRect(0, 0, W, H);
+
+  // Grid
+  ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+  ctx.lineWidth = 0.5;
+  var gi;
+  for (gi = 0; gi < H; gi += 30 * sy) {
+    ctx.beginPath(); ctx.moveTo(0, gi); ctx.lineTo(W, gi); ctx.stroke();
+  }
+  for (gi = 0; gi < W; gi += 30 * sx) {
+    ctx.beginPath(); ctx.moveTo(gi, 0); ctx.lineTo(gi, H); ctx.stroke();
+  }
+
+  // Draw regions
+  var ri;
+  for (ri = 0; ri < REGIONS.length; ri++) {
+    var reg = REGIONS[ri];
+    var isSel = reg.id === highlightId;
+    ctx.beginPath();
+    var pi;
+    for (pi = 0; pi < reg.pts.length; pi++) {
+      var px = reg.pts[pi][0] * sx;
+      var py = reg.pts[pi][1] * sy;
+      if (pi === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fillStyle = isSel ? reg.color + 'cc' : reg.color + '55';
+    ctx.fill();
+    ctx.strokeStyle = isSel ? reg.color : reg.color + '88';
+    ctx.lineWidth = isSel ? 2 : 1;
+    ctx.stroke();
+
+    // Label
+    var cx = 0, cy = 0;
+    for (pi = 0; pi < reg.pts.length; pi++) {
+      cx += reg.pts[pi][0];
+      cy += reg.pts[pi][1];
+    }
+    cx = cx / reg.pts.length * sx;
+    cy = cy / reg.pts.length * sy;
+    ctx.fillStyle = isSel ? reg.color : '#555';
+    ctx.font = (isSel ? 'bold ' : '') + Math.round(9 * Math.min(sx, sy)) + 'px system-ui,sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(reg.name, cx, cy);
+  }
+}
+
+function getRegionAt(canvas, clientX, clientY) {
+  var rect = canvas.getBoundingClientRect();
+  var x = (clientX - rect.left) / rect.width * 390;
+  var y = (clientY - rect.top) / rect.height * 200;
+  var best = null, bestD = 9999;
+  var ri, pi;
+  for (ri = 0; ri < REGIONS.length; ri++) {
+    var reg = REGIONS[ri];
+    var cx = 0, cy = 0;
+    for (pi = 0; pi < reg.pts.length; pi++) {
+      cx += reg.pts[pi][0]; cy += reg.pts[pi][1];
+    }
+    cx /= reg.pts.length; cy /= reg.pts.length;
+    var d = Math.sqrt((x-cx)*(x-cx) + (y-cy)*(y-cy));
+    if (d < bestD) { bestD = d; best = reg; }
+  }
+  return bestD < 40 ? best : null;
+}
+
+function initWorldMap() {
+  var canvas = document.getElementById('worldMap');
+  if (!canvas) return;
+  drawMap(null);
+
+  function onTap(e) {
+    var cx, cy;
+    if (e.changedTouches) {
+      cx = e.changedTouches[0].clientX;
+      cy = e.changedTouches[0].clientY;
+    } else {
+      cx = e.clientX; cy = e.clientY;
+    }
+    var reg = getRegionAt(canvas, cx, cy);
+    if (reg) {
+      selectedRegion = reg.name;
+      document.getElementById('regionLabel').textContent = reg.name + ' selected';
+      drawMap(reg.id);
+      recalc();
+    }
+  }
+  canvas.addEventListener('click', onTap);
+  canvas.addEventListener('touchend', function(e) { e.preventDefault(); onTap(e); }, false);
 }
 
 // ── GLOBE ──
@@ -861,6 +1060,7 @@ function initGlobe() {
 renderCouncil();
 renderGallery();
 initGlobe();
+initWorldMap();
 </script>
 
 </body>
