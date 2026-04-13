@@ -435,7 +435,7 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
               <span style="font-size:11px;font-weight:600;letter-spacing:1px;color:var(--ink3);text-transform:uppercase;">Planetary View</span>
               <span style="font-size:11px;color:var(--ink4)" id="regionLabel">Tap a region</span>
             </div>
-            <canvas id="worldMap" width="400" height="220" style="display:block;width:100%;cursor:pointer;"></canvas>
+            <canvas id="worldMap" width="800" height="440" style="display:block;width:100%;height:auto;cursor:pointer;min-height:180px;background:#f0ede8;"></canvas>
           </div>
           <div class="time-row" style="margin-top:10px">
             <span class="time-label">Time horizon:</span>
@@ -1686,6 +1686,7 @@ function autoResize(el){el.style.height='auto';el.style.height=Math.min(el.scrol
 function initGlobe(){
   const canvas=document.getElementById('globeCanvas');
   if(!canvas)return;
+  if(canvas.offsetWidth===0){setTimeout(initGlobe,200);return;}
   const ctx=canvas.getContext('2d');
   const cx=80,cy=80,r=68;
   let angle=0;
@@ -1843,6 +1844,11 @@ function getMapRegionAt(canvas, clientX, clientY) {
 function initWorldMap() {
   const canvas = document.getElementById('worldMap');
   if (!canvas) return;
+  // Retry if canvas not ready
+  if (canvas.offsetWidth === 0) {
+    setTimeout(initWorldMap, 200);
+    return;
+  }
   drawWorldMap(null);
 
   function handleTap(e) {
