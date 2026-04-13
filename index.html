@@ -39,7 +39,7 @@ textarea{resize:none;min-height:80px;}
 .dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
 @keyframes blink{0%,80%,100%{opacity:.2}40%{opacity:1}}
 .error{font-size:12px;color:#c04020;padding:8px 14px;border:1px solid #e05030;border-radius:8px;margin:6px 16px;background:#fdf2f0;}
-.home-hero{padding:0;background:#f2ede4;}
+.home-hero{text-align:center;padding:40px 20px 24px;}
 .home-title{font-size:40px;font-weight:700;color:#1a1814;margin-bottom:8px;}
 .home-sub{font-size:16px;color:#8a8580;margin-bottom:28px;}
 .doors{display:flex;flex-direction:column;gap:10px;max-width:480px;margin:0 auto;}
@@ -48,98 +48,6 @@ textarea{resize:none;min-height:80px;}
 .door-icon{font-size:24px;display:block;margin-bottom:8px;}
 .door-q{font-size:15px;font-weight:600;color:#1a1814;margin-bottom:4px;}
 .door-desc{font-size:13px;color:#8a8580;}
-/* ── NASA HOME ── */
-.nasa-hero{
-  background:#1a1410;
-  padding:32px 20px 28px;
-  position:relative;overflow:hidden;
-  border-bottom:3px solid #c4501a;
-}
-.nasa-hero::before{
-  content:'';position:absolute;inset:0;
-  background-image:
-    linear-gradient(rgba(196,80,26,.06) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(196,80,26,.06) 1px,transparent 1px);
-  background-size:32px 32px;pointer-events:none;
-}
-.nasa-eyebrow{
-  font-family:'Courier New',monospace;font-size:9px;letter-spacing:5px;
-  color:#c4501a;text-transform:uppercase;margin-bottom:14px;
-  display:flex;align-items:center;gap:8px;position:relative;z-index:1;
-}
-.nasa-eyebrow::before{content:'▶';font-size:7px;}
-.nasa-quote{
-  font-size:clamp(15px,3.5vw,21px);color:#e8e0d0;
-  line-height:1.55;font-style:italic;
-  font-family:Georgia,serif;
-  position:relative;z-index:1;
-  padding-left:16px;border-left:2px solid #c4501a;
-  margin-bottom:10px;max-width:560px;
-}
-.nasa-attribution{
-  font-family:'Courier New',monospace;font-size:9px;letter-spacing:2px;
-  color:#6a5a3a;text-transform:uppercase;margin-bottom:28px;
-  position:relative;z-index:1;padding-left:16px;
-}
-/* Why are you here box */
-.why-box{
-  background:#232018;border:1px solid #3a3020;
-  padding:22px 20px;position:relative;z-index:1;
-  border-left:3px solid #c4501a;
-}
-.why-title{
-  font-family:Georgia,serif;font-size:20px;color:#e8e0d0;
-  margin-bottom:4px;
-}
-.why-sub{
-  font-family:'Courier New',monospace;font-size:8px;letter-spacing:3px;
-  color:#6a5a3a;text-transform:uppercase;margin-bottom:18px;
-}
-.why-opts{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
-.why-opt{
-  display:flex;align-items:center;gap:12px;padding:11px 14px;
-  border:1px solid #2e2820;cursor:pointer;transition:all .15s;
-  background:transparent;color:#e8e0d0;text-align:left;width:100%;
-  font-family:inherit;
-  -webkit-appearance:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent;
-}
-.why-opt:hover,.why-opt:active{background:#2e2820;border-color:#6a5a3a;}
-.why-opt-icon{font-size:20px;width:28px;text-align:center;flex-shrink:0;}
-.why-opt-title{font-size:14px;font-weight:600;color:#e8e0d0;margin-bottom:2px;}
-.why-opt-desc{font-family:'Courier New',monospace;font-size:9px;color:#6a5a3a;letter-spacing:.5px;}
-.why-skip-row{text-align:center;}
-.why-skip-btn{
-  font-family:'Courier New',monospace;font-size:8px;letter-spacing:2px;
-  color:#6a5a3a;text-transform:uppercase;cursor:pointer;
-  background:none;border:none;padding:6px 10px;
-  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
-}
-.why-skip-btn:hover{color:#c8b888;}
-/* Doors section (shown after skip) */
-.home-doors-section{
-  padding:20px 20px 0;background:#f2ede4;
-}
-.home-doors-label{
-  font-family:'Courier New',monospace;font-size:8px;letter-spacing:4px;
-  color:#8a8070;text-transform:uppercase;margin-bottom:14px;
-  text-align:center;
-}
-.home-metrics-strip{
-  display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;
-  margin-bottom:14px;
-}
-.home-metric{
-  background:#fff;border:1.5px solid #e8e4dc;border-radius:8px;
-  padding:10px 8px;text-align:center;cursor:pointer;
-}
-.home-footer-link{
-  text-align:center;padding:10px 0 0;
-  font-family:'Courier New',monospace;font-size:8px;letter-spacing:3px;
-  color:#8a8070;text-transform:uppercase;cursor:pointer;
-  background:none;border:none;width:100%;display:block;
-  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
-}
-.home-footer-link:hover{color:#c4501a;}
 /* ── FLOATING COUNCIL ── */
 #councilFloat{position:fixed;bottom:24px;right:16px;z-index:200;}
 #councilFloatBtn{width:52px;height:52px;border-radius:50%;background:#1a1814;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(0,0,0,0.25);touch-action:manipulation;transition:transform .2s;}
@@ -199,7 +107,7 @@ textarea{resize:none;min-height:80px;}
     <ellipse cx="12" cy="12" rx="11" ry="3.5" stroke="#b8922a" stroke-width="1" fill="none"/>
   </svg>
   <span class="header-title">The World Game</span>
-  <button onclick="openProfile()" style="margin-left:auto;background:transparent;border:none;cursor:pointer;touch-action:manipulation;padding:2px" title="Your profile">
+  <button onclick="show('quiz')" style="margin-left:auto;background:transparent;border:none;cursor:pointer;touch-action:manipulation;padding:2px" title="Your profile">
     <canvas id="headerAvatarCanvas" width="36" height="36" style="border-radius:50%;border:1.5px solid #2a2820;display:block"></canvas>
   </button>
 </div>
@@ -219,51 +127,31 @@ textarea{resize:none;min-height:80px;}
 
 <div class="screen active" id="screen-home">
   <div class="home-hero">
-    <canvas id="globeCanvas" width="140" height="140" style="display:block;margin:0 auto 16px"></canvas>
+    <canvas id="globeCanvas" width="140" height="140" style="display:block;margin:0 auto 20px"></canvas>
     <div class="home-title">The World Game</div>
-    <div class="home-sub" style="margin-bottom:20px">Make the world work for everyone</div>
-
-```
-<!-- Live world metrics — always visible -->
-<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;max-width:360px;margin:0 auto 20px;width:100%">
-  <div style="background:rgba(42,144,96,0.1);border:1px solid rgba(42,144,96,0.3);border-radius:10px;padding:10px 8px;text-align:center;cursor:pointer" onclick="show('world')">
-    <div style="font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#2a9060;margin-bottom:3px">Flourishing</div>
-    <div style="font-size:22px;font-weight:700;color:#2a9060" id="homeFl">--</div>
-  </div>
-  <div style="background:rgba(184,146,42,0.1);border:1px solid rgba(184,146,42,0.3);border-radius:10px;padding:10px 8px;text-align:center;cursor:pointer" onclick="show('world')">
-    <div style="font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#b8922a;margin-bottom:3px">Ecological</div>
-    <div style="font-size:22px;font-weight:700;color:#b8922a" id="homeEc">--</div>
-  </div>
-  <div style="background:rgba(80,64,160,0.1);border:1px solid rgba(80,64,160,0.3);border-radius:10px;padding:10px 8px;text-align:center;cursor:pointer" onclick="show('world')">
-    <div style="font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#5040a0;margin-bottom:3px">Stability</div>
-    <div style="font-size:22px;font-weight:700;color:#5040a0" id="homeSt">--</div>
-  </div>
-</div>
-<div style="font-size:11px;color:#b8b4ae;margin-bottom:24px;max-width:300px;margin-left:auto;margin-right:auto">Global baseline 2025 — tap to model a better world</div>
-<div class="doors">
-  <button class="door" onclick="show('oracle')">
-    <span class="door-icon">🪞</span>
-    <div class="door-q">I need help with something</div>
-    <div class="door-desc">Bring your real questions. Receive wisdom from across the ages.</div>
-  </button>
-  <button class="door" onclick="show('forum')">
-    <span class="door-icon">⬡</span>
-    <div class="door-q">I want to think through a big idea</div>
-    <div class="door-desc">Let great minds debate and reach a synthesis.</div>
-  </button>
-  <button class="door" onclick="show('create')">
-    <span class="door-icon">✦</span>
-    <div class="door-q">I just want to make something</div>
-    <div class="door-desc">Express an idea, write something, create freely.</div>
-  </button>
-  <button class="door" onclick="show('world')">
-    <span class="door-icon">🌍</span>
-    <div class="door-q">What's happening in the world?</div>
-    <div class="door-desc">Model scenarios and simulate a better world.</div>
-  </button>
-</div>
-```
-
+    <div class="home-sub">Make the world work for everyone</div>
+    <div class="doors">
+      <button class="door" onclick="show('oracle')">
+        <span class="door-icon">🪞</span>
+        <div class="door-q">I need help with something</div>
+        <div class="door-desc">Bring your real questions. Receive wisdom from across the ages.</div>
+      </button>
+      <button class="door" onclick="show('forum')">
+        <span class="door-icon">⬡</span>
+        <div class="door-q">I want to think through a big idea</div>
+        <div class="door-desc">Let great minds debate and reach a synthesis.</div>
+      </button>
+      <button class="door" onclick="show('create')">
+        <span class="door-icon">✦</span>
+        <div class="door-q">I just want to make something</div>
+        <div class="door-desc">Express an idea, write something, create freely.</div>
+      </button>
+      <button class="door" onclick="show('world')">
+        <span class="door-icon">🌍</span>
+        <div class="door-q">What's happening in the world?</div>
+        <div class="door-desc">Model scenarios and simulate a better world.</div>
+      </button>
+    </div>
   </div>
 </div>
 
@@ -800,13 +688,6 @@ function show(name) {
   }
 }
 
-function skipWhy() {
-  var wb = document.getElementById('whyBox');
-  var hd = document.getElementById('homeDoors');
-  if (wb) wb.style.display = 'none';
-  if (hd) hd.style.display = 'block';
-}
-
 // ── API ──
 function api(system, user, maxTok, cb) {
   fetch('/api/chat', {
@@ -978,50 +859,43 @@ async function aiCurateCouncil() {
 
   var all = BASE.concat(POOL);
   var names = all.map(function(m) { return m.name; }).join(', ');
-  var sys = 'You are a council curator. Given a situation or question, select 5 thinkers who would offer the most valuable perspectives.\n\nAvailable thinkers: ' + names + '\n\nYou may also add up to 2 thinkers NOT on this list if highly relevant.\n\nRespond in this EXACT format — two lines only:\nNAMES: Name1, Name2, Name3, Name4, Name5\nNOTE: One sentence about why this council fits.';
+  var sys = 'You are a council curator. Given a persons situation or question, select 5 thinkers from this list who would offer the most valuable and distinct perspectives: ' + names + '. Respond with ONLY a JSON array of exactly 5 names, e.g. ["Name1","Name2","Name3","Name4","Name5"]. No explanation.';
 
   fetch('/api/chat', {
     method:'POST',
     headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ system: sys, user: input, maxTokens: 150 })
+    body: JSON.stringify({ system: sys, user: input, maxTokens: 100 })
   })
   .then(function(r) { return r.json(); })
   .then(function(d) {
     btn.disabled = false;
-    btn.textContent = '✦ Assemble My Council';
+    btn.textContent = 'Assemble My Council';
     if (d.error) { result.innerHTML = '<div style="color:#c04020;font-size:13px">' + d.error + '</div>'; return; }
     try {
-      var text = d.text || '';
-      var namesMatch = text.match(/NAMES:\s*(.+)/i);
-      var noteMatch = text.match(/NOTE:\s*(.+)/i);
-      if (!namesMatch) throw new Error('No names found');
-      var picked = namesMatch[1].split(',').map(function(n){ return n.trim(); }).filter(function(n){ return n.length > 0; });
-      if (!picked.length) throw new Error('Empty names');
+      var text = d.text.trim();
+      var start = text.indexOf('[');
+      var end = text.lastIndexOf(']');
+      if (start < 0 || end < 0) throw new Error('No array found');
+      var picked = JSON.parse(text.substring(start, end+1));
       council = [];
       picked.forEach(function(name) {
         for (var i = 0; i < all.length; i++) {
-          if (all[i].name.toLowerCase() === name.toLowerCase()) { council.push(all[i]); return; }
+          if (all[i].name === name) { council.push(all[i]); return; }
         }
-        // Not in list — add as custom thinker
-        council.push({ name: name, era: '', domain: 'Selected thinker' });
+        council.push({ name:name, era:'', domain:'Selected thinker' });
       });
-      // Always include Claude for synthesis
+      var claude = BASE[BASE.length-1];
       var hasClaude = council.some(function(m) { return m.isClaude; });
-      if (!hasClaude && BASE[BASE.length-1]) council.push(BASE[BASE.length-1]);
+      if (!hasClaude) council.push(claude);
       renderCouncil();
-      var note = noteMatch ? noteMatch[1].trim() : '';
-      result.innerHTML =
-        '<div style="color:#2a9060;font-size:13px;padding:6px 0;line-height:1.5">' +
-        '✓ Council assembled: ' + council.filter(function(m){return !m.isClaude;}).map(function(m){return m.name;}).join(', ') +
-        (note ? '<br><span style="color:#8a8580;font-size:12px;font-style:italic">' + note + '</span>' : '') +
-        '</div>';
+      result.innerHTML = '<div style="color:#2a9060;font-size:13px;padding:6px 0">Council assembled: ' + council.map(function(m){return m.name;}).join(', ') + '</div>';
     } catch(e) {
-      result.innerHTML = '<div style="color:#c04020;font-size:13px">Could not parse response — try rephrasing your situation.</div>';
+      result.innerHTML = '<div style="color:#c04020;font-size:13px">Could not parse response. Try again.</div>';
     }
   })
   .catch(function(e) {
     btn.disabled = false;
-    btn.textContent = '✦ Assemble My Council';
+    btn.textContent = 'Assemble My Council';
     result.innerHTML = '<div style="color:#c04020;font-size:13px">' + e.message + '</div>';
   });
 }
@@ -1516,13 +1390,6 @@ function recalc() {
   document.getElementById('fillFl').style.width = fl + '%';
   document.getElementById('fillEc').style.width = ec + '%';
   document.getElementById('fillSt').style.width = st + '%';
-  // Sync to home screen
-  var hFl = document.getElementById('homeFl');
-  var hEc = document.getElementById('homeEc');
-  var hSt = document.getElementById('homeSt');
-  if (hFl) hFl.textContent = fl;
-  if (hEc) hEc.textContent = ec;
-  if (hSt) hSt.textContent = st;
 
 }
 
@@ -3047,24 +2914,12 @@ var quizScores = {};
 
 // ── QUIZ ──
 function skipQuiz() { show("home"); }
-
-function openProfile() {
-  if (avatarState.type) {
-    // Already has avatar - go straight to builder
-    show('quiz');
-    setTimeout(showAvatarBuilder, 50);
-  } else {
-    // No avatar yet - start quiz
-    startQuiz();
-  }
-}
-
 function startQuiz() {
   quizStep = 0;
   quizScores = {};
   Object.keys(TYPES).forEach(function(t){ quizScores[t] = 0; });
   show('quiz');
-  setTimeout(renderQuizStep, 50);
+  renderQuizStep();
 }
 
 function renderQuizStep() {
@@ -3113,10 +2968,8 @@ function finishQuiz() {
 
 function showTypeReveal() {
   show('quiz');
-  setTimeout(function() {
   var screen = document.getElementById('screen-quiz');
-  if (!screen) return;
-  var td = TYPES[avatarState.type] || TYPES.analyst;
+  var td = TYPES[avatarState.type];
   screen.innerHTML =
     '<div style="display:flex;flex-direction:column;align-items:center;padding:40px 20px;background:#0a0a0f;min-height:100vh">' +
     '<div style="font-size:10px;font-weight:600;letter-spacing:2px;color:#3a3830;margin-bottom:28px;text-transform:uppercase">You are</div>' +
@@ -3128,14 +2981,11 @@ function showTypeReveal() {
     '<button onclick="startQuiz()" style="background:transparent;border:none;color:#3a3830;font-size:13px;cursor:pointer;touch-action:manipulation;font-family:inherit">Retake quiz</button>' +
     '</div>';
   setTimeout(function(){ drawAvatar('revealCanvas', avatarState); }, 80);
-  }, 30);
 }
 
 function showAvatarBuilder() {
   show('quiz');
-  setTimeout(function() {
   var screen = document.getElementById('screen-quiz');
-  if (!screen) return;
   var td = TYPES[avatarState.type] || TYPES.analyst;
 
   function opts(arr, key) {
@@ -3160,10 +3010,9 @@ function showAvatarBuilder() {
 
     '<canvas id="builderCanvas" width="140" height="140" style="display:block;margin:0 auto 16px;border-radius:50%;border:2px solid #2a2820"></canvas>' +
 
-    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">' +
-    '<div style="flex:1;padding:10px 14px;background:#141414;border:1.5px solid #2a2820;border-radius:8px;color:#f0ede8;font-size:15px;font-weight:600;font-family:inherit" id="usernameDisplay">' + (avatarState.username||generateUsername()) + '</div>' +
-    '<button onclick="avatarState.username=generateUsername();document.getElementById('usernameDisplay').textContent=avatarState.username" style="padding:10px 14px;background:#1a1814;border:1.5px solid #2a2820;border-radius:8px;color:#5a5650;font-size:12px;cursor:pointer;touch-action:manipulation;white-space:nowrap;font-family:inherit">New name</button>' +
-    '</div>' +
+    '<input id="usernameInput" placeholder="Choose a name (anonymous by default)" value="' + (avatarState.username||'') + '" ' +
+    'style="width:100%;padding:10px 14px;background:#141414;border:1.5px solid #2a2820;border-radius:8px;color:#f0ede8;font-size:14px;font-family:inherit;outline:none;margin-bottom:20px;box-sizing:border-box" ' +
+    'oninput="avatarState.username=this.value">' +
 
     '<div style="display:flex;flex-direction:column;gap:16px;background:#0e0e14;border-radius:12px;padding:16px;margin-bottom:20px">' +
 
@@ -3200,56 +3049,32 @@ function showAvatarBuilder() {
     '</div>';
 
   setTimeout(function(){ drawAvatar('builderCanvas', avatarState); }, 80);
-  }, 30);
-}
-
-
-var NAME_PREFIXES = ['Alpha','Beta','Gamma','Delta','Echo','Nova','Sigma','Zeta','Axis','Core','Arc','Flux','Node','Orbit','Phase','Pulse','Quasar','Relay','Shift','Vega'];
-var NAME_SUFFIXES = ['Seven','Prime','Zero','One','Null','Void','Edge','Deep','Far','High','Low','Dark','Bright','True','Free','Bold','Fast','Clear','Wide','Long'];
-
-function generateUsername() {
-  var pre = NAME_PREFIXES[Math.floor(Math.random() * NAME_PREFIXES.length)];
-  var suf = NAME_SUFFIXES[Math.floor(Math.random() * NAME_SUFFIXES.length)];
-  return pre + suf;
 }
 
 function setAv(key, val, isPalette) {
-  if (isPalette) {
-    avatarState.paletteIdx = parseInt(val);
-  } else {
-    avatarState[key] = val;
-  }
-  // Update button selected states using data attributes
+  if (isPalette || key === 'paletteIdx') { avatarState.paletteIdx = parseInt(val); key = 'paletteIdx'; val = parseInt(val); }
+  else avatarState[key] = val;
+  // Update sel classes
   var btns = document.querySelectorAll('.builder-opt');
-  for (var i = 0; i < btns.length; i++) {
+  for (var i=0;i<btns.length;i++) {
     var b = btns[i];
-    var bk = b.getAttribute('data-k');
-    var bv = b.getAttribute('data-v');
-    if (!bk) continue;
-    var actualKey = isPalette ? 'paletteIdx' : key;
-    if (bk === actualKey) {
-      var match = bv === String(val);
-      b.classList.toggle('sel', match);
-      if (bk === 'type' && match && TYPES[val]) {
-        b.style.borderColor = TYPES[val].color;
-        b.style.color = TYPES[val].color;
-      } else if (bk === 'type') {
-        b.style.borderColor = '';
-        b.style.color = '';
-      }
+    var oc = b.getAttribute('onclick')||'';
+    if (oc.indexOf("setAv('"+key+"'") >= 0) {
+      var isMatch = oc.indexOf("'"+val+"'") >= 0 || oc.indexOf(','+val+')') >= 0;
+      b.classList.toggle('sel', isMatch);
+      if (key==='type' && isMatch) { b.style.borderColor=TYPES[val]?TYPES[val].color:''; b.style.color=TYPES[val]?TYPES[val].color:''; }
+      else if (key==='type') { b.style.borderColor=''; b.style.color=''; }
     }
   }
-  // Update color dots
   var dots = document.querySelectorAll('.color-dot');
-  for (var j = 0; j < dots.length; j++) {
-    var dv = dots[j].getAttribute('data-v');
-    dots[j].classList.toggle('sel', dv === String(val) && isPalette);
+  for (var j=0;j<dots.length;j++) {
+    var oc2 = dots[j].getAttribute('onclick')||'';
+    dots[j].classList.toggle('sel', oc2.indexOf(','+val+')') >= 0);
   }
   drawAvatar('builderCanvas', avatarState);
 }
 
 function saveAvatar() {
-  if (!avatarState.username) avatarState.username = generateUsername();
   try { localStorage.setItem('wg_avatar', JSON.stringify(avatarState)); } catch(e){}
   show('home');
   drawHeaderAvatar();
@@ -3505,14 +3330,10 @@ function drawSym(ctx,cx,cy,r,sym,p) {
 
 
 // ── INIT ──
-document.addEventListener('DOMContentLoaded', function() {
-  loadAvatar();
-  renderCouncil();
-  renderGallery();
-  initGlobe();
-  recalc();
-  drawHeaderAvatar();
-});
+renderCouncil();
+renderGallery();
+initGlobe();
+recalc();
 </script>
 
 <div id="councilFloat">
