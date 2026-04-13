@@ -1592,7 +1592,9 @@ function initWorldMap() {
 
   leafletMap.on('click', function(e) {
     var z = leafletMap.getZoom();
-    if (z >= 4) reverseGeocode(e.latlng.lat, e.latlng.lng);
+    if (z >= 4 && selectedPlace.code) {
+      reverseGeocode(e.latlng.lat, e.latlng.lng);
+    }
   });
 }
 
@@ -1607,11 +1609,18 @@ function loadCountryLayer() {
         },
         onEachFeature: function(feature, layer) {
           layer.on('click', function(e) {
-            L.DomEvent.stopPropagation(e);
+            var z = leafletMap.getZoom();
             var props = feature.properties;
             var name = props.ADMIN || props.name || props.NAME || 'Unknown';
             var iso2 = getISO2(props);
             var iso3 = ISO2_TO_ISO3[iso2] || '';
+            // If zoomed in and already on this country, use reverse geocode for region
+            if (z >= 5 && selectedPlace.code === iso2) {
+              L.DomEvent.stopPropagation(e);
+              reverseGeocode(e.latlng.lat, e.latlng.lng);
+              return;
+            }
+            L.DomEvent.stopPropagation(e);
             onCountryClick(iso2, iso3, name, e.latlng);
           });
           layer.on('mouseover', function() {
