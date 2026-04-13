@@ -48,6 +48,27 @@ textarea{resize:none;min-height:80px;}
 .door-icon{font-size:24px;display:block;margin-bottom:8px;}
 .door-q{font-size:15px;font-weight:600;color:#1a1814;margin-bottom:4px;}
 .door-desc{font-size:13px;color:#8a8580;}
+/* ── FLOATING COUNCIL ── */
+#councilFloat{position:fixed;bottom:24px;right:16px;z-index:200;}
+#councilFloatBtn{width:52px;height:52px;border-radius:50%;background:#1a1814;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(0,0,0,0.25);touch-action:manipulation;transition:transform .2s;}
+#councilFloatBtn:active{transform:scale(.92);}
+#councilFloatBtn svg{width:26px;height:26px;}
+#councilChatPanel{position:fixed;bottom:90px;right:12px;left:12px;max-width:480px;margin:0 auto;background:#fff;border:1px solid #e8e4dc;border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,.18);z-index:199;display:none;flex-direction:column;max-height:70vh;overflow:hidden;}
+#councilChatPanel.open{display:flex;}
+.chat-header{padding:14px 16px;border-bottom:1px solid #e8e4dc;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.chat-header-title{font-size:14px;font-weight:600;color:#1a1814;}
+.chat-header-sub{font-size:11px;color:#b8b4ae;margin-top:1px;}
+.chat-close{width:28px;height:28px;border-radius:50%;background:#f4f0e8;border:none;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;touch-action:manipulation;}
+.chat-messages{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-height:120px;}
+.chat-msg-user{background:#1a1814;color:#fff;padding:8px 12px;border-radius:12px 12px 3px 12px;font-size:14px;line-height:1.5;align-self:flex-end;max-width:85%;}
+.chat-msg-council{background:#f4f0e8;color:#1a1814;padding:8px 12px;border-radius:12px 12px 12px 3px;font-size:14px;line-height:1.5;align-self:flex-start;max-width:90%;}
+.chat-msg-speaker{font-size:10px;font-weight:600;color:#b8922a;margin-bottom:3px;letter-spacing:.5px;}
+.chat-input-row{padding:10px 12px;border-top:1px solid #e8e4dc;display:flex;gap:8px;flex-shrink:0;}
+.chat-input-row input{flex:1;padding:9px 14px;border:1.5px solid #e8e4dc;border-radius:20px;font-size:14px;font-family:inherit;outline:none;background:#f8f7f4;}
+.chat-input-row input:focus{border-color:#d4aa44;}
+.chat-send{padding:9px 16px;background:#1a1814;color:#fff;border:none;border-radius:20px;font-size:13px;cursor:pointer;touch-action:manipulation;font-family:inherit;}
+.chat-context{padding:6px 12px;font-size:11px;color:#b8b4ae;border-bottom:1px solid #f4f0e8;flex-shrink:0;font-style:italic;}
+
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -120,19 +141,57 @@ textarea{resize:none;min-height:80px;}
 <!-- ORACLE -->
 
 <div class="screen" id="screen-oracle">
-  <div class="card">
-    <div class="card-hdr"><span class="card-title">Oracle</span></div>
-    <div class="card-body">
-      <p style="font-size:14px;color:#8a8580;margin-bottom:14px;line-height:1.6">Bring your real questions. Completely private.</p>
-      <textarea id="oracleInput" placeholder="What is on your mind?" rows="3"></textarea>
-      <div style="margin-top:10px;display:flex;gap:8px">
-        <button class="btn btn-dark" onclick="oracleQuery()" id="oracleBtn" style="flex:1">Ask</button>
+  <div class="card" style="margin-top:4px">
+    <div class="card-hdr" style="justify-content:space-between">
+      <span class="card-title">Oracle</span>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-outline" style="font-size:11px;padding:3px 10px" onclick="setOracleMode('personal')" id="oModePers">Personal</button>
+        <button class="btn btn-outline" style="font-size:11px;padding:3px 10px" onclick="setOracleMode('global')" id="oModeGlob">Global</button>
+        <button class="btn btn-outline" style="font-size:11px;padding:3px 10px" onclick="setOracleMode('synthesis')" id="oModeSync">Synthesis</button>
       </div>
     </div>
-    <div class="messages" id="oracleMsgs">
-      <div class="msg-sys">The oracle awaits.</div>
+    <div class="card-body" style="padding:12px 16px">
+      <div id="oracleModeDesc" style="font-size:13px;color:#8a8580;margin-bottom:12px;line-height:1.6">
+        Bring your real questions — personal, professional, existential. Completely private.
+      </div>
+
+```
+  <!-- Document upload -->
+  <div id="oracleDocArea" style="margin-bottom:10px">
+    <div style="display:flex;align-items:center;gap:8px">
+      <label style="font-size:12px;color:#8a8580;cursor:pointer;padding:5px 12px;border:1.5px dashed #d8d4cc;border-radius:8px;flex:1;text-align:center" id="oracleDocLabel">
+        📎 Attach a document (PDF or text)
+        <input type="file" accept=".txt,.pdf,.md" id="oracleDocFile" style="display:none" onchange="handleOracleDoc(this)">
+      </label>
+      <button id="oracleDocClear" style="display:none" class="btn btn-outline" style="font-size:11px;padding:4px 10px" onclick="clearOracleDoc()">✕ Clear</button>
     </div>
-    <div id="oracleErr"></div>
+    <div id="oracleDocName" style="font-size:11px;color:#2a9060;margin-top:4px;display:none"></div>
+  </div>
+
+  <textarea id="oracleInput" placeholder="What is on your mind?" rows="3" style="margin-bottom:10px"></textarea>
+  <button class="btn btn-dark btn-full" onclick="oracleQuery()" id="oracleBtn">Ask the Council</button>
+  <div style="font-size:11px;color:#b8b4ae;margin-top:8px;text-align:center">Oracle sessions are completely private — never stored, never shared.</div>
+</div>
+
+<!-- Chat-style messages -->
+<div class="chat-messages" id="oracleMsgs" style="min-height:160px;max-height:none;border-top:1px solid #e8e4dc">
+  <div style="text-align:center;color:#b8b4ae;font-size:13px;padding:20px 0">The council awaits your question.</div>
+</div>
+<div id="oracleErr"></div>
+
+<!-- Follow-up input -->
+<div id="oracleFollowUp" style="display:none;padding:10px 12px;border-top:1px solid #e8e4dc;display:none">
+  <div style="display:flex;gap:8px">
+    <input id="oracleFollowInput" placeholder="Ask a follow-up..." style="flex:1;padding:8px 14px;border:1.5px solid #e8e4dc;border-radius:20px;font-size:14px;font-family:inherit;outline:none" onkeydown="if(event.keyCode===13)oracleFollowUp()">
+    <button class="chat-send" onclick="oracleFollowUp()">Send</button>
+  </div>
+</div>
+
+<div style="padding:10px 16px;border-top:1px solid #e8e4dc">
+  <button class="btn btn-outline btn-full" style="font-size:12px" onclick="show('forum')">Take this to the Forum →</button>
+</div>
+```
+
   </div>
 </div>
 
@@ -871,9 +930,148 @@ function renderCouncil() {
 }
 
 // ── ORACLE ──
+// ── ORACLE EXTRAS ──
+var oracleMode = 'personal';
+var oracleDoc = null;
+var oracleConvHistory = [];
+
+var ORACLE_MODE_DESC = {
+  personal: 'Bring your real questions — personal, professional, existential. Completely private.',
+  global: 'Ask about world events, civilizational questions, historical patterns, or geopolitical dynamics.',
+  synthesis: 'Upload a document or describe an idea. The council will analyze, challenge, and synthesize.'
+};
+
+function setOracleMode(mode) {
+  oracleMode = mode;
+  document.getElementById('oracleModeDesc').textContent = ORACLE_MODE_DESC[mode];
+  var btns = { personal:'oModePers', global:'oModeGlob', synthesis:'oModeSync' };
+  Object.keys(btns).forEach(function(m) {
+    var btn = document.getElementById(btns[m]);
+    if (btn) {
+      btn.style.borderColor = m === mode ? '#1a1814' : '';
+      btn.style.color = m === mode ? '#1a1814' : '';
+      btn.style.fontWeight = m === mode ? '600' : '';
+    }
+  });
+  var placeholder = {
+    personal: 'What is on your mind?',
+    global: 'What is happening in the world that you want to understand?',
+    synthesis: 'Describe what you want the council to analyze...'
+  };
+  var input = document.getElementById('oracleInput');
+  if (input) input.placeholder = placeholder[mode] || placeholder.personal;
+}
+
+function handleOracleDoc(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    oracleDoc = { name: file.name, text: e.target.result.substring(0, 8000) };
+    document.getElementById('oracleDocName').textContent = file.name + ' loaded';
+    document.getElementById('oracleDocName').style.display = 'block';
+    document.getElementById('oracleDocClear').style.display = 'inline-flex';
+    document.getElementById('oracleDocLabel').textContent = file.name;
+  };
+  reader.readAsText(file);
+}
+
+function clearOracleDoc() {
+  oracleDoc = null;
+  document.getElementById('oracleDocFile').value = '';
+  document.getElementById('oracleDocName').style.display = 'none';
+  document.getElementById('oracleDocClear').style.display = 'none';
+  document.getElementById('oracleDocLabel').innerHTML = '📎 Attach a document (PDF or text)<input type="file" accept=".txt,.pdf,.md" id="oracleDocFile" style="display:none" onchange="handleOracleDoc(this)">';
+}
+
+function oracleFollowUp() {
+  var input = document.getElementById('oracleFollowInput');
+  if (!input || !input.value.trim()) return;
+  var q = input.value.trim();
+  input.value = '';
+  // Append to oracle messages as a new user question
+  var msgs = document.getElementById('oracleMsgs');
+  var userDiv = document.createElement('div');
+  userDiv.className = 'chat-msg-user';
+  userDiv.style.cssText = 'align-self:flex-end;max-width:85%;background:#1a1814;color:#fff;padding:8px 12px;border-radius:12px;font-size:14px;margin:4px 0';
+  userDiv.textContent = q;
+  msgs.appendChild(userDiv);
+  msgs.scrollTop = msgs.scrollHeight;
+  // Re-run oracle with follow-up context
+  oracleConvHistory.push({ role:'user', content: q });
+  doOracleCall(q);
+}
+
+function doOracleCall(q) {
+  if (loading) return;
+  loading = true;
+  document.getElementById('oracleBtn').disabled = true;
+  var msgs = document.getElementById('oracleMsgs');
+
+  var think = document.createElement('div');
+  think.className = 'thinking';
+  think.id = 'think-oracle';
+  think.innerHTML = '<span>The Council</span><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>';
+  msgs.appendChild(think);
+  msgs.scrollTop = msgs.scrollHeight;
+
+  var docContext = oracleDoc ? 'Document provided: "' + oracleDoc.name + '"\n\n' + oracleDoc.text.substring(0,3000) + '\n\n' : '';
+  var modeHint = {
+    personal: 'This is a personal question. Be warm, specific, and practically useful.',
+    global: 'This is a question about world affairs. Draw on historical patterns and your unique perspective.',
+    synthesis: 'Analyze this carefully. Identify what is strong, what is missing, and what matters most.'
+  }[oracleMode] || '';
+
+  var histContext = oracleConvHistory.slice(-4).map(function(m){
+    return (m.role === 'user' ? 'Person: ' : 'Council: ') + m.content;
+  }).join('\n');
+
+  var sys = 'You are facilitating wisdom from a council: ' + getCouncilNames() + '.\n\n' +
+    modeHint + '\n\n' +
+    'Select 3 most relevant voices. For each:\nSPEAKER: [name]\n[1-2 sentences]\n\nThen:\nCONSENSUS:\n[2-3 sentence synthesis]\n\n' +
+    (histContext ? 'Prior conversation:\n' + histContext + '\n\n' : '') +
+    (docContext ? docContext : '') +
+    'Be specific and honest. No platitudes.';
+
+  api(sys, q, 1200, function(text, err) {
+    loading = false;
+    document.getElementById('oracleBtn').disabled = false;
+    var t = document.getElementById('think-oracle');
+    if (t) t.parentNode.removeChild(t);
+    if (err) {
+      document.getElementById('oracleErr').innerHTML = '<div class="error">' + err + '</div>';
+      return;
+    }
+    oracleConvHistory.push({ role:'assistant', content: text });
+    var parsed = tryParseOracle(text);
+    if (parsed) {
+      msgs.appendChild(parsed);
+    } else {
+      var div = document.createElement('div');
+      div.className = 'msg-consensus';
+      div.innerHTML = '<div class="lbl">The Council</div><div class="txt">' + text.split('\n').join('<br>') + '</div>';
+      msgs.appendChild(div);
+    }
+    msgs.scrollTop = msgs.scrollHeight;
+    document.getElementById('oracleFollowUp').style.display = 'block';
+  });
+}
+
 function oracleQuery() {
   var q = document.getElementById('oracleInput').value.trim();
   if (!q || loading) return;
+  oracleConvHistory = [];
+  var msgs = document.getElementById('oracleMsgs');
+  msgs.innerHTML = '';
+  var userDiv = document.createElement('div');
+  userDiv.className = 'chat-msg-user';
+  userDiv.style.cssText = 'align-self:flex-end;background:#1a1814;color:#fff;padding:8px 12px;border-radius:12px;font-size:14px;margin-bottom:4px';
+  userDiv.textContent = q;
+  msgs.appendChild(userDiv);
+  document.getElementById('oracleFollowUp').style.display = 'none';
+  loading = false; // reset for doOracleCall
+  doOracleCall(q);
+  return; // rest of old code skipped
   loading = true;
   document.getElementById('oracleBtn').disabled = true;
   var msgs_el = document.getElementById('oracleMsgs');
@@ -1476,36 +1674,31 @@ function filterADM1(data, iso2, iso3) {
   if (!data || !data.features) return { type:'FeatureCollection', features:[] };
   var iso2up = (iso2 || '').toUpperCase();
   var iso3up = (iso3 || '').toUpperCase();
+
   var features = data.features.filter(function(f) {
     var p = f.properties || {};
-    // Natural Earth ADM1 key fields (check all variants)
-    var checks = [
-      p.adm0_a3, p.ADM0_A3, p.adm0_a3_us, p.adm0_a3_is,
-      p.iso_a3, p.ISO_A3,
-      p.iso_3166_2 ? p.iso_3166_2.substring(0,3) : null
-    ];
-    for (var i = 0; i < checks.length; i++) {
-      if (checks[i] && checks[i].toUpperCase() === iso3up) return true;
+    // Scan every string property for ISO3 match (broadest possible search)
+    var keys = Object.keys(p);
+    for (var i = 0; i < keys.length; i++) {
+      var val = p[keys[i]];
+      if (typeof val === 'string') {
+        var vup = val.toUpperCase().trim();
+        if (iso3up && vup === iso3up) return true;
+        if (iso2up && vup === iso2up && val.length === 2) return true;
+      }
     }
-    // ISO2 checks
-    var iso2checks = [p.iso_a2, p.ISO_A2, p.adm0_iso];
-    for (var j = 0; j < iso2checks.length; j++) {
-      if (iso2checks[j] && iso2checks[j].toUpperCase() === iso2up) return true;
-    }
-    // Country name check
-    var nameChecks = [p.admin, p.ADMIN, p.adm0_name, p.ADM0_NAME, p.geonunit, p.sovereignt];
+    // Country name match
+    var nameChecks = [p.admin, p.ADMIN, p.adm0_name, p.ADM0_NAME, p.geonunit, p.sovereignt, p.name, p.NAME];
     for (var k = 0; k < nameChecks.length; k++) {
-      if (nameChecks[k] && NAME_TO_ISO2[nameChecks[k].toUpperCase()] === iso2) return true;
+      if (nameChecks[k] && NAME_TO_ISO2[nameChecks[k].toUpperCase()] === iso2up) return true;
     }
     return false;
   });
-  // Debug: log count
-  if (features.length === 0 && iso3up) {
-    // Try to find what's in the data for this region
-    var sample = data.features.slice(0,3).map(function(f) {
-      return JSON.stringify({a3:f.properties.adm0_a3, iso:f.properties.iso_a2, name:f.properties.admin});
-    });
-    console.log('No match for', iso2up, iso3up, 'Sample:', sample.join(' | '));
+
+  if (features.length === 0 && data.features.length > 0) {
+    // Log first feature props to diagnose
+    var fp = data.features[0].properties;
+    console.log('ADM1 filter miss for', iso2up, iso3up, '| Sample feature:', JSON.stringify(fp).substring(0, 150));
   }
   return { type:'FeatureCollection', features: features };
 }
@@ -1978,6 +2171,147 @@ function initGlobe() {
     requestAnimationFrame(draw);
   }
   draw();
+}
+
+// ── FLOATING COUNCIL CHAT ──
+var chatOpen = false;
+var chatHistory = [];
+var chatLoading = false;
+
+function toggleCouncilChat() {
+  chatOpen = !chatOpen;
+  var panel = document.getElementById('councilChatPanel');
+  if (chatOpen) {
+    panel.classList.add('open');
+    updateChatContext();
+    updateChatCouncilNames();
+    setTimeout(function() {
+      var input = document.getElementById('chatInput');
+      if (input) input.focus();
+    }, 100);
+  } else {
+    panel.classList.remove('open');
+  }
+}
+
+function updateChatCouncilNames() {
+  var el = document.getElementById('chatCouncilNames');
+  if (!el) return;
+  var names = council.slice(0,4).map(function(m){return m.name;}).join(', ');
+  if (council.length > 4) names += ' +' + (council.length-4) + ' more';
+  el.textContent = names;
+}
+
+function updateChatContext() {
+  var bar = document.getElementById('chatContextBar');
+  if (!bar) return;
+  var ctx = '';
+  if (selectedPlace && selectedPlace.name && selectedPlace.name !== 'Global') {
+    ctx = 'Context: ' + selectedPlace.name;
+  }
+  if (activeProblem) {
+    ctx = ctx ? ctx + ' — ' + activeProblem.substring(0,50) : activeProblem.substring(0,60);
+  }
+  if (ctx) {
+    bar.style.display = 'block';
+    bar.textContent = ctx;
+  } else {
+    bar.style.display = 'none';
+  }
+}
+
+function addChatMsg(role, text, speaker) {
+  var msgs = document.getElementById('chatMessages');
+  if (!msgs) return;
+  var div = document.createElement('div');
+  if (role === 'user') {
+    div.className = 'chat-msg-user';
+    div.textContent = text;
+  } else {
+    div.className = 'chat-msg-council';
+    if (speaker) {
+      var spk = document.createElement('div');
+      spk.className = 'chat-msg-speaker';
+      spk.textContent = speaker.toUpperCase();
+      div.appendChild(spk);
+    }
+    div.innerHTML = (speaker ? '<div class="chat-msg-speaker">'+speaker.toUpperCase()+'</div>' : '') +
+                    '<div>' + text + '</div>';
+  }
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function addChatThinking(speakerName) {
+  var msgs = document.getElementById('chatMessages');
+  if (!msgs) return;
+  var div = document.createElement('div');
+  div.className = 'chat-msg-council';
+  div.id = 'chatThinking';
+  div.innerHTML = '<div class="chat-msg-speaker">' + (speakerName||'COUNCIL').toUpperCase() + '</div>' +
+    '<div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>';
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function removeChatThinking() {
+  var el = document.getElementById('chatThinking');
+  if (el) el.parentNode.removeChild(el);
+}
+
+function sendChat() {
+  var input = document.getElementById('chatInput');
+  if (!input || chatLoading) return;
+  var text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  chatLoading = true;
+  addChatMsg('user', text);
+  chatHistory.push({ role:'user', content: text });
+
+  // Pick a speaker
+  var speakers = council.filter(function(m){return !m.isClaude;});
+  var speaker = speakers[Math.floor(Math.random() * speakers.length)] || council[0];
+
+  addChatThinking(speaker.name);
+
+  // Build context
+  var ctx = '';
+  if (selectedPlace && selectedPlace.name !== 'Global') ctx += 'The user is currently viewing ' + selectedPlace.name + ' on the World Game map. ';
+  if (activeProblem) ctx += 'The forum is debating: "' + activeProblem + '". ';
+
+  // Recent history
+  var recentHist = chatHistory.slice(-6).map(function(m){
+    return (m.role==='user' ? 'User: ' : speaker.name+': ') + m.content;
+  }).join('\n');
+
+  var sys = 'You are ' + speaker.name + ' (' + speaker.era + '), known for: ' + speaker.domain + '. ' +
+    'You are part of a council advising this person. Be direct, specific, and true to your voice. ' +
+    '2-4 sentences. No preamble. ' +
+    (ctx ? ctx : '') +
+    (recentHist ? 'Conversation so far:\n' + recentHist : '');
+
+  fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json' },
+    body: JSON.stringify({ system:sys, user:text, maxTokens:300 })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d) {
+    chatLoading = false;
+    removeChatThinking();
+    if (d.error) {
+      addChatMsg('council', d.error, 'Error');
+    } else {
+      addChatMsg('council', d.text, speaker.name);
+      chatHistory.push({ role:'assistant', content: d.text });
+    }
+  })
+  .catch(function(e) {
+    chatLoading = false;
+    removeChatThinking();
+    addChatMsg('council', e.message, 'Error');
+  });
 }
 
 // ── INIT ──
