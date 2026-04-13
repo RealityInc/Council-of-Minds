@@ -947,29 +947,67 @@ function fetchCountryLayer() {
     });
 }
 
+// ISO3 to ISO2 lookup for common mismatches
+var ISO3_TO_ISO2 = {
+  'USA':'US','GBR':'GB','FRA':'FR','DEU':'DE','CHN':'CN','IND':'IN','BRA':'BR',
+  'RUS':'RU','CAN':'CA','AUS':'AU','JPN':'JP','KOR':'KR','MEX':'MX','IDN':'ID',
+  'TUR':'TR','SAU':'SA','ARG':'AR','ZAF':'ZA','NGA':'NG','EGY':'EG','PAK':'PK',
+  'BGD':'BD','IRN':'IR','THA':'TH','COL':'CO','ESP':'ES','ITA':'IT','POL':'PL',
+  'NLD':'NL','PHL':'PH','MYS':'MY','VNM':'VN','UKR':'UA','SWE':'SE','NOR':'NO',
+  'DNK':'DK','FIN':'FI','CHE':'CH','AUT':'AT','BEL':'BE','PRT':'PT','GRC':'GR',
+  'CZE':'CZ','ROU':'RO','HUN':'HU','CHL':'CL','PER':'PE','VEN':'VE','COD':'CD',
+  'TZA':'TZ','KEN':'KE','ETH':'ET','GHA':'GH','UGA':'UG','AGO':'AO','MOZ':'MZ',
+  'IRQ':'IQ','SYR':'SY','YEM':'YE','SDN':'SD','DZA':'DZ','MAR':'MA','TUN':'TN',
+  'LBY':'LY','NZL':'NZ','SGP':'SG','HKG':'HK','TWN':'TW','ISR':'IL','ARE':'AE',
+  'QAT':'QA','KWT':'KW','KAZ':'KZ','UZB':'UZ','AFG':'AF','MMR':'MM','KHM':'KH',
+  'LAO':'LA','NPL':'NP','LKA':'LK','CUB':'CU','DOM':'DO','GTM':'GT','HND':'HN',
+  'SLV':'SV','CRI':'CR','PAN':'PA','ECU':'EC','BOL':'BO','PRY':'PY','URY':'UY',
+  'CMR':'CM','CIV':'CI','MLI':'ML','BFA':'BF','NER':'NE','SEN':'SN','GIN':'GN',
+  'ZMB':'ZM','ZWE':'ZW','MDG':'MG','MOZ':'MZ','BWA':'BW','NAM':'NA'
+};
+
+function getISO2(props) {
+  // Try direct iso_a2 first
+  var code = props.iso_a2 || props.ISO_A2 || props.ISO2 || '';
+  if (code && code !== '-99' && code.length === 2) return code.toUpperCase();
+  // Try converting from iso_a3
+  var code3 = props.iso_a3 || props.ISO_A3 || props.adm0_a3 || '';
+  if (code3 && ISO3_TO_ISO2[code3.toUpperCase()]) return ISO3_TO_ISO2[code3.toUpperCase()];
+  // Try name-based lookup
+  var name = (props.name || props.NAME || '').toUpperCase();
+  var nameMap = {'UNITED STATES OF AMERICA':'US','UNITED STATES':'US','USA':'US',
+    'UNITED KINGDOM':'GB','UK':'GB','SOUTH KOREA':'KR','NORTH KOREA':'KP',
+    'RUSSIA':'RU','IRAN':'IR','SYRIA':'SY','TAIWAN':'TW','CZECHIA':'CZ',
+    'CZECH REPUBLIC':'CZ','IVORY COAST':'CI','DEMOCRATIC REPUBLIC OF THE CONGO':'CD',
+    'REPUBLIC OF THE CONGO':'CG','TANZANIA':'TZ','SOUTH AFRICA':'ZA','NEW ZEALAND':'NZ'};
+  if (nameMap[name]) return nameMap[name];
+  return code;
+}
+
 function addCountryLayer(geojson) {
   L.geoJSON(geojson, {
     style: function() {
       return {
         fillColor: '#2a9060',
-        fillOpacity: 0.1,
+        fillOpacity: 0.08,
         color: '#2a9060',
         weight: 0.8,
-        opacity: 0.5
+        opacity: 0.4
       };
     },
     onEachFeature: function(feature, layer) {
       layer.on('click', function(e) {
         L.DomEvent.stopPropagation(e);
-        var name = feature.properties.name || feature.properties.NAME || 'Unknown';
-        var code = feature.properties.iso_a2 || feature.properties.ISO_A2 || '';
+        var props = feature.properties;
+        var name = props.name || props.NAME || props.ADMIN || 'Unknown';
+        var code = getISO2(props);
         selectCountry(code, name, e.latlng);
       });
       layer.on('mouseover', function() {
-        layer.setStyle({ fillOpacity: 0.3, weight: 1.5 });
+        layer.setStyle({ fillOpacity: 0.25, weight: 1.5, color: '#1a6b4a' });
       });
       layer.on('mouseout', function() {
-        layer.setStyle({ fillOpacity: 0.1, weight: 0.8 });
+        layer.setStyle({ fillOpacity: 0.08, weight: 0.8, color: '#2a9060' });
       });
     }
   }).addTo(leafletMap);
@@ -1023,6 +1061,15 @@ function fetchWorldBankData(code, name, latlng) {
     }
   }
 
+  // Set a timeout so we don't hang forever
+  var timeoutId = setTimeout(function() {
+    if (pending > 0) {
+      pending = 0;
+      wbCache[cacheKey] = results;
+      displayCountryData(results, name, latlng);
+    }
+  }, 8000);
+
   indicators.forEach(function(ind) {
     var url = 'https://api.worldbank.org/v2/country/' + code + '/indicator/' + ind + '?format=json&mrv=5&per_page=5';
     fetch(url)
@@ -1041,6 +1088,18 @@ function fetchWorldBankData(code, name, latlng) {
       })
       .catch(function() { done(ind, null); });
   });
+
+  // Override done to clear timeout when all complete naturally
+  var origDone = done;
+  done = function(ind, val) {
+    results[ind] = val;
+    pending--;
+    if (pending === 0) {
+      clearTimeout(timeoutId);
+      wbCache[cacheKey] = results;
+      displayCountryData(results, name, latlng);
+    }
+  };
 }
 
 function displayCountryData(data, name, latlng) {
