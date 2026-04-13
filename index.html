@@ -49,6 +49,18 @@ textarea{resize:none;min-height:80px;}
 .door-q{font-size:15px;font-weight:600;color:#1a1814;margin-bottom:4px;}
 .door-desc{font-size:13px;color:#8a8580;}
 </style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+#leafletMap { height: 340px; background: #dde8e4; }
+.leaflet-popup-content { font-size: 13px; line-height: 1.6; min-width: 180px; }
+.popup-title { font-weight: 700; font-size: 14px; margin-bottom: 6px; color: #1a1814; }
+.popup-row { display: flex; justify-content: space-between; margin-bottom: 3px; }
+.popup-label { color: #8a8580; }
+.popup-val { font-weight: 600; color: #1a1814; }
+.popup-source { font-size: 10px; color: #b8b4ae; margin-top: 6px; }
+.loading-map { display: flex; align-items: center; justify-content: center; height: 100%; font-size: 13px; color: #8a8580; }
+</style>
 </head>
 <body>
 
@@ -185,87 +197,107 @@ textarea{resize:none;min-height:80px;}
 
 <div class="screen" id="screen-world">
   <div style="margin-bottom:14px">
-    <div style="font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:#8a8580;margin-bottom:12px">World Game</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:#8a8580">World Game</div>
+      <div style="font-size:12px;color:#b8b4ae" id="viewingLabel">Global Average</div>
+    </div>
 
 ```
 <!-- Metrics -->
-<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
-  <div class="card" style="padding:12px">
-    <div style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580;margin-bottom:4px">Flourishing</div>
-    <div style="font-size:28px;font-weight:700;color:#1a6b4a" id="metFl">62</div>
-    <div style="height:3px;background:#e8e4dc;border-radius:2px;margin-top:6px"><div id="fillFl" style="height:100%;background:#2a9060;border-radius:2px;width:62%;transition:width .5s"></div></div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
+  <div class="card" style="padding:10px">
+    <div style="font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580;margin-bottom:3px">Flourishing</div>
+    <div style="font-size:26px;font-weight:700;color:#1a6b4a" id="metFl">--</div>
+    <div style="height:3px;background:#e8e4dc;border-radius:2px;margin-top:5px"><div id="fillFl" style="height:100%;background:#2a9060;border-radius:2px;width:0%;transition:width .5s"></div></div>
   </div>
-  <div class="card" style="padding:12px">
-    <div style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580;margin-bottom:4px">Ecological</div>
-    <div style="font-size:28px;font-weight:700;color:#b8922a" id="metEc">48</div>
-    <div style="height:3px;background:#e8e4dc;border-radius:2px;margin-top:6px"><div id="fillEc" style="height:100%;background:#d4aa44;border-radius:2px;width:48%;transition:width .5s"></div></div>
+  <div class="card" style="padding:10px">
+    <div style="font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580;margin-bottom:3px">Ecological</div>
+    <div style="font-size:26px;font-weight:700;color:#b8922a" id="metEc">--</div>
+    <div style="height:3px;background:#e8e4dc;border-radius:2px;margin-top:5px"><div id="fillEc" style="height:100%;background:#d4aa44;border-radius:2px;width:0%;transition:width .5s"></div></div>
   </div>
-  <div class="card" style="padding:12px">
-    <div style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580;margin-bottom:4px">Stability</div>
-    <div style="font-size:28px;font-weight:700;color:#5040a0" id="metSt">55</div>
-    <div style="height:3px;background:#e8e4dc;border-radius:2px;margin-top:6px"><div id="fillSt" style="height:100%;background:#7060c0;border-radius:2px;width:55%;transition:width .5s"></div></div>
+  <div class="card" style="padding:10px">
+    <div style="font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580;margin-bottom:3px">Stability</div>
+    <div style="font-size:26px;font-weight:700;color:#5040a0" id="metSt">--</div>
+    <div style="height:3px;background:#e8e4dc;border-radius:2px;margin-top:5px"><div id="fillSt" style="height:100%;background:#7060c0;border-radius:2px;width:0%;transition:width .5s"></div></div>
   </div>
 </div>
 
-<!-- Map -->
-<div class="card" style="margin-bottom:12px">
-  <div style="padding:10px 14px;border-bottom:1px solid #e8e4dc;display:flex;justify-content:space-between;align-items:center">
+<!-- Leaflet Map -->
+<div class="card" style="margin-bottom:12px;overflow:hidden">
+  <div style="padding:8px 14px;border-bottom:1px solid #e8e4dc;display:flex;justify-content:space-between;align-items:center">
     <span style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580">Planetary View</span>
-    <span style="font-size:12px;color:#b8b4ae" id="regionLabel">Tap a region</span>
+    <button class="btn btn-outline" style="font-size:10px;padding:3px 10px" onclick="resetMapView()">Reset</button>
   </div>
-  <canvas id="worldMap" width="700" height="380" style="display:block;width:100%;height:auto;background:#eef2f0;cursor:pointer"></canvas>
+  <div id="leafletMap"></div>
+  <div style="padding:6px 14px;border-top:1px solid #e8e4dc;font-size:11px;color:#b8b4ae" id="mapStatus">Tap any country for real data. Zoom in for states and counties.</div>
+</div>
+
+<!-- Data panel - shown when country selected -->
+<div id="dataPanel" style="display:none" class="card" style="margin-bottom:12px">
+  <div class="card-hdr"><span class="card-title" id="dataPanelTitle">Country Data</span></div>
+  <div id="dataPanelContent" style="padding:14px"></div>
 </div>
 
 <!-- Sliders -->
 <div class="card">
-  <div style="padding:10px 14px;border-bottom:1px solid #e8e4dc">
-    <span style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580">Parameters</span>
+  <div style="padding:10px 14px;border-bottom:1px solid #e8e4dc;display:flex;justify-content:space-between;align-items:center">
+    <span style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580">Model a Scenario</span>
+    <button class="btn btn-outline" style="font-size:10px;padding:3px 10px" onclick="resetSliders()">Reset to Baseline</button>
   </div>
-  <div style="padding:16px 20px;display:flex;flex-direction:column;gap:14px">
+  <div style="padding:14px 20px;display:flex;flex-direction:column;gap:12px">
+    <div style="font-size:11px;color:#b8b4ae;padding-bottom:6px;border-bottom:1px solid #f0ece4">
+      Drag sliders to model alternative futures. Baselines show real 2025 global data.
+    </div>
     <div>
-      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:2px">
         <span style="font-size:13px;color:#4a4640">Renewable energy</span>
-        <span style="font-size:13px;font-weight:600;color:#b8922a" id="sv-ren">32%</span>
+        <span style="font-size:13px;font-weight:600;color:#b8922a" id="sv-ren">34%</span>
       </div>
-      <input type="range" min="0" max="100" value="32" id="sl-ren" oninput="document.getElementById('sv-ren').textContent=this.value+'%';recalc()" style="width:100%;accent-color:#d4aa44">
+      <div style="font-size:11px;color:#b8b4ae;margin-bottom:4px">2025 baseline: 34% of global electricity (IEA). Goal: 60% by 2030.</div>
+      <input type="range" min="0" max="100" value="34" id="sl-ren" oninput="document.getElementById('sv-ren').textContent=this.value+'%';recalc()" style="width:100%;accent-color:#d4aa44">
     </div>
     <div>
-      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-        <span style="font-size:13px;color:#4a4640">Food distribution</span>
-        <span style="font-size:13px;font-weight:600;color:#b8922a" id="sv-food">61%</span>
+      <div style="display:flex;justify-content:space-between;margin-bottom:2px">
+        <span style="font-size:13px;color:#4a4640">Food security</span>
+        <span style="font-size:13px;font-weight:600;color:#b8922a" id="sv-food">72%</span>
       </div>
-      <input type="range" min="0" max="100" value="61" id="sl-food" oninput="document.getElementById('sv-food').textContent=this.value+'%';recalc()" style="width:100%;accent-color:#d4aa44">
+      <div style="font-size:11px;color:#b8b4ae;margin-bottom:4px">2025 baseline: 72% food secure. 673M hungry. (FAO SOFI 2025)</div>
+      <input type="range" min="0" max="100" value="72" id="sl-food" oninput="document.getElementById('sv-food').textContent=this.value+'%';recalc()" style="width:100%;accent-color:#d4aa44">
     </div>
     <div>
-      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-        <span style="font-size:13px;color:#4a4640">Killingry to Livingry</span>
+      <div style="display:flex;justify-content:space-between;margin-bottom:2px">
+        <span style="font-size:13px;color:#4a4640">Livingry vs. Killingry</span>
         <span style="font-size:13px;font-weight:600;color:#b8922a" id="sv-kl">8%</span>
       </div>
+      <div style="font-size:11px;color:#b8b4ae;margin-bottom:4px">2025 baseline: ~8% of govt spend on human welfare vs. military. (Fuller metric)</div>
       <input type="range" min="0" max="100" value="8" id="sl-kl" oninput="document.getElementById('sv-kl').textContent=this.value+'%';recalc()" style="width:100%;accent-color:#d4aa44">
     </div>
     <div>
-      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:2px">
         <span style="font-size:13px;color:#4a4640">Protected land</span>
         <span style="font-size:13px;font-weight:600;color:#b8922a" id="sv-land">17%</span>
       </div>
+      <div style="font-size:11px;color:#b8b4ae;margin-bottom:4px">2025 baseline: ~17% protected. COP15 target: 30% by 2030.</div>
       <input type="range" min="0" max="100" value="17" id="sl-land" oninput="document.getElementById('sv-land').textContent=this.value+'%';recalc()" style="width:100%;accent-color:#d4aa44">
     </div>
     <div>
-      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-        <span style="font-size:13px;color:#4a4640">Water access</span>
-        <span style="font-size:13px;font-weight:600;color:#b8922a" id="sv-water">71%</span>
+      <div style="display:flex;justify-content:space-between;margin-bottom:2px">
+        <span style="font-size:13px;color:#4a4640">Safe water access</span>
+        <span style="font-size:13px;font-weight:600;color:#b8922a" id="sv-water">74%</span>
       </div>
-      <input type="range" min="0" max="100" value="71" id="sl-water" oninput="document.getElementById('sv-water').textContent=this.value+'%';recalc()" style="width:100%;accent-color:#d4aa44">
+      <div style="font-size:11px;color:#b8b4ae;margin-bottom:4px">2025 baseline: 74% safely managed water. 2.1B lack access. (WHO/UNICEF)</div>
+      <input type="range" min="0" max="100" value="74" id="sl-water" oninput="document.getElementById('sv-water').textContent=this.value+'%';recalc()" style="width:100%;accent-color:#d4aa44">
     </div>
     <div>
-      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
-        <span style="font-size:13px;color:#4a4640">Wealth distribution</span>
-        <span style="font-size:13px;font-weight:600;color:#b8922a" id="sv-wealth">34%</span>
+      <div style="display:flex;justify-content:space-between;margin-bottom:2px">
+        <span style="font-size:13px;color:#4a4640">Wealth equity</span>
+        <span style="font-size:13px;font-weight:600;color:#b8922a" id="sv-wealth">12%</span>
       </div>
-      <input type="range" min="0" max="100" value="34" id="sl-wealth" oninput="document.getElementById('sv-wealth').textContent=this.value+'%';recalc()" style="width:100%;accent-color:#d4aa44">
+      <div style="font-size:11px;color:#b8b4ae;margin-bottom:4px">2025 baseline: bottom 50% own ~2% of wealth. Top 1% own 45%. (Credit Suisse)</div>
+      <input type="range" min="0" max="100" value="12" id="sl-wealth" oninput="document.getElementById('sv-wealth').textContent=this.value+'%';recalc()" style="width:100%;accent-color:#d4aa44">
     </div>
   </div>
-  <div style="padding:0 20px 16px;display:flex;gap:8px;flex-wrap:wrap">
+  <div style="padding:0 20px 14px;display:flex;gap:8px;flex-wrap:wrap">
     <button class="btn btn-outline" onclick="askCouncil()">Ask the Council</button>
     <button class="btn btn-outline" onclick="makeArt()">Make Art from This</button>
   </div>
@@ -387,14 +419,12 @@ function show(name) {
   window.scrollTo(0,0);
   if (name === 'council') renderCouncil();
   if (name === 'gallery') renderGallery();
-  if (name === 'world') setTimeout(function() { drawMap(selectedRegion ? getRegionIdByName(selectedRegion) : null); }, 50);
-}
-
-function getRegionIdByName(name) {
-  for (var i = 0; i < REGIONS.length; i++) {
-    if (REGIONS[i].name === name) return REGIONS[i].id;
+  if (name === 'world') {
+    setTimeout(function() {
+      if (!leafletMap) initWorldMap();
+      else leafletMap.invalidateSize();
+    }, 100);
   }
-  return null;
 }
 
 // ── API ──
@@ -747,12 +777,12 @@ function getSlider(id, def) {
   return el ? parseInt(el.value) || def : def;
 }
 function recalc() {
-  var ren = getSlider('sl-ren', 32);
-  var food = getSlider('sl-food', 61);
+  var ren = getSlider('sl-ren', 34);
+  var food = getSlider('sl-food', 72);
   var kl = getSlider('sl-kl', 8);
   var land = getSlider('sl-land', 17);
-  var water = getSlider('sl-water', 71);
-  var wealth = getSlider('sl-wealth', 34);
+  var water = getSlider('sl-water', 74);
+  var wealth = getSlider('sl-wealth', 12);
 
   var fl = Math.min(100, Math.round(food*0.25 + water*0.2 + wealth*0.2 + kl*0.2 + ren*0.1 + land*0.05));
   var ec = Math.min(100, Math.round(ren*0.4 + land*0.35 + kl*0.15 + (100-food*0.01)));
@@ -764,6 +794,7 @@ function recalc() {
   document.getElementById('fillFl').style.width = fl + '%';
   document.getElementById('fillEc').style.width = ec + '%';
   document.getElementById('fillSt').style.width = st + '%';
+
 }
 
 function askCouncil() {
@@ -771,8 +802,7 @@ function askCouncil() {
   var food = getSlider('sl-food', 61);
   var fl = document.getElementById('metFl').textContent;
   var ec = document.getElementById('metEc').textContent;
-  var region = selectedRegion ? selectedRegion + ': ' : '';
-  problem = 'World Game ' + region + 'renewable energy ' + ren + '%, food distribution ' + food + '%, flourishing ' + fl + '/100, ecological ' + ec + '/100. What are the philosophical and ethical implications?';
+  problem = 'World Game scenario: renewable energy ' + ren + '%, food distribution ' + food + '%, flourishing ' + fl + '/100, ecological ' + ec + '/100. What are the philosophical and ethical implications?';
   document.getElementById('forumInput').value = problem;
   show('forum');
   setTimeout(startDebate, 100);
@@ -781,7 +811,7 @@ function askCouncil() {
 function makeArt() {
   var ren = getSlider('sl-ren', 32);
   var food = getSlider('sl-food', 61);
-  var theme = 'the current state of the world: renewable energy at ' + ren + '%, food distribution at ' + food + '%' + (selectedRegion ? ' in ' + selectedRegion : '');
+  var theme = 'the current state of the world: renewable energy at ' + ren + '%, food distribution at ' + food + '%';
   document.getElementById('createTheme').value = theme;
   show('create');
 }
@@ -856,130 +886,320 @@ function shareCreateToGallery() {
   shareToGallery('creative', lastCreateTheme.substring(0, 60), lastCreateText.substring(0, 300));
 }
 
-// ── WORLD MAP ──
-var REGIONS = [
-  {id:'na', name:'N. America', color:'#2a9060',
-   pts:[[55,18],[95,14],[118,20],[125,32],[122,50],[112,65],[98,82],[82,98],[66,100],[48,90],[28,76],[14,58],[12,40],[28,24]]},
-  {id:'sa', name:'S. America', color:'#b8922a',
-   pts:[[82,98],[98,95],[112,100],[120,115],[124,135],[120,158],[112,178],[100,188],[86,184],[74,168],[68,148],[70,125],[76,108]]},
-  {id:'eu', name:'Europe', color:'#2a9060',
-   pts:[[155,18],[175,14],[198,16],[212,22],[220,34],[214,46],[202,52],[188,56],[172,52],[158,44],[148,32]]},
-  {id:'af', name:'Africa', color:'#d4aa44',
-   pts:[[158,52],[175,48],[198,50],[218,44],[228,58],[232,78],[228,100],[220,122],[212,144],[204,164],[194,174],[180,168],[168,152],[158,130],[150,108],[148,86],[150,66]]},
-  {id:'me', name:'Middle East', color:'#c04020',
-   pts:[[220,34],[240,30],[258,34],[268,46],[268,60],[258,68],[242,72],[228,68],[220,56]]},
-  {id:'as', name:'Asia', color:'#2a9060',
-   pts:[[220,16],[252,10],[288,8],[322,12],[352,18],[368,32],[372,50],[362,66],[342,72],[318,76],[294,78],[272,72],[258,68],[242,72],[228,68],[220,56],[220,34],[212,22],[220,16]]},
-  {id:'sea', name:'SE Asia', color:'#7060c0',
-   pts:[[294,78],[318,76],[338,84],[348,100],[342,115],[326,122],[308,118],[294,106],[290,92]]},
-  {id:'oc', name:'Oceania', color:'#5040a0',
-   pts:[[318,148],[344,140],[364,148],[372,162],[366,176],[350,182],[330,178],[316,166],[312,154]]}
-];
+// ── WORLD MAP (LEAFLET) ──
+var leafletMap = null;
+var currentCountryCode = null;
+var currentCountryName = null;
+var wbCache = {};
 
-var selectedRegion = null;
-
-function drawMap(highlightId) {
-  var canvas = document.getElementById('worldMap');
-  if (!canvas) return;
-  var ctx = canvas.getContext('2d');
-  var W = canvas.width, H = canvas.height;
-  var sx = W / 390, sy = H / 200;
-
-  ctx.clearRect(0, 0, W, H);
-
-  // Ocean
-  ctx.fillStyle = '#dde8e4';
-  ctx.fillRect(0, 0, W, H);
-
-  // Grid
-  ctx.strokeStyle = 'rgba(255,255,255,0.4)';
-  ctx.lineWidth = 0.5;
-  var gi;
-  for (gi = 0; gi < H; gi += 30 * sy) {
-    ctx.beginPath(); ctx.moveTo(0, gi); ctx.lineTo(W, gi); ctx.stroke();
-  }
-  for (gi = 0; gi < W; gi += 30 * sx) {
-    ctx.beginPath(); ctx.moveTo(gi, 0); ctx.lineTo(gi, H); ctx.stroke();
-  }
-
-  // Draw regions
-  var ri;
-  for (ri = 0; ri < REGIONS.length; ri++) {
-    var reg = REGIONS[ri];
-    var isSel = reg.id === highlightId;
-    ctx.beginPath();
-    var pi;
-    for (pi = 0; pi < reg.pts.length; pi++) {
-      var px = reg.pts[pi][0] * sx;
-      var py = reg.pts[pi][1] * sy;
-      if (pi === 0) ctx.moveTo(px, py);
-      else ctx.lineTo(px, py);
-    }
-    ctx.closePath();
-    ctx.fillStyle = isSel ? reg.color + 'cc' : reg.color + '55';
-    ctx.fill();
-    ctx.strokeStyle = isSel ? reg.color : reg.color + '88';
-    ctx.lineWidth = isSel ? 2 : 1;
-    ctx.stroke();
-
-    // Label
-    var cx = 0, cy = 0;
-    for (pi = 0; pi < reg.pts.length; pi++) {
-      cx += reg.pts[pi][0];
-      cy += reg.pts[pi][1];
-    }
-    cx = cx / reg.pts.length * sx;
-    cy = cy / reg.pts.length * sy;
-    ctx.fillStyle = isSel ? reg.color : '#555';
-    ctx.font = (isSel ? 'bold ' : '') + Math.round(9 * Math.min(sx, sy)) + 'px system-ui,sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(reg.name, cx, cy);
-  }
-}
-
-function getRegionAt(canvas, clientX, clientY) {
-  var rect = canvas.getBoundingClientRect();
-  var x = (clientX - rect.left) / rect.width * 390;
-  var y = (clientY - rect.top) / rect.height * 200;
-  var best = null, bestD = 9999;
-  var ri, pi;
-  for (ri = 0; ri < REGIONS.length; ri++) {
-    var reg = REGIONS[ri];
-    var cx = 0, cy = 0;
-    for (pi = 0; pi < reg.pts.length; pi++) {
-      cx += reg.pts[pi][0]; cy += reg.pts[pi][1];
-    }
-    cx /= reg.pts.length; cy /= reg.pts.length;
-    var d = Math.sqrt((x-cx)*(x-cx) + (y-cy)*(y-cy));
-    if (d < bestD) { bestD = d; best = reg; }
-  }
-  return bestD < 40 ? best : null;
-}
+// World Bank indicator codes
+var WB_INDICATORS = {
+  renewable: 'EG.ELC.RNEW.ZS',
+  food: 'SN.ITK.DEFC.ZS',
+  water: 'SH.H2O.SMDW.ZS',
+  land: 'ER.LND.PTLD.ZS',
+  gini: 'SI.POV.GINI',
+  gdp: 'NY.GDP.PCAP.CD'
+};
 
 function initWorldMap() {
-  var canvas = document.getElementById('worldMap');
-  if (!canvas) return;
-  drawMap(null);
+  if (typeof L === 'undefined') return;
+  if (leafletMap) { leafletMap.remove(); leafletMap = null; }
 
-  function onTap(e) {
-    var cx, cy;
-    if (e.changedTouches) {
-      cx = e.changedTouches[0].clientX;
-      cy = e.changedTouches[0].clientY;
-    } else {
-      cx = e.clientX; cy = e.clientY;
+  leafletMap = L.map('leafletMap', {
+    center: [20, 0],
+    zoom: 2,
+    minZoom: 2,
+    maxZoom: 12,
+    zoomControl: true
+  });
+
+  // CartoDB light tiles - clean, no labels cluttering
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: 'OpenStreetMap, CartoDB',
+    subdomains: 'abcd',
+    maxZoom: 19
+  }).addTo(leafletMap);
+
+  // Click handler
+  leafletMap.on('click', function(e) {
+    var zoom = leafletMap.getZoom();
+    if (zoom >= 5) {
+      // Try to get US state/county data via reverse geocode
+      fetchLocationData(e.latlng.lat, e.latlng.lng, zoom);
     }
-    var reg = getRegionAt(canvas, cx, cy);
-    if (reg) {
-      selectedRegion = reg.name;
-      document.getElementById('regionLabel').textContent = reg.name + ' selected';
-      drawMap(reg.id);
-      recalc();
+  });
+
+  // Use a GeoJSON country layer for clickable countries
+  fetchCountryLayer();
+}
+
+function fetchCountryLayer() {
+  // Use a lightweight countries GeoJSON from CDN
+  var script = document.createElement('script');
+  script.src = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
+  // Actually use fetch instead
+  fetch('https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson')
+    .then(function(r) { return r.json(); })
+    .then(function(data) { addCountryLayer(data); })
+    .catch(function() {
+      document.getElementById('mapStatus').textContent = 'Tap map to explore. Country outlines loading...';
+    });
+}
+
+function addCountryLayer(geojson) {
+  L.geoJSON(geojson, {
+    style: function() {
+      return {
+        fillColor: '#2a9060',
+        fillOpacity: 0.1,
+        color: '#2a9060',
+        weight: 0.8,
+        opacity: 0.5
+      };
+    },
+    onEachFeature: function(feature, layer) {
+      layer.on('click', function(e) {
+        L.DomEvent.stopPropagation(e);
+        var name = feature.properties.name || feature.properties.NAME || 'Unknown';
+        var code = feature.properties.iso_a2 || feature.properties.ISO_A2 || '';
+        selectCountry(code, name, e.latlng);
+      });
+      layer.on('mouseover', function() {
+        layer.setStyle({ fillOpacity: 0.3, weight: 1.5 });
+      });
+      layer.on('mouseout', function() {
+        layer.setStyle({ fillOpacity: 0.1, weight: 0.8 });
+      });
+    }
+  }).addTo(leafletMap);
+  document.getElementById('mapStatus').textContent = 'Tap any country for real data. Zoom in for states and counties.';
+}
+
+function selectCountry(code, name, latlng) {
+  currentCountryCode = code;
+  currentCountryName = name;
+  document.getElementById('viewingLabel').textContent = name;
+  document.getElementById('mapStatus').textContent = 'Loading data for ' + name + '...';
+
+  // Show data panel
+  document.getElementById('dataPanel').style.display = 'block';
+  document.getElementById('dataPanelTitle').textContent = name;
+  document.getElementById('dataPanelContent').innerHTML = '<div style="color:#8a8580;font-size:13px">Fetching from World Bank...</div>';
+
+  // Add popup marker
+  if (latlng) {
+    L.popup()
+      .setLatLng(latlng)
+      .setContent('<div class="popup-title">' + name + '</div><div style="color:#8a8580;font-size:12px">Loading data...</div>')
+      .openOn(leafletMap);
+  }
+
+  fetchWorldBankData(code, name, latlng);
+}
+
+function fetchWorldBankData(code, name, latlng) {
+  if (!code || code === '-99') {
+    showNoData(name, latlng);
+    return;
+  }
+  var cacheKey = code;
+  if (wbCache[cacheKey]) {
+    displayCountryData(wbCache[cacheKey], name, latlng);
+    return;
+  }
+
+  // Fetch multiple indicators in parallel
+  var indicators = ['EG.ELC.RNEW.ZS', 'SN.ITK.DEFC.ZS', 'SH.H2O.SMDW.ZS', 'ER.LND.PTLD.ZS', 'SI.POV.GINI', 'NY.GDP.PCAP.CD'];
+  var results = {};
+  var pending = indicators.length;
+
+  function done(ind, val) {
+    results[ind] = val;
+    pending--;
+    if (pending === 0) {
+      wbCache[cacheKey] = results;
+      displayCountryData(results, name, latlng);
     }
   }
-  canvas.addEventListener('click', onTap);
-  canvas.addEventListener('touchend', function(e) { e.preventDefault(); onTap(e); }, false);
+
+  indicators.forEach(function(ind) {
+    var url = 'https://api.worldbank.org/v2/country/' + code + '/indicator/' + ind + '?format=json&mrv=5&per_page=5';
+    fetch(url)
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var val = null;
+        if (data && data[1]) {
+          for (var i = 0; i < data[1].length; i++) {
+            if (data[1][i].value !== null) {
+              val = { value: Math.round(data[1][i].value * 10) / 10, year: data[1][i].date };
+              break;
+            }
+          }
+        }
+        done(ind, val);
+      })
+      .catch(function() { done(ind, null); });
+  });
+}
+
+function displayCountryData(data, name, latlng) {
+  var ren = data['EG.ELC.RNEW.ZS'];
+  var hunger = data['SN.ITK.DEFC.ZS'];
+  var water = data['SH.H2O.SMDW.ZS'];
+  var land = data['ER.LND.PTLD.ZS'];
+  var gini = data['SI.POV.GINI'];
+  var gdp = data['NY.GDP.PCAP.CD'];
+
+  // Calculate scores for this country
+  var renVal = ren ? ren.value : 34;
+  var foodVal = hunger ? Math.max(0, 100 - hunger.value) : 72;
+  var waterVal = water ? water.value : 74;
+  var landVal = land ? land.value : 17;
+  var wealthVal = gini ? Math.max(0, 100 - gini.value) : 50;
+  var klVal = 8; // no country-level data available
+
+  // Update sliders to country values
+  setSlider('sl-ren', renVal, 'sv-ren');
+  setSlider('sl-food', foodVal, 'sv-food');
+  setSlider('sl-water', waterVal, 'sv-water');
+  setSlider('sl-land', landVal, 'sv-land');
+  setSlider('sl-wealth', wealthVal, 'sv-wealth');
+  recalc();
+
+  // Build data panel
+  var html = '';
+  html += row('Renewable energy', ren ? ren.value + '% (' + ren.year + ')' : 'No data');
+  html += row('Food secure', hunger ? Math.round(100-hunger.value) + '% (' + hunger.year + ')' : 'No data');
+  html += row('Safe water', water ? water.value + '% (' + water.year + ')' : 'No data');
+  html += row('Protected land', land ? land.value + '% (' + land.year + ')' : 'No data');
+  html += row('Gini coefficient', gini ? gini.value + ' (' + gini.year + ')' : 'No data');
+  html += row('GDP per capita', gdp ? '$' + Math.round(gdp.value).toLocaleString() + ' (' + gdp.year + ')' : 'No data');
+  html += '<div style="font-size:10px;color:#b8b4ae;margin-top:10px;padding-top:8px;border-top:1px solid #f0ece4">Source: World Bank Open Data. Most recent available year shown.</div>';
+  document.getElementById('dataPanelContent').innerHTML = html;
+
+  // Update popup
+  if (latlng && leafletMap) {
+    var popupHtml = '<div class="popup-title">' + name + '</div>';
+    if (ren) popupHtml += '<div class="popup-row"><span class="popup-label">Renewables</span><span class="popup-val">' + ren.value + '%</span></div>';
+    if (water) popupHtml += '<div class="popup-row"><span class="popup-label">Safe water</span><span class="popup-val">' + water.value + '%</span></div>';
+    if (gdp) popupHtml += '<div class="popup-row"><span class="popup-label">GDP/capita</span><span class="popup-val">$' + Math.round(gdp.value/1000) + 'k</span></div>';
+    popupHtml += '<div class="popup-source">World Bank Open Data</div>';
+    L.popup().setLatLng(latlng).setContent(popupHtml).openOn(leafletMap);
+  }
+
+  document.getElementById('mapStatus').textContent = name + ' data loaded. Zoom in to explore regions.';
+}
+
+function fetchLocationData(lat, lng, zoom) {
+  // Use Nominatim reverse geocode for sub-country zoom levels
+  var url = 'https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lng + '&format=json&zoom=' + (zoom >= 8 ? 10 : 6);
+  fetch(url, { headers: { 'Accept-Language': 'en' } })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (!d || !d.address) return;
+      var addr = d.address;
+      var region = addr.state || addr.province || addr.county || addr.city || addr.country;
+      var country = addr.country_code ? addr.country_code.toUpperCase() : '';
+      if (region) {
+        document.getElementById('viewingLabel').textContent = region + (addr.country ? ', ' + addr.country : '');
+        document.getElementById('mapStatus').textContent = region + ' — ';
+        // For US, fetch Census data
+        if (country === 'US' && addr.state) {
+          fetchUSData(addr, lat, lng);
+        } else {
+          document.getElementById('mapStatus').textContent = region + ' — zoom in to explore further';
+        }
+      }
+    })
+    .catch(function() {});
+}
+
+function fetchUSData(addr, lat, lng) {
+  // US Census Bureau API - no key needed for basic ACS data
+  var stateFips = US_STATE_FIPS[addr.state] || '';
+  if (!stateFips) {
+    document.getElementById('mapStatus').textContent = addr.state + ' — Census data unavailable';
+    return;
+  }
+  document.getElementById('mapStatus').textContent = 'Loading Census data for ' + addr.state + '...';
+
+  // ACS 5-year estimates: median income, poverty rate, health insurance
+  var url = 'https://api.census.gov/data/2022/acs/acs5?get=NAME,B19013_001E,B17001_002E,B27001_001E,B01003_001E&for=state:' + stateFips;
+  fetch(url)
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (!d || d.length < 2) return;
+      var row_data = d[1];
+      var name = row_data[0];
+      var medianIncome = parseInt(row_data[1]);
+      var poverty = parseInt(row_data[2]);
+      var pop = parseInt(row_data[4]);
+      var html = '';
+      if (medianIncome > 0) html += row('Median household income', '$' + medianIncome.toLocaleString());
+      if (pop > 0) html += row('Population', pop.toLocaleString());
+      if (poverty > 0) html += row('People in poverty', poverty.toLocaleString());
+      html += '<div style="font-size:10px;color:#b8b4ae;margin-top:8px">Source: US Census ACS 5-year estimates 2022</div>';
+      document.getElementById('dataPanel').style.display = 'block';
+      document.getElementById('dataPanelTitle').textContent = name;
+      document.getElementById('dataPanelContent').innerHTML = html;
+      document.getElementById('mapStatus').textContent = name + ' Census data loaded.';
+    })
+    .catch(function() {
+      document.getElementById('mapStatus').textContent = addr.state + ' — Census API unavailable';
+    });
+}
+
+// US state FIPS codes
+var US_STATE_FIPS = {
+  'Alabama':'01','Alaska':'02','Arizona':'04','Arkansas':'05','California':'06',
+  'Colorado':'08','Connecticut':'09','Delaware':'10','Florida':'12','Georgia':'13',
+  'Hawaii':'15','Idaho':'16','Illinois':'17','Indiana':'18','Iowa':'19',
+  'Kansas':'20','Kentucky':'21','Louisiana':'22','Maine':'23','Maryland':'24',
+  'Massachusetts':'25','Michigan':'26','Minnesota':'27','Mississippi':'28','Missouri':'29',
+  'Montana':'30','Nebraska':'31','Nevada':'32','New Hampshire':'33','New Jersey':'34',
+  'New Mexico':'35','New York':'36','North Carolina':'37','North Dakota':'38','Ohio':'39',
+  'Oklahoma':'40','Oregon':'41','Pennsylvania':'42','Rhode Island':'44','South Carolina':'45',
+  'South Dakota':'46','Tennessee':'47','Texas':'48','Utah':'49','Vermont':'50',
+  'Virginia':'51','Washington':'53','West Virginia':'54','Wisconsin':'55','Wyoming':'56'
+};
+
+function row(label, value) {
+  return '<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #f4f0e8"><span style="font-size:13px;color:#8a8580">' + label + '</span><span style="font-size:13px;font-weight:600;color:#1a1814">' + value + '</span></div>';
+}
+
+function showNoData(name, latlng) {
+  document.getElementById('dataPanelContent').innerHTML = '<div style="color:#8a8580;font-size:13px;padding:8px 0">No World Bank data available for ' + name + '.</div>';
+  document.getElementById('mapStatus').textContent = name + ' — no data available';
+}
+
+function setSlider(sliderId, val, labelId) {
+  var slider = document.getElementById(sliderId);
+  var label = document.getElementById(labelId);
+  if (slider && val !== null) {
+    slider.value = Math.round(val);
+    if (label) label.textContent = Math.round(val) + '%';
+  }
+}
+
+function resetMapView() {
+  if (leafletMap) {
+    leafletMap.setView([20, 0], 2);
+    document.getElementById('viewingLabel').textContent = 'Global Average';
+    document.getElementById('dataPanel').style.display = 'none';
+    resetSliders();
+  }
+}
+
+function resetSliders() {
+  setSlider('sl-ren', 34, 'sv-ren');
+  setSlider('sl-food', 72, 'sv-food');
+  setSlider('sl-kl', 8, 'sv-kl');
+  setSlider('sl-land', 17, 'sv-land');
+  setSlider('sl-water', 74, 'sv-water');
+  setSlider('sl-wealth', 12, 'sv-wealth');
+  recalc();
+  document.getElementById('viewingLabel').textContent = 'Global Average';
 }
 
 // ── GLOBE ──
@@ -1060,7 +1280,7 @@ function initGlobe() {
 renderCouncil();
 renderGallery();
 initGlobe();
-initWorldMap();
+recalc();
 </script>
 
 </body>
