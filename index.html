@@ -224,7 +224,7 @@ textarea{resize:none;min-height:80px;}
     <div class="home-sub" style="margin-bottom:20px">Make the world work for everyone</div>
 
 ```
-<!-- Live world metrics on home -->
+<!-- Live world metrics — always visible -->
 <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;max-width:360px;margin:0 auto 20px;width:100%">
   <div style="background:rgba(42,144,96,0.1);border:1px solid rgba(42,144,96,0.3);border-radius:10px;padding:10px 8px;text-align:center;cursor:pointer" onclick="show('world')">
     <div style="font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#2a9060;margin-bottom:3px">Flourishing</div>
@@ -3505,10 +3505,14 @@ function drawSym(ctx,cx,cy,r,sym,p) {
 
 
 // ── INIT ──
-renderCouncil();
-renderGallery();
-initGlobe();
-recalc();
+document.addEventListener('DOMContentLoaded', function() {
+  loadAvatar();
+  renderCouncil();
+  renderGallery();
+  initGlobe();
+  recalc();
+  drawHeaderAvatar();
+});
 </script>
 
 <div id="councilFloat">
