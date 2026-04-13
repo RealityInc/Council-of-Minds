@@ -425,12 +425,43 @@ function oracleQuery() {
       document.getElementById('oracleErr').innerHTML = '<div class="error">' + err + '</div>';
       return;
     }
-    parseOracle(msgs_el, text);
+    // Try structured parse first, fallback to raw display
+    var parsed = tryParseOracle(text);
+    if (parsed) {
+      msgs_el.appendChild(parsed);
+    } else {
+      // Fallback: show raw response in consensus style
+      var div = document.createElement('div');
+      div.className = 'msg-consensus';
+      div.innerHTML = '<div class="lbl">The Council</div><div class="txt">' + text.replace(/\n/g,'<br>') + '</div>';
+      msgs_el.appendChild(div);
+    }
+    // Share button
+    var shareDiv = document.createElement('div');
+    shareDiv.style.cssText = 'padding:8px 20px;border-top:1px solid #e8e4dc';
+    shareDiv.innerHTML = '<button class="btn btn-outline" style="font-size:12px;padding:6px 14px" onclick="shareOracleToGallery()">Share to Gallery</button>';
+    msgs_el.parentNode.appendChild(shareDiv);
+    lastOracleQ = q;
+    lastOracleText = text;
   });
 }
 
-function parseOracle(container, text) {
+var lastOracleQ = '';
+var lastOracleText = '';
+
+function shareOracleToGallery() {
+  shareToGallery('insight', 'Oracle: ' + lastOracleQ.substring(0,50), lastOracleText.substring(0,300));
+}
+
+function tryParseOracle(text) {
   var lines = text.split('\n');
+  var hasSpeaker = false;
+  for (var li = 0; li < lines.length; li++) {
+    if (lines[li].trim().indexOf('SPEAKER:') === 0) { hasSpeaker = true; break; }
+  }
+  if (!hasSpeaker) return null;
+
+  var frag = document.createDocumentFragment();
   var i = 0;
   while (i < lines.length) {
     var line = lines[i].trim();
@@ -446,7 +477,7 @@ function parseOracle(container, text) {
         var div = document.createElement('div');
         div.className = 'msg-speech';
         div.innerHTML = '<div class="spk">' + name + '</div><div class="body">' + buf.join(' ') + '</div>';
-        container.appendChild(div);
+        frag.appendChild(div);
       }
     } else if (line.indexOf('CONSENSUS:') === 0) {
       i++;
@@ -458,15 +489,12 @@ function parseOracle(container, text) {
       if (cbuf.length) {
         var cdiv = document.createElement('div');
         cdiv.className = 'msg-consensus';
-        var synthText = cbuf.join(' ');
-        cdiv.innerHTML = '<div class="lbl">Council Synthesis</div><div class="txt">' + synthText + '</div><div style="margin-top:10px"><button class="btn btn-outline" style="font-size:12px;padding:6px 14px" onclick="shareToGallery(\'insight\',\'Oracle: '+q.substring(0,40).replace(/'/g,'')+'\',\''+synthText.substring(0,200).replace(/'/g,'')+'\'  )">Share to Gallery</button></div>';
-        container.appendChild(cdiv);
+        cdiv.innerHTML = '<div class="lbl">Council Synthesis</div><div class="txt">' + cbuf.join(' ') + '</div>';
+        frag.appendChild(cdiv);
       }
-    } else {
-      i++;
-    }
+    } else { i++; }
   }
-  container.scrollTop = container.scrollHeight;
+  return frag;
 }
 
 // ── FORUM ──
@@ -568,9 +596,10 @@ function synthesize() {
     if (err) return;
     var div = document.createElement('div');
     div.className = 'msg-consensus';
-    div.innerHTML = '<div class="lbl">Synthesis</div><div class="txt">' + text + '</div>';
+    div.innerHTML = '<div class="lbl">Synthesis</div><div class="txt">' + text + '</div><div style="margin-top:10px"><button class="btn btn-outline" style="font-size:12px;padding:6px 14px" onclick="shareForumToGallery()">Share to Gallery</button></div>';
     container.appendChild(div);
     container.scrollTop = container.scrollHeight;
+    lastSynthText = text;
   });
 }
 
@@ -646,9 +675,11 @@ function triggerCreate() {
       if (!err && text) {
         var div = document.createElement('div');
         div.className = 'msg-consensus';
-        div.innerHTML = '<div class="lbl">The Council Writes as One</div><div class="txt" style="white-space:pre-wrap">' + text + '</div>';
+        div.innerHTML = '<div class="lbl">The Council Writes as One</div><div class="txt" style="white-space:pre-wrap">' + text + '</div><div style="margin-top:10px"><button class="btn btn-outline" style="font-size:12px;padding:6px 14px" onclick="shareCreateToGallery()">Share to Gallery</button></div>';
         container.appendChild(div);
         container.scrollTop = container.scrollHeight;
+        lastCreateTheme = document.getElementById('createTheme').value;
+        lastCreateText = text;
       }
     });
   }
@@ -737,6 +768,19 @@ function shareToGallery(type, title, content) {
   var id = Date.now();
   galleryItems.unshift({id:id, type:type, title:title, content:content.substring(0,200), date:new Date().toLocaleDateString(), appreciations:0});
   show('gallery');
+}
+
+// ── SHARE HELPERS ──
+var lastSynthText = '';
+var lastCreateTheme = '';
+var lastCreateText = '';
+
+function shareForumToGallery() {
+  shareToGallery('debate', problem.substring(0, 60), lastSynthText.substring(0, 300));
+}
+
+function shareCreateToGallery() {
+  shareToGallery('creative', lastCreateTheme.substring(0, 60), lastCreateText.substring(0, 300));
 }
 
 // ── GLOBE ──
