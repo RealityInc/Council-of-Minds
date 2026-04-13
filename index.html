@@ -1696,9 +1696,12 @@ function filterADM1(data, iso2, iso3) {
   });
 
   if (features.length === 0 && data.features.length > 0) {
-    // Log first feature props to diagnose
     var fp = data.features[0].properties;
-    console.log('ADM1 filter miss for', iso2up, iso3up, '| Sample feature:', JSON.stringify(fp).substring(0, 150));
+    var propKeys = Object.keys(fp).join(', ');
+    var sample = JSON.stringify(fp).substring(0, 200);
+    console.log('ADM1 miss for', iso2up, iso3up, '| Props:', propKeys, '| Sample:', sample);
+    // Show diagnostic in map status
+    setMapStatus('No regions for ' + iso2up + '/' + iso3up + '. File has ' + data.features.length + ' features. Keys: ' + propKeys.substring(0,60));
   }
   return { type:'FeatureCollection', features: features };
 }
@@ -2321,5 +2324,34 @@ initGlobe();
 recalc();
 </script>
 
+<div id="councilFloat">
+  <button id="councilFloatBtn" onclick="toggleCouncilChat()" title="Ask your council">
+    <svg viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="13" cy="13" r="12" stroke="#d4aa44" stroke-width="1.5"/>
+      <path d="M8 9.5 Q13 6 18 9.5 Q21 13 18 16 L19 20 L15 17.5 Q13 18.5 11 17.5 Q6 15 8 9.5Z" fill="rgba(212,170,68,0.15)" stroke="#d4aa44" stroke-width="1"/>
+      <circle cx="10" cy="13" r="1" fill="#d4aa44"/>
+      <circle cx="13" cy="13" r="1" fill="#d4aa44"/>
+      <circle cx="16" cy="13" r="1" fill="#d4aa44"/>
+    </svg>
+  </button>
+</div>
+
+<div id="councilChatPanel">
+  <div class="chat-header">
+    <div>
+      <div class="chat-header-title">Your Council</div>
+      <div class="chat-header-sub" id="chatCouncilNames">Loading council...</div>
+    </div>
+    <button class="chat-close" onclick="toggleCouncilChat()">&#x2715;</button>
+  </div>
+  <div class="chat-context" id="chatContextBar" style="display:none"></div>
+  <div class="chat-messages" id="chatMessages">
+    <div style="text-align:center;color:#b8b4ae;font-size:13px;padding:20px 0">Your council is ready. Ask anything.</div>
+  </div>
+  <div class="chat-input-row">
+    <input id="chatInput" placeholder="Ask your council..." onkeydown="if(event.keyCode===13)sendChat()">
+    <button class="chat-send" onclick="sendChat()">Send</button>
+  </div>
+</div>
 </body>
 </html>
