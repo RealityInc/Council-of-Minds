@@ -1626,8 +1626,7 @@ function loadCountryLayer() {
     .catch(function() { setMapStatus('Tap to explore. Country layer loading...'); });
 }
 
-// Load sub-national boundaries via Natural Earth ADM1 global file
-// Loaded once, cached, then filtered per country client-side
+// Load sub-national boundaries via per-country GeoJSON from GADM CDN
 function loadSubLayer(iso2, iso3, countryName) {
   if (!iso2) { setMapStatus('No region code for ' + countryName); return; }
   if (iso2 === 'US') { loadUSStateLayer(); return; }
@@ -1639,35 +1638,70 @@ function loadSubLayer(iso2, iso3, countryName) {
     return;
   }
 
-  // If global ADM1 already loaded, just filter it
-  if (geoCache['_ne_adm1']) {
-    var filtered = filterADM1(geoCache['_ne_adm1'], iso2, iso3);
-    if (filtered.features && filtered.features.length > 0) {
-      geoCache[cacheKey] = filtered;
-      renderSubLayer(filtered, iso2, iso3, countryName);
-    } else {
-      setMapStatus('No regional data for ' + countryName + '. Zoom in to explore.');
-    }
-    return;
-  }
+  setMapStatus('Loading regions for ' + countryName + '...');
 
-  setMapStatus('Loading region data (first time only)...');
-  // Natural Earth 50m ADM1 - ~3MB, covers all countries, good CORS support
-  fetch('https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_admin_1_states_provinces.geojson')
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      geoCache['_ne_adm1'] = data;
-      var filtered = filterADM1(data, iso2, iso3);
-      if (filtered.features && filtered.features.length > 0) {
-        geoCache[cacheKey] = filtered;
-        renderSubLayer(filtered, iso2, iso3, countryName);
-      } else {
-        setMapStatus('No regional boundaries found for ' + countryName + '.');
-      }
+  // Use gadm.org CDN - serves per-country GeoJSON, excellent CORS
+  // URL: https://geodata.ucdavis.edu/gadm/gadm4.1/json/gadm41_{ISO3}_1.json
+  var gadmUrl = 'https://geodata.ucdavis.edu/gadm/gadm4.1/json/gadm41_' + iso3 + '_1.json';
+
+  fetch(gadmUrl)
+    .then(function(r) {
+      if (!r.ok) throw new Error('GADM ' + r.status);
+      return r.json();
     })
-    .catch(function() {
-      setMapStatus('Region boundaries unavailable. Zoom in to explore by tapping.');
+    .then(function(data) {
+      if (!data || !data.features || data.features.length === 0) throw new Error('Empty');
+      geoCache[cacheKey] = data;
+      renderSubLayer(data, iso2, iso3, countryName);
+    })
+    .catch(function(e1) {
+      // Fallback: try Natural Earth via jsDelivr (different CDN, better CORS)
+      var neUrl = 'https://cdn.jsdelivr.net/gh/nvkelso/natural-earth-vector@master/geojson/ne_50m_admin_1_states_provinces.geojson';
+      if (geoCache['_ne_adm1']) {
+        var filtered = filterByISO(geoCache['_ne_adm1'], iso2, iso3);
+        if (filtered.features.length > 0) {
+          geoCache[cacheKey] = filtered;
+          renderSubLayer(filtered, iso2, iso3, countryName);
+        } else {
+          setMapStatus(countryName + ' regions not available. The base map shows boundaries when zoomed in.');
+        }
+        return;
+      }
+      fetch(neUrl)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          geoCache['_ne_adm1'] = data;
+          var filtered = filterByISO(data, iso2, iso3);
+          if (filtered.features.length > 0) {
+            geoCache[cacheKey] = filtered;
+            renderSubLayer(filtered, iso2, iso3, countryName);
+          } else {
+            setMapStatus(countryName + ' — zoom in to see regions on the base map.');
+          }
+        })
+        .catch(function() {
+          setMapStatus(countryName + ' — zoom in to see regions. Tap any area for local data.');
+        });
     });
+}
+
+// Separate clean filter function for Natural Earth
+function filterByISO(data, iso2, iso3) {
+  var i2 = (iso2||'').toUpperCase();
+  var i3 = (iso3||'').toUpperCase();
+  var features = (data.features||[]).filter(function(f) {
+    var p = f.properties||{};
+    // GADM uses GID_0 for country ISO3
+    if (p.GID_0 && p.GID_0.toUpperCase() === i3) return true;
+    // Natural Earth uses adm0_a3
+    if (p.adm0_a3 && p.adm0_a3.toUpperCase() === i3) return true;
+    if (p.ADM0_A3 && p.ADM0_A3.toUpperCase() === i3) return true;
+    // ISO2 fallbacks
+    if (p.iso_a2 && p.iso_a2.toUpperCase() === i2) return true;
+    if (p.ISO_A2 && p.ISO_A2.toUpperCase() === i2) return true;
+    return false;
+  });
+  return { type:'FeatureCollection', features: features };
 }
 
 function filterADM1(data, iso2, iso3) {
