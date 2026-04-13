@@ -890,89 +890,80 @@ function shareCreateToGallery() {
 // ── WORLD MAP (LEAFLET) ──
 var leafletMap = null;
 var countryLayer = null;
-var stateLayer = null;
-var countyLayer = null;
-var currentZoomLevel = 'world'; // world | country | state | county
-var selectedPlace = { name: 'Global', code: null, type: 'world' };
+var subLayer = null;
+var selectedPlace = { name:'Global', code:null, iso3:null, type:'world' };
 var wbCache = {};
-var censusCache = {};
+var subCache = {};
+var geoCache = {};
 
-// ISO3 to ISO2
-var ISO3_TO_ISO2 = {
-  'USA':'US','GBR':'GB','FRA':'FR','DEU':'DE','CHN':'CN','IND':'IN','BRA':'BR',
-  'RUS':'RU','CAN':'CA','AUS':'AU','JPN':'JP','KOR':'KR','MEX':'MX','IDN':'ID',
-  'TUR':'TR','SAU':'SA','ARG':'AR','ZAF':'ZA','NGA':'NG','EGY':'EG','PAK':'PK',
-  'BGD':'BD','IRN':'IR','THA':'TH','COL':'CO','ESP':'ES','ITA':'IT','POL':'PL',
-  'NLD':'NL','PHL':'PH','MYS':'MY','VNM':'VN','UKR':'UA','SWE':'SE','NOR':'NO',
-  'DNK':'DK','FIN':'FI','CHE':'CH','AUT':'AT','BEL':'BE','PRT':'PT','GRC':'GR',
-  'CZE':'CZ','ROU':'RO','HUN':'HU','CHL':'CL','PER':'PE','VEN':'VE','COD':'CD',
-  'TZA':'TZ','KEN':'KE','ETH':'ET','GHA':'GH','UGA':'UG','AGO':'AO','MOZ':'MZ',
-  'IRQ':'IQ','DZA':'DZ','MAR':'MA','TUN':'TN','NZL':'NZ','SGP':'SG','ARE':'AE',
-  'QAT':'QA','KWT':'KW','KAZ':'KZ','MMR':'MM','KHM':'KH','NPL':'NP','CUB':'CU',
-  'GTM':'GT','ECU':'EC','BOL':'BO','PRY':'PY','URY':'UY','CMR':'CM','SEN':'SN',
-  'ZMB':'ZM','ZWE':'ZW','MDG':'MG','BWA':'BW','NAM':'NA','ISL':'IS','IRL':'IE',
-  'HRV':'HR','SVK':'SK','SVN':'SI','BGR':'BG','SRB':'RS','LTU':'LT','LVA':'LV',
-  'EST':'EE','BLR':'BY','MDA':'MD','MKD':'MK','ALB':'AL','BIH':'BA','MNE':'ME',
-  'LUX':'LU','CYP':'CY','MLT':'MT'
+// ISO2 to ISO3 (for geoBoundaries API which needs ISO3)
+var ISO2_TO_ISO3 = {
+  'AF':'AFG','AL':'ALB','DZ':'DZA','AD':'AND','AO':'AGO','AG':'ATG','AR':'ARG',
+  'AM':'ARM','AU':'AUS','AT':'AUT','AZ':'AZE','BS':'BHS','BH':'BHR','BD':'BGD',
+  'BB':'BRB','BY':'BLR','BE':'BEL','BZ':'BLZ','BJ':'BEN','BT':'BTN','BO':'BOL',
+  'BA':'BIH','BW':'BWA','BR':'BRA','BN':'BRN','BG':'BGR','BF':'BFA','BI':'BDI',
+  'CV':'CPV','KH':'KHM','CM':'CMR','CA':'CAN','CF':'CAF','TD':'TCD','CL':'CHL',
+  'CN':'CHN','CO':'COL','KM':'COM','CG':'COG','CD':'COD','CR':'CRI','CI':'CIV',
+  'HR':'HRV','CU':'CUB','CY':'CYP','CZ':'CZE','DK':'DNK','DJ':'DJI','DM':'DMA',
+  'DO':'DOM','EC':'ECU','EG':'EGY','SV':'SLV','GQ':'GNQ','ER':'ERI','EE':'EST',
+  'SZ':'SWZ','ET':'ETH','FJ':'FJI','FI':'FIN','FR':'FRA','GA':'GAB','GM':'GMB',
+  'GE':'GEO','DE':'DEU','GH':'GHA','GR':'GRC','GD':'GRD','GT':'GTM','GN':'GIN',
+  'GW':'GNB','GY':'GUY','HT':'HTI','HN':'HND','HU':'HUN','IS':'ISL','IN':'IND',
+  'ID':'IDN','IR':'IRN','IQ':'IRQ','IE':'IRL','IL':'ISR','IT':'ITA','JM':'JAM',
+  'JP':'JPN','JO':'JOR','KZ':'KAZ','KE':'KEN','KI':'KIR','KP':'PRK','KR':'KOR',
+  'KW':'KWT','KG':'KGZ','LA':'LAO','LV':'LVA','LB':'LBN','LS':'LSO','LR':'LBR',
+  'LY':'LBY','LI':'LIE','LT':'LTU','LU':'LUX','MG':'MDG','MW':'MWI','MY':'MYS',
+  'MV':'MDV','ML':'MLI','MT':'MLT','MH':'MHL','MR':'MRT','MU':'MUS','MX':'MEX',
+  'FM':'FSM','MD':'MDA','MC':'MCO','MN':'MNG','ME':'MNE','MA':'MAR','MZ':'MOZ',
+  'MM':'MMR','NA':'NAM','NR':'NRU','NP':'NPL','NL':'NLD','NZ':'NZL','NI':'NIC',
+  'NE':'NER','NG':'NGA','NO':'NOR','OM':'OMN','PK':'PAK','PW':'PLW','PA':'PAN',
+  'PG':'PNG','PY':'PRY','PE':'PER','PH':'PHL','PL':'POL','PT':'PRT','QA':'QAT',
+  'RO':'ROU','RU':'RUS','RW':'RWA','KN':'KNA','LC':'LCA','VC':'VCT','WS':'WSM',
+  'SM':'SMR','ST':'STP','SA':'SAU','SN':'SEN','RS':'SRB','SC':'SYC','SL':'SLE',
+  'SG':'SGP','SK':'SVK','SI':'SVN','SB':'SLB','SO':'SOM','ZA':'ZAF','SS':'SSD',
+  'ES':'ESP','LK':'LKA','SD':'SDN','SR':'SUR','SE':'SWE','CH':'CHE','SY':'SYR',
+  'TW':'TWN','TJ':'TJK','TZ':'TZA','TH':'THA','TL':'TLS','TG':'TGO','TO':'TON',
+  'TT':'TTO','TN':'TUN','TR':'TUR','TM':'TKM','TV':'TUV','UG':'UGA','UA':'UKR',
+  'AE':'ARE','GB':'GBR','US':'USA','UY':'URY','UZ':'UZB','VU':'VUT','VE':'VEN',
+  'VN':'VNM','YE':'YEM','ZM':'ZMB','ZW':'ZWE'
 };
 
+var ISO3_TO_ISO2 = {};
+for (var k in ISO2_TO_ISO3) { ISO3_TO_ISO2[ISO2_TO_ISO3[k]] = k; }
+
 var NAME_TO_ISO2 = {
-  'UNITED STATES OF AMERICA':'US','UNITED STATES':'US','USA':'US','U.S.A.':'US',
-  'UNITED KINGDOM':'GB','UK':'GB','GREAT BRITAIN':'GB',
-  'SOUTH KOREA':'KR','NORTH KOREA':'KP','KOREA, REP.':'KR','KOREA DEM REP':'KP',
-  'RUSSIA':'RU','RUSSIAN FEDERATION':'RU',
-  'IRAN':'IR','IRAN ISLAMIC REP':'IR',
-  'TAIWAN':'TW','TAIWAN, CHINA':'TW',
-  'CZECHIA':'CZ','CZECH REPUBLIC':'CZ',
-  'IVORY COAST':'CI',
+  'UNITED STATES OF AMERICA':'US','UNITED STATES':'US','USA':'US',
+  'UNITED KINGDOM':'GB','UK':'GB','SOUTH KOREA':'KR','NORTH KOREA':'KP',
+  'RUSSIA':'RU','RUSSIAN FEDERATION':'RU','IRAN':'IR','TAIWAN':'TW',
+  'CZECHIA':'CZ','CZECH REPUBLIC':'CZ','IVORY COAST':'CI',
   'DEMOCRATIC REPUBLIC OF THE CONGO':'CD','DR CONGO':'CD','CONGO, DEM. REP.':'CD',
-  'REPUBLIC OF CONGO':'CG','CONGO':'CG',
-  'TANZANIA':'TZ','UNITED REPUBLIC OF TANZANIA':'TZ',
-  'SOUTH AFRICA':'ZA','VIETNAM':'VN','VIET NAM':'VN',
-  'LAOS':'LA',
-  'SYRIA':'SY','SYRIAN ARAB REPUBLIC':'SY',
-  'BOLIVIA':'BO','BOLIVIA PLURINATIONAL STATE':'BO',
-  'VENEZUELA':'VE','VENEZUELA RB':'VE',
-  'MYANMAR':'MM','BURMA':'MM',
-  'EGYPT':'EG','ARAB REPUBLIC OF EGYPT':'EG',
-  'ETHIOPIA':'ET','KENYA':'KE','NIGERIA':'NG','GHANA':'GH','TANZANIA':'TZ',
+  'REPUBLIC OF CONGO':'CG','TANZANIA':'TZ','UNITED REPUBLIC OF TANZANIA':'TZ',
+  'SOUTH AFRICA':'ZA','VIETNAM':'VN','VIET NAM':'VN','MYANMAR':'MM','BURMA':'MM',
+  'EGYPT':'EG','ETHIOPIA':'ET','KENYA':'KE','NIGERIA':'NG','GHANA':'GH',
   'SOUTH SUDAN':'SS','SUDAN':'SD','ANGOLA':'AO','MOZAMBIQUE':'MZ','ZAMBIA':'ZM',
   'ZIMBABWE':'ZW','MADAGASCAR':'MG','CAMEROON':'CM','SENEGAL':'SN','MALI':'ML',
-  'BURKINA FASO':'BF','NIGER':'NE','GUINEA':'GN','UGANDA':'UG','MALAWI':'MW',
   'ALGERIA':'DZ','MOROCCO':'MA','TUNISIA':'TN','LIBYA':'LY',
   'SAUDI ARABIA':'SA','IRAQ':'IQ','YEMEN':'YE','JORDAN':'JO','LEBANON':'LB',
-  'ISRAEL':'IL','PALESTINE':'PS','STATE OF PALESTINE':'PS',
-  'UNITED ARAB EMIRATES':'AE','KUWAIT':'KW','QATAR':'QA','BAHRAIN':'BH','OMAN':'OM',
+  'ISRAEL':'IL','UNITED ARAB EMIRATES':'AE','KUWAIT':'KW','QATAR':'QA','OMAN':'OM',
   'AFGHANISTAN':'AF','PAKISTAN':'PK','BANGLADESH':'BD','SRI LANKA':'LK','NEPAL':'NP',
   'THAILAND':'TH','MALAYSIA':'MY','INDONESIA':'ID','PHILIPPINES':'PH',
-  'SINGAPORE':'SG','CAMBODIA':'KH','MYANMAR':'MM',
-  'BRAZIL':'BR','ARGENTINA':'AR','CHILE':'CL','COLOMBIA':'CO','PERU':'PE',
-  'ECUADOR':'EC','BOLIVIA':'BO','PARAGUAY':'PY','URUGUAY':'UY',
-  'MEXICO':'MX','CUBA':'CU','GUATEMALA':'GT','HONDURAS':'HN',
-  'GERMANY':'DE','FRANCE':'FR','ITALY':'IT','SPAIN':'ES','PORTUGAL':'PT',
-  'NETHERLANDS':'NL','BELGIUM':'BE','SWITZERLAND':'CH','AUSTRIA':'AT',
-  'SWEDEN':'SE','NORWAY':'NO','DENMARK':'DK','FINLAND':'FI','ICELAND':'IS',
-  'POLAND':'PL','CZECHIA':'CZ','SLOVAKIA':'SK','HUNGARY':'HU','ROMANIA':'RO',
-  'BULGARIA':'BG','GREECE':'GR','CROATIA':'HR','SERBIA':'RS','UKRAINE':'UA',
-  'TURKEY':'TR','TURKIYE':'TR',
-  'CANADA':'CA','AUSTRALIA':'AU','NEW ZEALAND':'NZ','JAPAN':'JP',
-  'CHINA':'CN',"PEOPLES REPUBLIC OF CHINA":'CN',
-  'INDIA':'IN','KAZAKHSTAN':'KZ','UZBEKISTAN':'UZ'
+  'SINGAPORE':'SG','CAMBODIA':'KH','BRAZIL':'BR','ARGENTINA':'AR','CHILE':'CL',
+  'COLOMBIA':'CO','PERU':'PE','ECUADOR':'EC','PARAGUAY':'PY','URUGUAY':'UY',
+  'MEXICO':'MX','CUBA':'CU','GUATEMALA':'GT','GERMANY':'DE','FRANCE':'FR',
+  'ITALY':'IT','SPAIN':'ES','PORTUGAL':'PT','NETHERLANDS':'NL','BELGIUM':'BE',
+  'SWITZERLAND':'CH','AUSTRIA':'AT','SWEDEN':'SE','NORWAY':'NO','DENMARK':'DK',
+  'FINLAND':'FI','POLAND':'PL','HUNGARY':'HU','ROMANIA':'RO','BULGARIA':'BG',
+  'GREECE':'GR','CROATIA':'HR','UKRAINE':'UA','TURKEY':'TR','TURKIYE':'TR',
+  'CANADA':'CA','AUSTRALIA':'AU','NEW ZEALAND':'NZ','JAPAN':'JP','CHINA':'CN',
+  'INDIA':'IN','KAZAKHSTAN':'KZ','UZBEKISTAN':'UZ','VENEZUELA':'VE','BOLIVIA':'BO'
 };
 
 function getISO2(props) {
-  // Try direct ISO2 fields first
   var code = props.ISO_A2 || props.iso_a2 || props.ISO2 || props.iso2 || '';
   if (code && code !== '-99' && code !== '-1' && code.length === 2) return code.toUpperCase();
-  // Try ISO3 conversion
   var code3 = props.ISO_A3 || props.iso_a3 || props.adm0_a3 || props.ISO3 || '';
   if (code3 && ISO3_TO_ISO2[code3.toUpperCase()]) return ISO3_TO_ISO2[code3.toUpperCase()];
-  // Try all name fields against lookup
-  var names = [
-    props.ADMIN || '', props.admin || '',
-    props.name || '', props.NAME || '',
-    props.NAME_LONG || '', props.FORMAL_EN || ''
-  ];
+  var names = [props.ADMIN||'',props.admin||'',props.name||'',props.NAME||'',props.NAME_LONG||''];
   for (var i = 0; i < names.length; i++) {
     var n = names[i].toUpperCase().trim();
     if (n && NAME_TO_ISO2[n]) return NAME_TO_ISO2[n];
@@ -996,53 +987,41 @@ var US_STATE_FIPS = {
 };
 
 function initWorldMap() {
-  if (typeof L === 'undefined') {
-    setTimeout(initWorldMap, 500);
-    return;
-  }
-  if (leafletMap) {
-    leafletMap.remove();
-    leafletMap = null;
-    countryLayer = null;
-    stateLayer = null;
-    countyLayer = null;
-  }
+  if (typeof L === 'undefined') { setTimeout(initWorldMap, 500); return; }
+  if (leafletMap) { leafletMap.remove(); leafletMap = null; countryLayer = null; subLayer = null; }
 
   leafletMap = L.map('leafletMap', {
-    center: [20, 0], zoom: 2, minZoom: 2, maxZoom: 14, zoomControl: true
+    center:[20,0], zoom:2, minZoom:2, maxZoom:14, zoomControl:true
   });
 
   L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-    attribution: 'OpenStreetMap, CartoDB', subdomains: 'abcd', maxZoom: 19
+    attribution:'OpenStreetMap, CartoDB', subdomains:'abcd', maxZoom:19
   }).addTo(leafletMap);
 
-  // Load country boundaries
   loadCountryLayer();
 
-  // On zoom, load appropriate sub-layers
+  // When zooming in past threshold on a selected country, load sub-national
   leafletMap.on('zoomend', function() {
     var z = leafletMap.getZoom();
-    if (z >= 4 && selectedPlace.code === 'US') {
-      loadStateLayer();
+    if (z >= 4 && selectedPlace.code && selectedPlace.type === 'country') {
+      loadSubLayer(selectedPlace.code, selectedPlace.iso3, selectedPlace.name);
     }
-    if (z >= 7 && currentZoomLevel === 'state') {
-      // County layer loaded on state click
+    if (z < 4 && subLayer) {
+      leafletMap.removeLayer(subLayer);
+      subLayer = null;
     }
   });
 
-  // Click anywhere on map - reverse geocode
   leafletMap.on('click', function(e) {
-    var z = leafletMap.getZoom();
-    if (z >= 5) reverseGeocode(e.latlng.lat, e.latlng.lng, z);
+    if (leafletMap.getZoom() >= 5) reverseGeocode(e.latlng.lat, e.latlng.lng);
   });
 }
 
 function loadCountryLayer() {
-  setMapStatus('Loading country boundaries...');
+  setMapStatus('Loading map...');
   fetch('https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson')
     .then(function(r) { return r.json(); })
     .then(function(data) {
-      if (countryLayer) { leafletMap.removeLayer(countryLayer); }
       countryLayer = L.geoJSON(data, {
         style: function() {
           return { fillColor:'#2a9060', fillOpacity:0.08, color:'#2a9060', weight:0.8, opacity:0.4 };
@@ -1051,9 +1030,10 @@ function loadCountryLayer() {
           layer.on('click', function(e) {
             L.DomEvent.stopPropagation(e);
             var props = feature.properties;
-            var name = props.name || props.NAME || props.ADMIN || 'Unknown';
-            var code = getISO2(props);
-            onCountryClick(code, name, e.latlng);
+            var name = props.ADMIN || props.name || props.NAME || 'Unknown';
+            var iso2 = getISO2(props);
+            var iso3 = ISO2_TO_ISO3[iso2] || '';
+            onCountryClick(iso2, iso3, name, e.latlng);
           });
           layer.on('mouseover', function() {
             layer.setStyle({ fillOpacity:0.22, weight:1.5, color:'#1a6b4a' });
@@ -1063,338 +1043,392 @@ function loadCountryLayer() {
           });
         }
       }).addTo(leafletMap);
-      setMapStatus('Tap any country for real data. Zoom in for states and counties.');
+      setMapStatus('Tap any country for real data. Zoom in for regions.');
+    })
+    .catch(function() { setMapStatus('Tap to explore. Country layer loading...'); });
+}
+
+// Load sub-national boundaries via geoBoundaries API
+function loadSubLayer(iso2, iso3, countryName) {
+  if (!iso3) return;
+  if (subLayer && subLayer._countryISO3 === iso3) return; // already loaded
+
+  // US gets special treatment with our existing detailed layer
+  if (iso2 === 'US') { loadUSStateLayer(); return; }
+
+  var cacheKey = 'geo_' + iso3;
+  if (geoCache[cacheKey]) {
+    renderSubLayer(geoCache[cacheKey], iso2, iso3, countryName);
+    return;
+  }
+
+  setMapStatus('Loading regions for ' + countryName + '...');
+
+  // geoBoundaries API - returns metadata with downloadURL
+  var apiUrl = 'https://www.geoboundaries.org/api/current/gbOpen/' + iso3 + '/ADM1/';
+  fetch(apiUrl)
+    .then(function(r) { return r.json(); })
+    .then(function(meta) {
+      if (!meta || !meta.gjDownloadURL) {
+        setMapStatus('Regional boundaries not available for ' + countryName);
+        return;
+      }
+      return fetch(meta.gjDownloadURL);
+    })
+    .then(function(r) { if (r) return r.json(); })
+    .then(function(geojson) {
+      if (!geojson) return;
+      geoCache[cacheKey] = geojson;
+      renderSubLayer(geojson, iso2, iso3, countryName);
     })
     .catch(function() {
-      setMapStatus('Map loaded. Tap to explore.');
+      setMapStatus('Regional data unavailable for ' + countryName + '.');
     });
 }
 
-function loadStateLayer() {
-  if (stateLayer) return; // already loaded
-  setMapStatus('Loading US state boundaries...');
+function renderSubLayer(geojson, iso2, iso3, countryName) {
+  if (subLayer) { leafletMap.removeLayer(subLayer); subLayer = null; }
+  subLayer = L.geoJSON(geojson, {
+    style: function() {
+      return { fillColor:'#5040a0', fillOpacity:0.06, color:'#5040a0', weight:1, opacity:0.5 };
+    },
+    onEachFeature: function(feature, layer) {
+      var regionName = feature.properties.shapeName ||
+                       feature.properties.NAME_1 ||
+                       feature.properties.name ||
+                       feature.properties.NAME || 'Region';
+      layer.bindTooltip(regionName, { permanent:false, direction:'center', className:'state-tooltip' });
+      layer.on('click', function(e) {
+        L.DomEvent.stopPropagation(e);
+        onRegionClick(regionName, iso2, iso3, countryName, e.latlng);
+      });
+      layer.on('mouseover', function() { layer.setStyle({ fillOpacity:0.2, weight:2 }); });
+      layer.on('mouseout', function() { layer.setStyle({ fillOpacity:0.06, weight:1 }); });
+    }
+  }).addTo(leafletMap);
+  subLayer._countryISO3 = iso3;
+  setMapStatus(countryName + ' regions loaded. Tap a region for data.');
+}
+
+function loadUSStateLayer() {
+  if (subLayer && subLayer._countryISO3 === 'USA') return;
+  setMapStatus('Loading US states...');
+  var cacheKey = 'geo_USA';
+  if (geoCache[cacheKey]) { renderUSStates(geoCache[cacheKey]); return; }
   fetch('https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json')
     .then(function(r) { return r.json(); })
-    .then(function(data) {
-      stateLayer = L.geoJSON(data, {
-        style: function() {
-          return { fillColor:'#5040a0', fillOpacity:0.06, color:'#5040a0', weight:1, opacity:0.5 };
-        },
-        onEachFeature: function(feature, layer) {
-          var stateName = feature.properties.name || feature.properties.NAME || '';
-          layer.bindTooltip(stateName, { permanent:false, direction:'center', className:'state-tooltip' });
-          layer.on('click', function(e) {
-            L.DomEvent.stopPropagation(e);
-            onStateClick(stateName, e.latlng);
-          });
-          layer.on('mouseover', function() {
-            layer.setStyle({ fillOpacity:0.2, weight:2, color:'#3020a0' });
-          });
-          layer.on('mouseout', function() {
-            layer.setStyle({ fillOpacity:0.06, weight:1, color:'#5040a0' });
-          });
-        }
-      }).addTo(leafletMap);
-      setMapStatus('Tap a state for Census data. Zoom in for counties.');
-    })
+    .then(function(data) { geoCache[cacheKey] = data; renderUSStates(data); })
     .catch(function() { setMapStatus('State boundaries unavailable.'); });
 }
 
-function loadCountyLayer(stateFips, stateName) {
-  if (countyLayer) { leafletMap.removeLayer(countyLayer); countyLayer = null; }
-  setMapStatus('Loading counties for ' + stateName + '...');
-  var url = 'https://raw.githubusercontent.com/deldersveld/topojson/master/countries/us-states/AL-01-alabama-counties.json';
-  // Use Census Tiger GeoJSON for counties - build URL from FIPS
-  var tigerUrl = 'https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json';
-  fetch(tigerUrl)
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      // Filter to just this state
-      var filtered = {
-        type: 'FeatureCollection',
-        features: data.features.filter(function(f) {
-          return f.id && f.id.toString().substring(0,2) === stateFips;
-        })
-      };
-      if (filtered.features.length === 0) {
-        setMapStatus(stateName + ' county data not available.');
-        return;
-      }
-      countyLayer = L.geoJSON(filtered, {
-        style: function() {
-          return { fillColor:'#c04020', fillOpacity:0.05, color:'#c04020', weight:0.6, opacity:0.4 };
-        },
-        onEachFeature: function(feature, layer) {
-          layer.on('click', function(e) {
-            L.DomEvent.stopPropagation(e);
-            var fips = feature.id || '';
-            var name = feature.properties.NAME || feature.properties.name || fips;
-            onCountyClick(name, fips, stateName, stateFips, e.latlng);
-          });
-          layer.on('mouseover', function() { layer.setStyle({ fillOpacity:0.18, weight:1 }); });
-          layer.on('mouseout', function() { layer.setStyle({ fillOpacity:0.05, weight:0.6 }); });
-        }
-      }).addTo(leafletMap);
-      setMapStatus('Tap a county for detailed Census data.');
-    })
-    .catch(function() { setMapStatus('County data unavailable.'); });
+function renderUSStates(data) {
+  if (subLayer) { leafletMap.removeLayer(subLayer); subLayer = null; }
+  subLayer = L.geoJSON(data, {
+    style: function() {
+      return { fillColor:'#5040a0', fillOpacity:0.06, color:'#5040a0', weight:1, opacity:0.5 };
+    },
+    onEachFeature: function(feature, layer) {
+      var stateName = feature.properties.name || feature.properties.NAME || '';
+      layer.bindTooltip(stateName, { permanent:false, direction:'center', className:'state-tooltip' });
+      layer.on('click', function(e) {
+        L.DomEvent.stopPropagation(e);
+        onStateClick(stateName, e.latlng);
+      });
+      layer.on('mouseover', function() { layer.setStyle({ fillOpacity:0.2, weight:2, color:'#3020a0' }); });
+      layer.on('mouseout', function() { layer.setStyle({ fillOpacity:0.06, weight:1, color:'#5040a0' }); });
+    }
+  }).addTo(leafletMap);
+  subLayer._countryISO3 = 'USA';
+  setMapStatus('Tap a state for Census data. Zoom in for counties.');
 }
 
 // ── CLICK HANDLERS ──
 
-function onCountryClick(code, name, latlng) {
-  selectedPlace = { name:name, code:code, type:'country' };
-  currentZoomLevel = 'country';
+function onCountryClick(iso2, iso3, name, latlng) {
+  selectedPlace = { name:name, code:iso2, iso3:iso3, type:'country' };
   document.getElementById('viewingLabel').textContent = name;
   showDataPanel(name, '<div style="color:#8a8580;font-size:13px">Fetching World Bank data...</div>');
-
   L.popup().setLatLng(latlng)
     .setContent('<div class="popup-title">' + name + '</div><div style="color:#8a8580;font-size:12px">Loading...</div>')
     .openOn(leafletMap);
 
-  if (code === 'US') {
-    loadStateLayer();
-    setMapStatus(name + ' — zoom in to see states');
+  // Auto-load sub-layer if zoomed in enough
+  if (leafletMap.getZoom() >= 4) {
+    loadSubLayer(iso2, iso3, name);
+  } else {
+    setMapStatus(name + ' — zoom in to see regions');
   }
-  fetchWorldBankData(code, name, latlng);
+  fetchWorldBankData(iso2, name, latlng);
+}
+
+function onRegionClick(regionName, iso2, iso3, countryName, latlng) {
+  var fullName = regionName + ', ' + countryName;
+  selectedPlace = { name:fullName, code:iso2, iso3:iso3, type:'region' };
+  document.getElementById('viewingLabel').textContent = fullName;
+  showDataPanel(fullName, '<div style="color:#8a8580;font-size:13px">Fetching regional data...</div>');
+  fetchRegionData(regionName, iso2, countryName, latlng);
 }
 
 function onStateClick(stateName, latlng) {
-  selectedPlace = { name:stateName, code:'US-'+stateName, type:'state' };
-  currentZoomLevel = 'state';
-  document.getElementById('viewingLabel').textContent = stateName + ', USA';
-  showDataPanel(stateName, '<div style="color:#8a8580;font-size:13px">Fetching Census data...</div>');
-
   var fips = US_STATE_FIPS[stateName] || '';
-  setMapStatus('Loading Census data for ' + stateName + '...');
-
-  // Zoom to state
-  leafletMap.setZoom(6);
-
-  // Load counties
+  selectedPlace = { name:stateName+', USA', code:'US', iso3:'USA', type:'state', fips:fips };
+  document.getElementById('viewingLabel').textContent = stateName + ', USA';
+  showDataPanel(stateName + ', USA', '<div style="color:#8a8580;font-size:13px">Fetching Census data...</div>');
   if (fips) loadCountyLayer(fips, stateName);
-
   fetchStateData(stateName, fips, latlng);
 }
 
 function onCountyClick(countyName, fips, stateName, stateFips, latlng) {
   var fullName = countyName + ' County, ' + stateName;
-  selectedPlace = { name:fullName, code:fips, type:'county' };
-  currentZoomLevel = 'county';
+  selectedPlace = { name:fullName, code:'US', type:'county' };
   document.getElementById('viewingLabel').textContent = fullName;
   showDataPanel(fullName, '<div style="color:#8a8580;font-size:13px">Fetching Census data...</div>');
-  leafletMap.setZoom(9);
   fetchCountyData(countyName, fips, stateFips, latlng);
 }
 
-// ── REVERSE GEOCODE (click on map at zoom >= 5) ──
-function reverseGeocode(lat, lng, zoom) {
-  var zoomLevel = zoom >= 9 ? 10 : zoom >= 6 ? 8 : 6;
-  fetch('https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lng+'&format=json&zoom='+zoomLevel, {
-    headers: { 'Accept-Language':'en' }
+function loadCountyLayer(stateFips, stateName) {
+  var countyLayerKey = 'counties_' + stateFips;
+  // Remove previous county layer if different state
+  if (subLayer && subLayer._countyFips && subLayer._countyFips !== stateFips) {
+    leafletMap.removeLayer(subLayer);
+    subLayer = null;
+  }
+  if (subLayer && subLayer._countyFips === stateFips) return;
+
+  fetch('https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var filtered = { type:'FeatureCollection', features: data.features.filter(function(f) {
+        return f.id && f.id.toString().substring(0,2) === stateFips;
+      })};
+      if (filtered.features.length === 0) return;
+      var cl = L.geoJSON(filtered, {
+        style: function() { return { fillColor:'#c04020', fillOpacity:0.05, color:'#c04020', weight:0.6, opacity:0.4 }; },
+        onEachFeature: function(feature, layer) {
+          layer.on('click', function(e) {
+            L.DomEvent.stopPropagation(e);
+            var name = feature.properties.NAME || feature.properties.name || '';
+            onCountyClick(name, feature.id||'', stateName, stateFips, e.latlng);
+          });
+          layer.on('mouseover', function() { layer.setStyle({ fillOpacity:0.18, weight:1 }); });
+          layer.on('mouseout', function() { layer.setStyle({ fillOpacity:0.05, weight:0.6 }); });
+        }
+      }).addTo(leafletMap);
+      cl._countyFips = stateFips;
+      setMapStatus('Tap a county for detailed data.');
+    })
+    .catch(function() {});
+}
+
+// ── REVERSE GEOCODE ──
+function reverseGeocode(lat, lng) {
+  var z = leafletMap.getZoom();
+  var zl = z >= 9 ? 10 : z >= 6 ? 8 : 6;
+  fetch('https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lng+'&format=json&zoom='+zl, {
+    headers: {'Accept-Language':'en'}
   })
   .then(function(r) { return r.json(); })
   .then(function(d) {
     if (!d || !d.address) return;
     var addr = d.address;
-    var countryCode = (addr.country_code || '').toUpperCase();
-    if (zoom >= 9 && countryCode === 'US' && addr.county) {
+    var cc = (addr.country_code||'').toUpperCase();
+    if (z >= 9 && cc === 'US' && addr.county) {
       var county = addr.county.replace(' County','').replace(' Parish','');
-      var state = addr.state || '';
-      var fips = US_STATE_FIPS[state] || '';
-      onCountyClick(county, '', state, fips, { lat:lat, lng:lng });
-    } else if (zoom >= 5 && countryCode === 'US' && addr.state) {
-      onStateClick(addr.state, { lat:lat, lng:lng });
+      var fips = US_STATE_FIPS[addr.state] || '';
+      onCountyClick(county, '', addr.state||'', fips, {lat:lat,lng:lng});
+    } else if (z >= 5 && cc === 'US' && addr.state) {
+      onStateClick(addr.state, {lat:lat,lng:lng});
+    } else if (z >= 5 && addr.state) {
+      var iso2 = cc;
+      var iso3 = ISO2_TO_ISO3[iso2] || '';
+      var regionName = addr.state || addr.county || addr.city || '';
+      if (regionName) onRegionClick(regionName, iso2, iso3, addr.country||'', {lat:lat,lng:lng});
     }
   })
   .catch(function() {});
 }
 
-// ── DATA FETCHERS ──
-
+// ── WORLD BANK DATA ──
 function fetchWorldBankData(code, name, latlng) {
   if (!code) { showNoData(name); return; }
   var cacheKey = 'wb_' + code;
   if (wbCache[cacheKey]) { displayCountryData(wbCache[cacheKey], name, latlng); return; }
 
-  var indicators = ['EG.ELC.RNEW.ZS','SN.ITK.DEFC.ZS','SH.H2O.SMDW.ZS','ER.LND.PTLD.ZS','SI.POV.GINI','NY.GDP.PCAP.CD'];
+  var inds = ['EG.ELC.RNEW.ZS','SN.ITK.DEFC.ZS','SH.H2O.SMDW.ZS','ER.LND.PTLD.ZS','SI.POV.GINI','NY.GDP.PCAP.CD'];
   var results = {};
-  var pending = indicators.length;
+  var pending = inds.length;
 
   var tid = setTimeout(function() {
-    pending = 0;
-    wbCache[cacheKey] = results;
-    displayCountryData(results, name, latlng);
+    if (pending > 0) { pending = 0; wbCache[cacheKey] = results; displayCountryData(results, name, latlng); }
   }, 8000);
 
-  indicators.forEach(function(ind) {
-    var url = 'https://api.worldbank.org/v2/country/'+code+'/indicator/'+ind+'?format=json&mrv=5&per_page=5';
-    fetch(url)
+  inds.forEach(function(ind) {
+    fetch('https://api.worldbank.org/v2/country/'+code+'/indicator/'+ind+'?format=json&mrv=5&per_page=5')
       .then(function(r) { return r.json(); })
       .then(function(data) {
         var val = null;
         if (data && data[1]) {
           for (var i = 0; i < data[1].length; i++) {
             if (data[1][i].value !== null) {
-              val = { value: Math.round(data[1][i].value * 10) / 10, year: data[1][i].date };
+              val = { value: Math.round(data[1][i].value*10)/10, year: data[1][i].date };
               break;
             }
           }
         }
-        results[ind] = val;
-        pending--;
+        results[ind] = val; pending--;
         if (pending <= 0) { clearTimeout(tid); wbCache[cacheKey] = results; displayCountryData(results, name, latlng); }
       })
       .catch(function() {
-        results[ind] = null;
-        pending--;
+        results[ind] = null; pending--;
         if (pending <= 0) { clearTimeout(tid); wbCache[cacheKey] = results; displayCountryData(results, name, latlng); }
       });
   });
 }
 
+// Region data - try World Bank subnational, fall back to country data
+function fetchRegionData(regionName, iso2, countryName, latlng) {
+  // Show region name, use country-level data as context
+  var cacheKey = 'wb_' + iso2;
+  if (wbCache[cacheKey]) {
+    displayRegionData(regionName, countryName, wbCache[cacheKey], latlng);
+  } else {
+    // Fetch country data first then display with region context
+    fetchWorldBankData(iso2, countryName, null);
+    // Show interim message
+    var html = '<div style="font-size:13px;color:#4a4640;margin-bottom:10px">';
+    html += 'Region-level statistics are limited for most countries. ';
+    html += 'Showing national data for ' + countryName + ' as context.</div>';
+    showDataPanel(regionName + ', ' + countryName, html + '<div style="color:#8a8580;font-size:13px">Loading national data...</div>');
+    // After a delay, show whatever we have
+    setTimeout(function() {
+      if (wbCache[cacheKey]) displayRegionData(regionName, countryName, wbCache[cacheKey], latlng);
+    }, 4000);
+  }
+  setMapStatus(regionName + ' — showing available data');
+}
+
 function fetchStateData(stateName, fips, latlng) {
   if (!fips) { showNoData(stateName); return; }
   var cacheKey = 'state_' + fips;
-  if (censusCache[cacheKey]) { displayStateData(censusCache[cacheKey], stateName, latlng); return; }
-
-  var url = 'https://api.census.gov/data/2022/acs/acs5?get=NAME,B19013_001E,B17001_002E,B01003_001E,B15003_022E,B27001_001E&for=state:' + fips;
-  fetch(url)
+  if (subCache[cacheKey]) { displayStateData(subCache[cacheKey], stateName, latlng); return; }
+  fetch('https://api.census.gov/data/2022/acs/acs5?get=NAME,B19013_001E,B17001_002E,B01003_001E,B15003_022E&for=state:' + fips)
     .then(function(r) { return r.json(); })
     .then(function(d) {
       if (!d || d.length < 2) { showNoData(stateName); return; }
       var r = d[1];
-      var data = {
-        name: r[0], medianIncome: parseInt(r[1]) || null,
-        poverty: parseInt(r[2]) || null, pop: parseInt(r[3]) || null,
-        bachelors: parseInt(r[4]) || null
-      };
-      censusCache[cacheKey] = data;
+      var data = { name:r[0], medianIncome:parseInt(r[1])||null, poverty:parseInt(r[2])||null, pop:parseInt(r[3])||null, bachelors:parseInt(r[4])||null };
+      subCache[cacheKey] = data;
       displayStateData(data, stateName, latlng);
     })
     .catch(function() { showNoData(stateName); });
 }
 
 function fetchCountyData(countyName, fips, stateFips, latlng) {
-  if (!stateFips) { showNoData(countyName + ' County'); return; }
-  var cacheKey = 'county_' + (fips || countyName + stateFips);
-  if (censusCache[cacheKey]) { displayCountyData(censusCache[cacheKey], countyName, latlng); return; }
-
-  // Search by name since FIPS from GeoJSON may be inconsistent
-  var url = 'https://api.census.gov/data/2022/acs/acs5?get=NAME,B19013_001E,B17001_002E,B01003_001E&for=county:*&in=state:' + stateFips;
-  fetch(url)
+  if (!stateFips) { showNoData(countyName+' County'); return; }
+  var cacheKey = 'county_' + stateFips + '_' + countyName;
+  if (subCache[cacheKey]) { displayCountyData(subCache[cacheKey], countyName, latlng); return; }
+  fetch('https://api.census.gov/data/2022/acs/acs5?get=NAME,B19013_001E,B17001_002E,B01003_001E&for=county:*&in=state:'+stateFips)
     .then(function(r) { return r.json(); })
     .then(function(d) {
       if (!d || d.length < 2) { showNoData(countyName); return; }
-      // Find matching county
       var match = null;
       for (var i = 1; i < d.length; i++) {
-        if (d[i][0] && d[i][0].toLowerCase().indexOf(countyName.toLowerCase()) >= 0) {
-          match = d[i]; break;
-        }
+        if (d[i][0] && d[i][0].toLowerCase().indexOf(countyName.toLowerCase()) >= 0) { match = d[i]; break; }
       }
-      if (!match) match = d[1]; // fallback to first
-      var data = {
-        name: match[0], medianIncome: parseInt(match[1]) || null,
-        poverty: parseInt(match[2]) || null, pop: parseInt(match[3]) || null
-      };
-      censusCache[cacheKey] = data;
+      if (!match) match = d[1];
+      var data = { name:match[0], medianIncome:parseInt(match[1])||null, poverty:parseInt(match[2])||null, pop:parseInt(match[3])||null };
+      subCache[cacheKey] = data;
       displayCountyData(data, countyName, latlng);
     })
-    .catch(function() { showNoData(countyName + ' County'); });
+    .catch(function() { showNoData(countyName+' County'); });
 }
 
-// ── DISPLAY FUNCTIONS ──
-
+// ── DISPLAY ──
 function displayCountryData(data, name, latlng) {
-  var ren = data['EG.ELC.RNEW.ZS'];
-  var hunger = data['SN.ITK.DEFC.ZS'];
-  var water = data['SH.H2O.SMDW.ZS'];
-  var land = data['ER.LND.PTLD.ZS'];
-  var gini = data['SI.POV.GINI'];
-  var gdp = data['NY.GDP.PCAP.CD'];
+  var ren = data['EG.ELC.RNEW.ZS'], hunger = data['SN.ITK.DEFC.ZS'];
+  var water = data['SH.H2O.SMDW.ZS'], land = data['ER.LND.PTLD.ZS'];
+  var gini = data['SI.POV.GINI'], gdp = data['NY.GDP.PCAP.CD'];
 
-  // Update sliders to country values
   if (ren) setSlider('sl-ren', ren.value, 'sv-ren');
-  if (hunger) setSlider('sl-food', Math.max(0, 100 - hunger.value), 'sv-food');
+  if (hunger) setSlider('sl-food', Math.max(0,100-hunger.value), 'sv-food');
   if (water) setSlider('sl-water', water.value, 'sv-water');
   if (land) setSlider('sl-land', land.value, 'sv-land');
-  if (gini) setSlider('sl-wealth', Math.max(0, 100 - gini.value), 'sv-wealth');
+  if (gini) setSlider('sl-wealth', Math.max(0,100-gini.value), 'sv-wealth');
   recalc();
 
   var hasAny = ren || hunger || water || land || gini || gdp;
   if (!hasAny) { showNoData(name); return; }
 
   var html = '';
-  if (ren) html += dataRow('Renewable electricity', ren.value + '%', ren.year);
-  if (hunger) html += dataRow('Food secure', Math.round(100-hunger.value) + '%', hunger.year);
-  if (water) html += dataRow('Safe water access', water.value + '%', water.year);
-  if (land) html += dataRow('Protected land', land.value + '%', land.year);
+  if (ren) html += dataRow('Renewable electricity', ren.value+'%', ren.year);
+  if (hunger) html += dataRow('Food secure', Math.round(100-hunger.value)+'%', hunger.year);
+  if (water) html += dataRow('Safe water', water.value+'%', water.year);
+  if (land) html += dataRow('Protected land', land.value+'%', land.year);
   if (gini) html += dataRow('Gini coefficient', gini.value, gini.year);
-  if (gdp) html += dataRow('GDP per capita', '$' + Math.round(gdp.value).toLocaleString(), gdp.year);
-  html += '<div style="font-size:10px;color:#b8b4ae;margin-top:10px;padding-top:6px;border-top:1px solid #f0ece4">Source: World Bank Open Data. Most recent year shown.</div>';
+  if (gdp) html += dataRow('GDP per capita', '$'+Math.round(gdp.value).toLocaleString(), gdp.year);
+  html += '<div style="font-size:10px;color:#b8b4ae;margin-top:10px;padding-top:6px;border-top:1px solid #f0ece4">World Bank Open Data. Most recent year shown.</div>';
   showDataPanel(name, html);
 
-  // Update popup
   if (latlng && leafletMap) {
-    var ph = '<div class="popup-title">' + name + '</div>';
-    if (ren) ph += '<div class="popup-row"><span class="popup-label">Renewables</span><span class="popup-val">' + ren.value + '%</span></div>';
-    if (water) ph += '<div class="popup-row"><span class="popup-label">Safe water</span><span class="popup-val">' + water.value + '%</span></div>';
-    if (gdp) ph += '<div class="popup-row"><span class="popup-label">GDP/capita</span><span class="popup-val">$' + Math.round(gdp.value/1000) + 'k</span></div>';
+    var ph = '<div class="popup-title">'+name+'</div>';
+    if (ren) ph += '<div class="popup-row"><span class="popup-label">Renewables</span><span class="popup-val">'+ren.value+'%</span></div>';
+    if (water) ph += '<div class="popup-row"><span class="popup-label">Safe water</span><span class="popup-val">'+water.value+'%</span></div>';
+    if (gdp) ph += '<div class="popup-row"><span class="popup-label">GDP/capita</span><span class="popup-val">$'+Math.round(gdp.value/1000)+'k</span></div>';
     ph += '<div class="popup-source">World Bank</div>';
     L.popup().setLatLng(latlng).setContent(ph).openOn(leafletMap);
   }
-  setMapStatus(name + ' data loaded. Sliders updated to local values.');
+  setMapStatus(name + ' data loaded. Sliders updated. Zoom in for regions.');
+}
+
+function displayRegionData(regionName, countryName, countryData, latlng) {
+  var ren = countryData['EG.ELC.RNEW.ZS'];
+  var hunger = countryData['SN.ITK.DEFC.ZS'];
+  var water = countryData['SH.H2O.SMDW.ZS'];
+  var gdp = countryData['NY.GDP.PCAP.CD'];
+
+  var html = '<div style="font-size:11px;color:#8a8580;margin-bottom:10px;padding:6px 8px;background:#f8f6f2;border-radius:6px">';
+  html += 'Sub-national data limited. Showing national figures for ' + countryName + '.</div>';
+  if (ren) html += dataRow('Renewable electricity', ren.value+'%', ren.year);
+  if (hunger) html += dataRow('Food secure', Math.round(100-hunger.value)+'%', hunger.year);
+  if (water) html += dataRow('Safe water', water.value+'%', water.year);
+  if (gdp) html += dataRow('GDP per capita', '$'+Math.round(gdp.value).toLocaleString(), gdp.year);
+  html += '<div style="font-size:10px;color:#b8b4ae;margin-top:8px">World Bank national data. Regional breakdown not available.</div>';
+  showDataPanel(regionName + ', ' + countryName, html);
+  setMapStatus(regionName + ' — national data shown as context.');
 }
 
 function displayStateData(data, stateName, latlng) {
-  // Update relevant sliders with state data
-  if (data.medianIncome) {
-    // Normalize median income to a 0-100 wealth equity score
-    // US median is ~$70k, scale: 0=$0, 100=$120k+
-    var wealthScore = Math.min(100, Math.round(data.medianIncome / 1200));
-    setSlider('sl-wealth', wealthScore, 'sv-wealth');
-  }
-  if (data.poverty && data.pop) {
-    var povertyRate = data.poverty / data.pop * 100;
-    var foodScore = Math.max(0, Math.round(100 - povertyRate * 2));
-    setSlider('sl-food', foodScore, 'sv-food');
-  }
+  if (data.medianIncome) setSlider('sl-wealth', Math.min(100,Math.round(data.medianIncome/1200)), 'sv-wealth');
+  if (data.poverty && data.pop) setSlider('sl-food', Math.max(0,Math.round(100-(data.poverty/data.pop*100)*2)), 'sv-food');
   recalc();
-
   var html = '';
   if (data.pop) html += dataRow('Population', data.pop.toLocaleString(), '2022');
-  if (data.medianIncome) html += dataRow('Median household income', '$' + data.medianIncome.toLocaleString(), '2022');
-  if (data.poverty && data.pop) html += dataRow('Poverty rate', (data.poverty/data.pop*100).toFixed(1) + '%', '2022');
+  if (data.medianIncome) html += dataRow('Median household income', '$'+data.medianIncome.toLocaleString(), '2022');
+  if (data.poverty && data.pop) html += dataRow('Poverty rate', (data.poverty/data.pop*100).toFixed(1)+'%', '2022');
   html += '<div style="font-size:11px;color:#8a8580;margin-top:10px;padding:8px;background:#f8f6f2;border-radius:6px">Zoom in and tap a county for local data.</div>';
-  html += '<div style="font-size:10px;color:#b8b4ae;margin-top:8px">Source: US Census ACS 5-year estimates 2022.</div>';
-  showDataPanel(stateName + ', USA', html);
-  setMapStatus(stateName + ' loaded. Tap a county for more detail.');
+  html += '<div style="font-size:10px;color:#b8b4ae;margin-top:6px">US Census ACS 5-year estimates 2022.</div>';
+  showDataPanel(stateName+', USA', html);
+  setMapStatus(stateName+' loaded. Tap a county for more detail.');
 }
 
 function displayCountyData(data, countyName, latlng) {
-  if (data.medianIncome) {
-    var wealthScore = Math.min(100, Math.round(data.medianIncome / 1200));
-    setSlider('sl-wealth', wealthScore, 'sv-wealth');
-  }
+  if (data.medianIncome) setSlider('sl-wealth', Math.min(100,Math.round(data.medianIncome/1200)), 'sv-wealth');
   recalc();
-
   var html = '';
   if (data.pop) html += dataRow('Population', data.pop.toLocaleString(), '2022');
-  if (data.medianIncome) html += dataRow('Median household income', '$' + data.medianIncome.toLocaleString(), '2022');
+  if (data.medianIncome) html += dataRow('Median household income', '$'+data.medianIncome.toLocaleString(), '2022');
   if (data.poverty && data.pop) html += dataRow('Poverty rate', (data.poverty/data.pop*100).toFixed(1)+'%', '2022');
-  html += '<div style="font-size:10px;color:#b8b4ae;margin-top:8px">Source: US Census ACS 5-year estimates 2022.</div>';
-  showDataPanel(data.name || countyName + ' County', html);
-  setMapStatus(countyName + ' County data loaded.');
+  html += '<div style="font-size:10px;color:#b8b4ae;margin-top:8px">US Census ACS 5-year estimates 2022.</div>';
+  showDataPanel(data.name||countyName+' County', html);
+  setMapStatus(countyName+' County data loaded.');
 }
 
 function showNoData(name) {
-  showDataPanel(name, '<div style="color:#8a8580;font-size:13px;padding:6px 0">No data available for ' + name + ' from World Bank or Census API.</div>');
-  setMapStatus(name + ' — no data available');
+  showDataPanel(name, '<div style="color:#8a8580;font-size:13px;padding:6px 0">No data available for '+name+'. World Bank or Census data may not cover this area.</div>');
+  setMapStatus(name+' — no data available');
 }
 
 // ── HELPERS ──
-
 function showDataPanel(title, html) {
   document.getElementById('dataPanel').style.display = 'block';
   document.getElementById('dataPanelTitle').textContent = title;
@@ -1402,8 +1436,8 @@ function showDataPanel(title, html) {
 }
 
 function dataRow(label, value, year) {
-  var yr = year ? ' <span style="color:#b8b4ae;font-size:10px">(' + year + ')</span>' : '';
-  return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f4f0e8"><span style="font-size:13px;color:#8a8580">' + label + '</span><span style="font-size:13px;font-weight:600;color:#1a1814">' + value + yr + '</span></div>';
+  var yr = year ? ' <span style="color:#b8b4ae;font-size:10px">('+year+')</span>' : '';
+  return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f4f0e8"><span style="font-size:13px;color:#8a8580">'+label+'</span><span style="font-size:13px;font-weight:600;color:#1a1814">'+value+yr+'</span></div>';
 }
 
 function setMapStatus(msg) {
@@ -1412,36 +1446,33 @@ function setMapStatus(msg) {
 }
 
 function setSlider(id, val, labelId) {
-  var slider = document.getElementById(id);
-  var label = document.getElementById(labelId);
-  if (slider && val !== null && !isNaN(val)) {
-    slider.value = Math.round(val);
-    if (label) label.textContent = Math.round(val) + '%';
+  var s = document.getElementById(id);
+  var l = document.getElementById(labelId);
+  if (s && val !== null && !isNaN(val)) {
+    s.value = Math.round(val);
+    if (l) l.textContent = Math.round(val)+'%';
   }
 }
 
 function resetMapView() {
-  if (leafletMap) { leafletMap.setView([20, 0], 2); }
-  selectedPlace = { name:'Global', code:null, type:'world' };
-  currentZoomLevel = 'world';
+  if (leafletMap) { leafletMap.setView([20,0], 2); }
+  if (subLayer) { leafletMap.removeLayer(subLayer); subLayer = null; }
+  selectedPlace = { name:'Global', code:null, iso3:null, type:'world' };
   document.getElementById('viewingLabel').textContent = 'Global Average';
   document.getElementById('dataPanel').style.display = 'none';
-  if (countyLayer) { leafletMap.removeLayer(countyLayer); countyLayer = null; }
   resetSliders();
 }
 
 function resetSliders() {
-  setSlider('sl-ren', 34, 'sv-ren');
-  setSlider('sl-food', 72, 'sv-food');
-  setSlider('sl-kl', 8, 'sv-kl');
-  setSlider('sl-land', 17, 'sv-land');
-  setSlider('sl-water', 74, 'sv-water');
-  setSlider('sl-wealth', 12, 'sv-wealth');
+  setSlider('sl-ren',34,'sv-ren'); setSlider('sl-food',72,'sv-food');
+  setSlider('sl-kl',8,'sv-kl'); setSlider('sl-land',17,'sv-land');
+  setSlider('sl-water',74,'sv-water'); setSlider('sl-wealth',12,'sv-wealth');
   recalc();
   document.getElementById('viewingLabel').textContent = 'Global Average';
 }
 
 // ── GLOBE ──
+
 
 function initGlobe() {
   var canvas = document.getElementById('globeCanvas');
