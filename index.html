@@ -1773,6 +1773,8 @@ function drawWorldMap(highlightId) {
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   const W = canvas.width, H = canvas.height;
+  // Scale factor: paths designed for 400x220, canvas is 800x440
+  const sx = W / 400, sy = H / 220;
   ctx.clearRect(0, 0, W, H);
 
   // Ocean background
@@ -1782,10 +1784,10 @@ function drawWorldMap(highlightId) {
   // Latitude grid lines
   ctx.strokeStyle = 'rgba(180,170,150,0.3)';
   ctx.lineWidth = 0.5;
-  for (let y = 20; y < H; y += 30) {
+  for (let y = 20*sy; y < H; y += 30*sy) {
     ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
   }
-  for (let x = 20; x < W; x += 30) {
+  for (let x = 20*sx; x < W; x += 30*sx) {
     ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
   }
 
@@ -1794,8 +1796,8 @@ function drawWorldMap(highlightId) {
     const isSelected = reg.id === highlightId;
     ctx.beginPath();
     reg.path.forEach((pt, i) => {
-      if (i === 0) ctx.moveTo(pt[0], pt[1]);
-      else ctx.lineTo(pt[0], pt[1]);
+      if (i === 0) ctx.moveTo(pt[0]*sx, pt[1]*sy);
+      else ctx.lineTo(pt[0]*sx, pt[1]*sy);
     });
     ctx.closePath();
 
@@ -1819,26 +1821,25 @@ function drawWorldMap(highlightId) {
 
     // Label
     ctx.fillStyle = isSelected ? reg.color : '#8a8580';
-    ctx.font = isSelected ? 'bold 9px Inter, sans-serif' : '8px Inter, sans-serif';
+    ctx.font = isSelected ? 'bold 11px Inter, sans-serif' : '10px Inter, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(reg.name, reg.cx, reg.cy);
+    ctx.fillText(reg.name, reg.cx*sx, reg.cy*sy);
   });
 }
 
 function getMapRegionAt(canvas, clientX, clientY) {
   const rect = canvas.getBoundingClientRect();
-  const sx = canvas.width / rect.width;
-  const sy = canvas.height / rect.height;
-  const x = (clientX - rect.left) * sx;
-  const y = (clientY - rect.top) * sy;
+  // Convert click to canvas coordinates (0-400, 0-220 space)
+  const x = (clientX - rect.left) / rect.width * 400;
+  const y = (clientY - rect.top) / rect.height * 220;
   // Find closest region center
   let best = null, bestD = 999;
   MAP_REGIONS.forEach(reg => {
     const d = Math.hypot(x - reg.cx, y - reg.cy);
     if (d < bestD) { bestD = d; best = reg; }
   });
-  return bestD < 45 ? best : null;
+  return bestD < 50 ? best : null;
 }
 
 function initWorldMap() {
