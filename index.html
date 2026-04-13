@@ -1473,19 +1473,40 @@ function loadSubLayer(iso2, iso3, countryName) {
 }
 
 function filterADM1(data, iso2, iso3) {
-  var features = (data.features || []).filter(function(f) {
+  if (!data || !data.features) return { type:'FeatureCollection', features:[] };
+  var iso2up = (iso2 || '').toUpperCase();
+  var iso3up = (iso3 || '').toUpperCase();
+  var features = data.features.filter(function(f) {
     var p = f.properties || {};
-    // Natural Earth ADM1 uses adm0_a3 for country ISO3
-    var fIso3 = (p.adm0_a3 || p.iso_a3 || p.ISO_A3 || p.ADM0_A3 || '').toUpperCase();
-    var fIso2 = (p.iso_a2 || p.ISO_A2 || p.adm0_iso || '').toUpperCase();
-    var fName = (p.admin || p.ADMIN || p.adm0_name || p.ADM0_NAME || '').toUpperCase();
-    // Match by ISO3 (most reliable), ISO2, or country name
-    if (iso3 && fIso3 && fIso3 === iso3.toUpperCase()) return true;
-    if (iso2 && fIso2 && fIso2 === iso2.toUpperCase()) return true;
-    // Name fallback
-    if (fName && NAME_TO_ISO2[fName] === iso2) return true;
+    // Natural Earth ADM1 key fields (check all variants)
+    var checks = [
+      p.adm0_a3, p.ADM0_A3, p.adm0_a3_us, p.adm0_a3_is,
+      p.iso_a3, p.ISO_A3,
+      p.iso_3166_2 ? p.iso_3166_2.substring(0,3) : null
+    ];
+    for (var i = 0; i < checks.length; i++) {
+      if (checks[i] && checks[i].toUpperCase() === iso3up) return true;
+    }
+    // ISO2 checks
+    var iso2checks = [p.iso_a2, p.ISO_A2, p.adm0_iso];
+    for (var j = 0; j < iso2checks.length; j++) {
+      if (iso2checks[j] && iso2checks[j].toUpperCase() === iso2up) return true;
+    }
+    // Country name check
+    var nameChecks = [p.admin, p.ADMIN, p.adm0_name, p.ADM0_NAME, p.geonunit, p.sovereignt];
+    for (var k = 0; k < nameChecks.length; k++) {
+      if (nameChecks[k] && NAME_TO_ISO2[nameChecks[k].toUpperCase()] === iso2) return true;
+    }
     return false;
   });
+  // Debug: log count
+  if (features.length === 0 && iso3up) {
+    // Try to find what's in the data for this region
+    var sample = data.features.slice(0,3).map(function(f) {
+      return JSON.stringify({a3:f.properties.adm0_a3, iso:f.properties.iso_a2, name:f.properties.admin});
+    });
+    console.log('No match for', iso2up, iso3up, 'Sample:', sample.join(' | '));
+  }
   return { type:'FeatureCollection', features: features };
 }
 
@@ -1785,8 +1806,9 @@ function displayCountryData(data, name, latlng) {
     L.popup().setLatLng(latlng).setContent(ph).openOn(leafletMap);
   }
   setMapStatus(name + ' data loaded. Sliders updated. Zoom in for regions.');
-  // Auto-load sub-national if zoomed in
-  if (leafletMap && leafletMap.getZoom() >= 4 && selectedPlace.iso3) {
+  // Auto-load sub-national boundaries regardless of zoom
+  // Use selectedPlace which was set in onCountryClick before this async call
+  if (leafletMap && selectedPlace.code && selectedPlace.iso3) {
     loadSubLayer(selectedPlace.code, selectedPlace.iso3, name);
   }
 }
