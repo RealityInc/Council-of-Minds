@@ -1892,7 +1892,7 @@ function setWorkshopMode(mode, el) {
 }
 async function triggerWorkshop() {
   const input = document.getElementById('workshopInput').value.trim();
-  if (!input) { showErr('workshopError', 'Describe what you're working on first.'); return; }
+  if (!input) { showErr('workshopError', 'Describe what you are working on first.'); return; }
   if (isLoading) return;
   setLoading(true, 'creative');
   document.getElementById('creativeDot').className = 'sdot sdot-active';
@@ -1924,13 +1924,8 @@ Respond in your authentic voice. Be specific and useful. 3-5 sentences. No pream
   // Synthesis
   if (pieces.length > 0) {
     showThinking('workshopMessages', 'Claude — synthesizing');
-    const all = pieces.map(p => `${p.name}: ${p.text}`).join('
-
-');
-    const synSys = `You are Claude. Synthesize these council perspectives on this idea into 2-3 sentences of actionable insight. What is the most important thing this person should take away?
-
-Idea: "${input}"
-Mode: ${workshopMode}`;
+    const all = pieces.map(function(p){return p.name+': '+p.text;}).join('\n\n');
+    const synSys = 'You are Claude. Synthesize these council perspectives on this idea into 2-3 sentences of actionable insight. What is the most important thing this person should take away?  Idea: "${input}" Mode: ${workshopMode}';
     try {
       const synth = await callClaude(synSys, all, 400);
       removeThinking('workshopMessages');
