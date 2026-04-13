@@ -67,6 +67,7 @@ textarea{resize:none;min-height:80px;}
   <button id="nav-forum" onclick="show('forum')">Forum</button>
   <button id="nav-create" onclick="show('create')">Create</button>
   <button id="nav-world" onclick="show('world')">World Game</button>
+  <button id="nav-gallery" onclick="show('gallery')">Gallery</button>
   <button id="nav-council" onclick="show('council')">Council</button>
 </div>
 
@@ -74,6 +75,7 @@ textarea{resize:none;min-height:80px;}
 
 <div class="screen active" id="screen-home">
   <div class="home-hero">
+    <canvas id="globeCanvas" width="140" height="140" style="display:block;margin:0 auto 20px"></canvas>
     <div class="home-title">The World Game</div>
     <div class="home-sub">Make the world work for everyone</div>
     <div class="doors">
@@ -228,6 +230,25 @@ textarea{resize:none;min-height:80px;}
   </div>
 </div>
 
+<!-- GALLERY -->
+
+<div class="screen" id="screen-gallery">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+    <div>
+      <div style="font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:#8a8580">Community Gallery</div>
+      <div style="font-size:14px;color:#8a8580;margin-top:2px">What people have made and shared</div>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap" id="galleryFilters">
+      <button class="btn btn-outline" style="padding:6px 12px;font-size:11px;border-color:#b8922a;color:#b8922a" onclick="filterGallery('all',this)">All</button>
+      <button class="btn btn-outline" style="padding:6px 12px;font-size:11px" onclick="filterGallery('creative',this)">Creative</button>
+      <button class="btn btn-outline" style="padding:6px 12px;font-size:11px" onclick="filterGallery('debate',this)">Debate</button>
+      <button class="btn btn-outline" style="padding:6px 12px;font-size:11px" onclick="filterGallery('insight',this)">Insight</button>
+    </div>
+  </div>
+  <div id="galleryGrid" style="display:flex;flex-direction:column;gap:10px"></div>
+  <div id="galleryEmpty" style="text-align:center;padding:40px 20px;color:#b8b4ae;font-size:14px;display:none">Nothing shared yet. Be the first.</div>
+</div>
+
 <!-- COUNCIL -->
 
 <div class="screen" id="screen-council">
@@ -311,7 +332,7 @@ var loading = false;
 
 // ── SCREENS ──
 function show(name) {
-  var screens = ['home','oracle','forum','create','world','council'];
+  var screens = ['home','oracle','forum','create','world','gallery','council'];
   for (var i = 0; i < screens.length; i++) {
     var s = screens[i];
     document.getElementById('screen-'+s).style.display = s === name ? 'block' : 'none';
@@ -437,7 +458,8 @@ function parseOracle(container, text) {
       if (cbuf.length) {
         var cdiv = document.createElement('div');
         cdiv.className = 'msg-consensus';
-        cdiv.innerHTML = '<div class="lbl">Council Synthesis</div><div class="txt">' + cbuf.join(' ') + '</div>';
+        var synthText = cbuf.join(' ');
+        cdiv.innerHTML = '<div class="lbl">Council Synthesis</div><div class="txt">' + synthText + '</div><div style="margin-top:10px"><button class="btn btn-outline" style="font-size:12px;padding:6px 14px" onclick="shareToGallery(\'insight\',\'Oracle: '+q.substring(0,40).replace(/'/g,'')+'\',\''+synthText.substring(0,200).replace(/'/g,'')+'\'  )">Share to Gallery</button></div>';
         container.appendChild(cdiv);
       }
     } else {
@@ -660,8 +682,141 @@ function askCouncil() {
   setTimeout(startDebate, 100);
 }
 
+// ── GALLERY ──
+var galleryItems = [
+  {id:1,type:'creative',title:'On the Weight of Water',content:'The river does not ask permission to find its way to sea. A collective poem on resource equity.',date:'Apr 2026',appreciations:12},
+  {id:2,type:'insight',title:"Fuller's Ephemeralization in the Age of AI",content:'We built a working World Game in under an hour. The question is no longer whether we can do more with less. The question is whether we will.',date:'Apr 2026',appreciations:8},
+  {id:3,type:'debate',title:'Should AI replace human decision-making in resource allocation?',content:'Jung noted the shadow of optimization: efficiency without wisdom produces systems that are perfectly wrong.',date:'Apr 2026',appreciations:15}
+];
+var galleryFilter = 'all';
+
+function filterGallery(type, btn) {
+  galleryFilter = type;
+  var btns = document.getElementById('galleryFilters').getElementsByTagName('button');
+  for (var i = 0; i < btns.length; i++) {
+    btns[i].style.borderColor = '';
+    btns[i].style.color = '';
+  }
+  if (btn) { btn.style.borderColor = '#b8922a'; btn.style.color = '#b8922a'; }
+  renderGallery();
+}
+
+function renderGallery() {
+  var grid = document.getElementById('galleryGrid');
+  var empty = document.getElementById('galleryEmpty');
+  if (!grid) return;
+  var items = galleryFilter === 'all' ? galleryItems : galleryItems.filter(function(i) { return i.type === galleryFilter; });
+  if (items.length === 0) { grid.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  var html = '';
+  for (var i = 0; i < items.length; i++) {
+    var item = items[i];
+    var typeColor = {creative:'#7060c0',debate:'#b8922a',insight:'#c04020',scenario:'#1a6b4a'}[item.type] || '#8a8580';
+    html += '<div style="background:#fff;border:1px solid #e8e4dc;border-radius:12px;overflow:hidden">';
+    html += '<div style="padding:10px 14px;border-bottom:1px solid #e8e4dc;display:flex;justify-content:space-between;align-items:center">';
+    html += '<span style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:'+typeColor+'">'+item.type+'</span>';
+    html += '<span style="font-size:11px;color:#b8b4ae">'+item.date+'</span></div>';
+    html += '<div style="padding:14px"><div style="font-size:15px;font-weight:600;color:#1a1814;margin-bottom:6px">'+item.title+'</div>';
+    html += '<div style="font-size:13px;color:#8a8580;line-height:1.5">'+item.content+'</div></div>';
+    html += '<div style="padding:8px 14px;border-top:1px solid #e8e4dc;display:flex;justify-content:space-between;align-items:center">';
+    html += '<span style="font-size:11px;color:#b8b4ae">'+( item.appreciations || 0)+' appreciations</span>';
+    html += '<button class="btn btn-outline" style="font-size:11px;padding:4px 12px" onclick="appreciateItem('+item.id+')">Appreciate</button>';
+    html += '</div></div>';
+  }
+  grid.innerHTML = html;
+}
+
+function appreciateItem(id) {
+  for (var i = 0; i < galleryItems.length; i++) {
+    if (galleryItems[i].id === id) { galleryItems[i].appreciations = (galleryItems[i].appreciations || 0) + 1; break; }
+  }
+  renderGallery();
+}
+
+function shareToGallery(type, title, content) {
+  var id = Date.now();
+  galleryItems.unshift({id:id, type:type, title:title, content:content.substring(0,200), date:new Date().toLocaleDateString(), appreciations:0});
+  show('gallery');
+}
+
+// ── GLOBE ──
+function initGlobe() {
+  var canvas = document.getElementById('globeCanvas');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var cx = 70, cy = 70, r = 60;
+  var angle = 0;
+
+  function draw() {
+    ctx.clearRect(0, 0, 140, 140);
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(184,146,42,0.25)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(184,146,42,0.15)';
+    ctx.lineWidth = 0.75;
+    var lat;
+    for (lat = -60; lat <= 60; lat += 30) {
+      var latRad = lat * Math.PI / 180;
+      var ry = r * Math.cos(latRad);
+      var yPos = cy - r * Math.sin(latRad);
+      if (ry > 0) {
+        ctx.beginPath();
+        ctx.ellipse(cx, yPos, ry, ry * 0.28, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+
+    ctx.strokeStyle = 'rgba(184,146,42,0.12)';
+    var lon;
+    for (lon = 0; lon < 360; lon += 40) {
+      var lonRad = (lon + angle) * Math.PI / 180;
+      ctx.beginPath();
+      var started = false;
+      var lt;
+      for (lt = -90; lt <= 90; lt += 5) {
+        var ltRad = lt * Math.PI / 180;
+        var x = cx + r * Math.cos(ltRad) * Math.sin(lonRad);
+        var y = cy - r * Math.sin(ltRad);
+        var z = Math.cos(ltRad) * Math.cos(lonRad);
+        if (z > 0) {
+          if (!started) { ctx.moveTo(x, y); started = true; }
+          else ctx.lineTo(x, y);
+        } else { started = false; }
+      }
+      ctx.stroke();
+    }
+
+    // Highlighted meridian
+    ctx.strokeStyle = 'rgba(184,146,42,0.4)';
+    ctx.lineWidth = 1;
+    var lonRad2 = angle * Math.PI / 180;
+    ctx.beginPath();
+    var s2 = false;
+    for (var lt2 = -90; lt2 <= 90; lt2 += 3) {
+      var ltRad2 = lt2 * Math.PI / 180;
+      var x2 = cx + r * Math.cos(ltRad2) * Math.sin(lonRad2);
+      var y2 = cy - r * Math.sin(ltRad2);
+      var z2 = Math.cos(ltRad2) * Math.cos(lonRad2);
+      if (z2 > 0) {
+        if (!s2) { ctx.moveTo(x2, y2); s2 = true; }
+        else ctx.lineTo(x2, y2);
+      } else { s2 = false; }
+    }
+    ctx.stroke();
+
+    angle += 0.3;
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+
 // ── INIT ──
 renderCouncil();
+renderGallery();
+initGlobe();
 </script>
 
 </body>
