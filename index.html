@@ -331,30 +331,101 @@ textarea{resize:none;min-height:80px;}
 <!-- COUNCIL -->
 
 <div class="screen" id="screen-council">
-  <div class="card">
-    <div class="card-hdr"><span class="card-title">Your Council</span></div>
+
+  <!-- Active council bar -->
+
+  <div class="card" style="margin-top:4px;margin-bottom:14px">
+    <div class="card-body" style="padding:14px 16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580">Active Council</div>
+        <button class="btn btn-outline" style="font-size:11px;padding:3px 10px" onclick="randomCouncil()">⚄ Random</button>
+      </div>
+      <div id="councilList" style="display:flex;flex-wrap:wrap;gap:6px;min-height:28px"></div>
+    </div>
+  </div>
+
+  <!-- Four paths -->
+
+  <div style="font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:#8a8580;margin-bottom:10px">Build Your Council</div>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px">
+
+```
+<button class="door" onclick="randomCouncil()">
+  <span style="font-size:20px;display:block;margin-bottom:6px">⚄</span>
+  <div class="door-q">Surprise me</div>
+  <div class="door-desc">5 thinkers drawn at random from across history</div>
+</button>
+
+<button class="door" onclick="showCouncilPanel('ai')">
+  <span style="font-size:20px;display:block;margin-bottom:6px">✦</span>
+  <div class="door-q">Curate it for me</div>
+  <div class="door-desc">Describe what you need — AI selects the right voices</div>
+</button>
+
+<button class="door" onclick="showCouncilPanel('name')">
+  <span style="font-size:20px;display:block;margin-bottom:6px">⊕</span>
+  <div class="door-q">Name who I want</div>
+  <div class="door-desc">Any historical figure, thinker, or person you choose</div>
+</button>
+
+<button class="door" onclick="showCouncilPanel('browse')">
+  <span style="font-size:20px;display:block;margin-bottom:6px">≡</span>
+  <div class="door-q">Browse and choose</div>
+  <div class="door-desc">See the full list, pick manually</div>
+</button>
+```
+
+  </div>
+
+  <!-- AI curation panel -->
+
+  <div id="councilPanelAi" style="display:none" class="card" style="margin-bottom:14px">
+    <div class="card-hdr"><span class="card-title">AI Council Curation</span></div>
     <div class="card-body">
-      <p style="font-size:14px;color:#8a8580;margin-bottom:16px;line-height:1.6">Choose who advises you. They speak when you use Oracle, Forum, and Create.</p>
-      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
-        <button class="door" onclick="randomCouncil()">
-          <div class="door-q">Surprise me</div>
-          <div class="door-desc">Pick 5 thinkers at random from across history</div>
-        </button>
-        <button class="door" onclick="showNameInput()">
-          <div class="door-q">Name who I want</div>
-          <div class="door-desc">Type any names separated by commas</div>
-        </button>
+      <p style="font-size:13px;color:#8a8580;margin-bottom:12px;line-height:1.6">Describe what you are working on or what you need. The council will be assembled to match.</p>
+      <textarea id="aiCurateInput" rows="3" placeholder="e.g. I am rethinking my career and feel stuck between safety and purpose..." style="margin-bottom:10px"></textarea>
+      <button class="btn btn-dark btn-full" onclick="aiCurateCouncil()" id="aiCurateBtn">✦ Assemble My Council</button>
+      <div id="aiCurateResult" style="margin-top:10px"></div>
+    </div>
+  </div>
+
+  <!-- Name panel -->
+
+  <div id="councilPanelName" style="display:none" class="card" style="margin-bottom:14px">
+    <div class="card-hdr"><span class="card-title">Name Your Council</span></div>
+    <div class="card-body">
+      <p style="font-size:13px;color:#8a8580;margin-bottom:12px;line-height:1.6">Type any names, separated by commas. Historical figures, philosophers, scientists, artists — anyone.</p>
+      <input id="nameInput" placeholder="e.g. Nikola Tesla, Octavia Butler, Ibn Khaldun, Ada Lovelace" style="margin-bottom:10px">
+      <button class="btn btn-dark btn-full" onclick="applyNames()">Add to Council</button>
+    </div>
+  </div>
+
+  <!-- Browse panel -->
+
+  <div id="councilPanelBrowse" style="display:none" class="card" style="margin-bottom:14px">
+    <div class="card-hdr">
+      <span class="card-title">Browse Thinkers</span>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-outline" style="font-size:11px;padding:3px 10px" onclick="selectAllCouncil()">All</button>
+        <button class="btn btn-outline" style="font-size:11px;padding:3px 10px" onclick="clearCouncil()">None</button>
       </div>
-      <div id="nameInputArea" style="display:none;margin-bottom:14px">
-        <input id="nameInput" placeholder="e.g. Nikola Tesla, Octavia Butler, Ibn Khaldun">
-        <button class="btn btn-dark btn-full" onclick="applyNames()" style="margin-top:8px">Add to Council</button>
-      </div>
-      <div>
-        <div style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580;margin-bottom:8px">Active Council</div>
-        <div id="councilList" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+    </div>
+    <div id="browseList" style="padding:4px 0;max-height:400px;overflow-y:auto"></div>
+  </div>
+
+  <!-- Saved councils -->
+
+  <div class="card">
+    <div class="card-hdr"><span class="card-title">Saved Councils</span></div>
+    <div class="card-body">
+      <div id="savedCouncilsList" style="margin-bottom:10px"></div>
+      <div style="display:flex;gap:8px">
+        <input id="saveCouncilName" placeholder="Name this council..." style="flex:1">
+        <button class="btn btn-dark" style="padding:10px 16px" onclick="saveCouncil()">Save</button>
       </div>
     </div>
   </div>
+
 </div>
 
 <!-- ABOUT -->
@@ -379,20 +450,6 @@ textarea{resize:none;min-height:80px;}
   </div>
 </div>
 
-<!-- Personal wellbeing note -->
-<div class="card" style="margin-bottom:14px;border-left:3px solid #b8922a">
-  <div class="card-body" style="padding:16px 20px">
-    <div style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#b8922a;margin-bottom:6px">A note on personal wellbeing</div>
-    <div style="font-size:14px;color:#4a4640;line-height:1.7">
-      Fuller understood that the personal and the planetary are inseparable. 
-      You cannot solve the world while neglecting yourself. 
-      The Oracle exists for this reason — your real questions, your specific situation, 
-      deserve the same quality of attention as global resource flows. 
-      Personal clarity is the foundation of civilizational change.
-    </div>
-  </div>
-</div>
-
 <!-- Tool descriptions -->
 <div style="font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:#8a8580;margin-bottom:12px;padding:0 4px">The Tools</div>
 
@@ -414,7 +471,7 @@ textarea{resize:none;min-height:80px;}
       <div style="font-size:22px;flex-shrink:0">🪞</div>
       <div>
         <div style="font-size:15px;font-weight:600;color:#1a1814;margin-bottom:4px">Oracle</div>
-        <div style="font-size:13px;color:#8a8580;line-height:1.6">Bring your real questions. A council of thinkers from across history assembles to offer perspective — practical, philosophical, personal. Completely private. Never stored.</div>
+        <div style="font-size:13px;color:#8a8580;line-height:1.6">Bring your real questions — personal, professional, existential. Fuller understood that the personal and the planetary are inseparable. You cannot solve the world while neglecting yourself. A council of thinkers from across history assembles to offer perspective. Completely private. Never stored.</div>
       </div>
     </div>
   </div>
@@ -586,9 +643,185 @@ function randomCouncil() {
   renderCouncil();
 }
 
+function showCouncilPanel(panel) {
+  var panels = ['ai', 'name', 'browse'];
+  panels.forEach(function(p) {
+    var el = document.getElementById('councilPanel' + p.charAt(0).toUpperCase() + p.slice(1));
+    if (el) el.style.display = p === panel ? 'block' : 'none';
+  });
+  if (panel === 'browse') renderBrowseList();
+}
+
 function showNameInput() {
-  var el = document.getElementById('nameInputArea');
-  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  showCouncilPanel('name');
+}
+
+function renderBrowseList() {
+  var el = document.getElementById('browseList');
+  if (!el) return;
+  var all = BASE.concat(POOL);
+  var html = '';
+  for (var i = 0; i < all.length; i++) {
+    var t = all[i];
+    var inCouncil = council.some(function(c) { return c.name === t.name; });
+    var bg = inCouncil ? 'background:#f0f8f4;' : '';
+    var check = inCouncil ? '✓ ' : '';
+    var safeName = t.name.replace(/'/g, "");
+    html += '<div onclick="toggleBrowseThinker("' + '"' + safeName + '"' + ')" style="padding:10px 16px;cursor:pointer;border-bottom:1px solid #f4f0e8;' + bg + 'display:flex;justify-content:space-between;align-items:center">';
+    html += '<div><div style="font-size:14px;font-weight:' + (inCouncil?'600':'400') + ';color:#1a1814">' + check + t.name + '</div>';
+    html += '<div style="font-size:11px;color:#b8b4ae">' + t.era + ' — ' + t.domain + '</div></div>';
+    html += '<div style="font-size:11px;color:' + (inCouncil?'#2a9060':'#e8e4dc') + '">' + (inCouncil?'✓':'') + '</div>';
+    html += '</div>';
+  }
+  el.innerHTML = html;
+}
+
+function toggleBrowseThinker(name) {
+  var all = BASE.concat(POOL);
+  var thinker = null;
+  for (var i = 0; i < all.length; i++) {
+    if (all[i].name === name) { thinker = all[i]; break; }
+  }
+  if (!thinker) return;
+  var idx = -1;
+  for (var j = 0; j < council.length; j++) {
+    if (council[j].name === name) { idx = j; break; }
+  }
+  if (idx >= 0) {
+    council.splice(idx, 1);
+  } else {
+    council.push(thinker);
+  }
+  renderCouncil();
+  renderBrowseList();
+}
+
+function selectAllCouncil() {
+  council = BASE.concat(POOL).slice();
+  renderCouncil(); renderBrowseList();
+}
+
+function clearCouncil() {
+  var claude = BASE[BASE.length-1];
+  council = [claude];
+  renderCouncil(); renderBrowseList();
+}
+
+// Saved councils
+function saveCouncil() {
+  var name = document.getElementById('saveCouncilName').value.trim();
+  if (!name) return;
+  var saved = getSavedCouncils();
+  saved[name] = council.map(function(m) { return m.name; });
+  localStorage.setItem('wg_councils', JSON.stringify(saved));
+  document.getElementById('saveCouncilName').value = '';
+  renderSavedCouncils();
+}
+
+function getSavedCouncils() {
+  try { return JSON.parse(localStorage.getItem('wg_councils') || '{}'); } catch(e) { return {}; }
+}
+
+function loadSavedCouncil(nameOrEl) {
+  var name = typeof nameOrEl === 'string' ? nameOrEl : nameOrEl;
+  var saved = getSavedCouncils();
+  var names = saved[name];
+  if (!names) return;
+  var all = BASE.concat(POOL);
+  council = [];
+  names.forEach(function(n) {
+    for (var i = 0; i < all.length; i++) {
+      if (all[i].name === n) { council.push(all[i]); return; }
+    }
+    // Custom thinker
+    council.push({ name:n, era:'', domain:'Custom thinker' });
+  });
+  renderCouncil();
+  renderSavedCouncils();
+}
+
+function deleteSavedCouncil(nameOrEl) {
+  var name = typeof nameOrEl === 'string' ? nameOrEl : nameOrEl;
+  var saved = getSavedCouncils();
+  delete saved[name];
+  localStorage.setItem('wg_councils', JSON.stringify(saved));
+  renderSavedCouncils();
+}
+
+function renderSavedCouncils() {
+  var el = document.getElementById('savedCouncilsList');
+  if (!el) return;
+  var saved = getSavedCouncils();
+  var keys = Object.keys(saved);
+  if (keys.length === 0) {
+    el.innerHTML = '<div style="font-size:13px;color:#b8b4ae;padding:4px 0">No saved councils yet.</div>';
+    return;
+  }
+  var html = '';
+  keys.forEach(function(k) {
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f4f0e8">';
+    html += '<div>';
+    html += '<div style="font-size:14px;font-weight:500;color:#1a1814">' + k + '</div>';
+    html += '<div style="font-size:11px;color:#b8b4ae">' + saved[k].join(', ').substring(0,60) + '...</div>';
+    html += '</div>';
+    html += '<div style="display:flex;gap:6px">';
+    html += '<button class="btn btn-outline" style="font-size:11px;padding:3px 10px" onclick="loadSavedCouncil(this.dataset.k)" data-k="' + k + '">Load</button>';
+    html += '<button class="btn btn-outline" style="font-size:11px;padding:3px 10px;color:#c04020;border-color:#e8c4b8" onclick="deleteSavedCouncil(this.dataset.k)" data-k="' + k + '">&#x2715;</button>';
+    html += '</div></div>';
+  });
+  el.innerHTML = html;
+}
+
+async function aiCurateCouncil() {
+  var input = document.getElementById('aiCurateInput').value.trim();
+  if (!input) return;
+  var btn = document.getElementById('aiCurateBtn');
+  var result = document.getElementById('aiCurateResult');
+  btn.disabled = true;
+  btn.textContent = 'Assembling...';
+  result.innerHTML = '<div style="color:#8a8580;font-size:13px">Consulting the archives...</div>';
+
+  var all = BASE.concat(POOL);
+  var names = all.map(function(m) { return m.name; }).join(', ');
+  var sys = 'You are a council curator. Given a persons situation or question, select 5 thinkers from this list who would offer the most valuable and distinct perspectives: ' + names + '. Respond with ONLY a JSON array of exactly 5 names, e.g. ["Name1","Name2","Name3","Name4","Name5"]. No explanation.';
+
+  fetch('/api/chat', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ system: sys, user: input, maxTokens: 100 })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    btn.disabled = false;
+    btn.textContent = 'Assemble My Council';
+    if (d.error) { result.innerHTML = '<div style="color:#c04020;font-size:13px">' + d.error + '</div>'; return; }
+    try {
+      var text = d.text.trim();
+      var start = text.indexOf('[');
+      var end = text.lastIndexOf(']');
+      if (start < 0 || end < 0) throw new Error('No array found');
+      var picked = JSON.parse(text.substring(start, end+1));
+      council = [];
+      picked.forEach(function(name) {
+        for (var i = 0; i < all.length; i++) {
+          if (all[i].name === name) { council.push(all[i]); return; }
+        }
+        council.push({ name:name, era:'', domain:'Selected thinker' });
+      });
+      var claude = BASE[BASE.length-1];
+      var hasClaude = council.some(function(m) { return m.isClaude; });
+      if (!hasClaude) council.push(claude);
+      renderCouncil();
+      result.innerHTML = '<div style="color:#2a9060;font-size:13px;padding:6px 0">Council assembled: ' + council.map(function(m){return m.name;}).join(', ') + '</div>';
+    } catch(e) {
+      result.innerHTML = '<div style="color:#c04020;font-size:13px">Could not parse response. Try again.</div>';
+    }
+  })
+  .catch(function(e) {
+    btn.disabled = false;
+    btn.textContent = 'Assemble My Council';
+    result.innerHTML = '<div style="color:#c04020;font-size:13px">' + e.message + '</div>';
+  });
 }
 
 function applyNames() {
@@ -610,11 +843,31 @@ function renderCouncil() {
   if (!el) return;
   el.innerHTML = '';
   for (var i = 0; i < council.length; i++) {
+    var m = council[i];
     var chip = document.createElement('div');
-    chip.style.cssText = 'padding:4px 12px;border:1px solid #e8e4dc;border-radius:20px;font-size:12px;font-weight:500;color:#4a4640;background:#fff';
-    chip.textContent = council[i].name;
+    var color = m.isClaude ? '#7060c0' : '#2a9060';
+    chip.style.cssText = 'padding:4px 12px;border:1.5px solid ' + color + '33;border-radius:20px;font-size:12px;font-weight:500;color:' + color + ';background:' + color + '11;cursor:pointer;transition:all .15s';
+    chip.textContent = m.name;
+    chip.title = m.era + (m.domain ? ' — ' + m.domain : '');
+    (function(name) {
+      chip.onclick = function() {
+        var idx = -1;
+        for (var j = 0; j < council.length; j++) {
+          if (council[j].name === name) { idx = j; break; }
+        }
+        if (idx >= 0 && council.length > 1) {
+          council.splice(idx, 1);
+          renderCouncil();
+          renderBrowseList();
+        }
+      };
+    })(m.name);
     el.appendChild(chip);
   }
+  if (council.length === 0) {
+    el.innerHTML = '<div style="font-size:13px;color:#b8b4ae">No council selected. Choose below.</div>';
+  }
+  renderSavedCouncils();
 }
 
 // ── ORACLE ──
@@ -1222,9 +1475,16 @@ function loadSubLayer(iso2, iso3, countryName) {
 function filterADM1(data, iso2, iso3) {
   var features = (data.features || []).filter(function(f) {
     var p = f.properties || {};
-    var fIso2 = (p.iso_a2 || p.ISO_A2 || p.adm0_a2 || '').toUpperCase();
-    var fIso3 = (p.adm0_a3 || p.iso_a3 || p.ISO_A3 || '').toUpperCase();
-    return fIso2 === iso2 || fIso3 === iso3;
+    // Natural Earth ADM1 uses adm0_a3 for country ISO3
+    var fIso3 = (p.adm0_a3 || p.iso_a3 || p.ISO_A3 || p.ADM0_A3 || '').toUpperCase();
+    var fIso2 = (p.iso_a2 || p.ISO_A2 || p.adm0_iso || '').toUpperCase();
+    var fName = (p.admin || p.ADMIN || p.adm0_name || p.ADM0_NAME || '').toUpperCase();
+    // Match by ISO3 (most reliable), ISO2, or country name
+    if (iso3 && fIso3 && fIso3 === iso3.toUpperCase()) return true;
+    if (iso2 && fIso2 && fIso2 === iso2.toUpperCase()) return true;
+    // Name fallback
+    if (fName && NAME_TO_ISO2[fName] === iso2) return true;
+    return false;
   });
   return { type:'FeatureCollection', features: features };
 }
@@ -1525,6 +1785,10 @@ function displayCountryData(data, name, latlng) {
     L.popup().setLatLng(latlng).setContent(ph).openOn(leafletMap);
   }
   setMapStatus(name + ' data loaded. Sliders updated. Zoom in for regions.');
+  // Auto-load sub-national if zoomed in
+  if (leafletMap && leafletMap.getZoom() >= 4 && selectedPlace.iso3) {
+    loadSubLayer(selectedPlace.code, selectedPlace.iso3, name);
+  }
 }
 
 function displayRegionData(regionName, countryName, countryData, latlng) {
