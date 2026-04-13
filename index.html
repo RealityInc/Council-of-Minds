@@ -2046,8 +2046,8 @@ function displayCountryData(data, name, latlng) {
     L.popup().setLatLng(latlng).setContent(ph).openOn(leafletMap);
   }
   setMapStatus(name + ' data loaded. Sliders updated. Zoom in for regions.');
-  // Add start project button to data panel
-  addStartProjectBtn(name, data);
+  // Add start project button
+  addStartProjectBtn(name, data, 'World Bank');
   // Sub-national boundaries: US uses GeoJSON overlay, others use base map + reverse geocode
   if (leafletMap && selectedPlace.code === 'US') {
     loadUSStateLayer();
@@ -2072,18 +2072,22 @@ function buildProjectBaseline(countryData) {
           flourishing:fl,ecological:ec,stability:st};
 }
 
-function addStartProjectBtn(title, countryData) {
-  var el = document.getElementById('dataPanelContent');
-  if (!el) return;
+function addStartProjectBtn(title, countryData, source) {
+  var slot = document.getElementById('startProjectSlot');
+  if (!slot) return;
+  window.currentPlaceBaseline = (countryData && countryData.flourishing)
+    ? countryData : buildProjectBaseline(countryData || {});
+  window.currentPlaceTitle = title;
+  window.currentPlaceSource = source || 'World Bank';
   var btn = document.createElement('button');
   btn.className = 'btn btn-dark btn-full';
   btn.style.marginTop = '12px';
   btn.textContent = 'Start a Project Here';
-  var baseline = typeof countryData === 'object' && countryData.flourishing
-    ? countryData : buildProjectBaseline(countryData || {});
-  var t = title;
-  btn.onclick = function() { startProject(t, baseline, 'World Bank'); };
-  el.appendChild(btn);
+  btn.onclick = function() {
+    startProject(window.currentPlaceTitle, window.currentPlaceBaseline, window.currentPlaceSource);
+  };
+  slot.innerHTML = '';
+  slot.appendChild(btn);
 }
 
 function displayRegionData(regionName, countryName, countryData, latlng) {
@@ -2122,14 +2126,7 @@ function displayStateData(data, stateName, latlng) {
     ecological: 45, stability: 70
   };
   if (data.medianIncome) stateBaseline.wealth = Math.min(100,Math.round(data.medianIncome/1200));
-  var spBtn = document.createElement('button');
-  spBtn.className = 'btn btn-dark btn-full';
-  spBtn.style.marginTop = '12px';
-  spBtn.textContent = 'Start a Project Here';
-  var spName = stateName + ', USA';
-  spBtn.onclick = function() { startProject(spName, stateBaseline, 'US Census 2022'); };
-  var dpContent = document.getElementById('dataPanelContent');
-  if (dpContent) dpContent.appendChild(spBtn);
+  addStartProjectBtn(stateName + ', USA', stateBaseline, 'US Census 2022');
 }
 
 function displayCountyData(data, countyName, latlng) {
@@ -2142,6 +2139,11 @@ function displayCountyData(data, countyName, latlng) {
   html += '<div style="font-size:10px;color:#b8b4ae;margin-top:8px">US Census ACS 5-year estimates 2022.</div>';
   showDataPanel(data.name||countyName+' County', html);
   setMapStatus(countyName+' County data loaded.');
+  var countyBaseline = {
+    energy:34, water:95, food:85, land:10, wealth:data.medianIncome?Math.min(100,Math.round(data.medianIncome/1200)):55, conflict:5,
+    flourishing:data.medianIncome?Math.min(100,Math.round(data.medianIncome/1200)):55, ecological:40, stability:65
+  };
+  addStartProjectBtn((data.name||countyName+' County'), countyBaseline, 'US Census 2022');
 }
 
 function showNoData(name) {
@@ -2153,7 +2155,9 @@ function showNoData(name) {
 function showDataPanel(title, html) {
   document.getElementById('dataPanel').style.display = 'block';
   document.getElementById('dataPanelTitle').textContent = title;
-  document.getElementById('dataPanelContent').innerHTML = html;
+  // Always include project button slot at bottom
+  document.getElementById('dataPanelContent').innerHTML = html + 
+    '<div id="startProjectSlot"></div>';
 }
 
 function dataRow(label, value, year) {
