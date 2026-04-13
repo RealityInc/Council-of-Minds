@@ -929,6 +929,12 @@ const OB_QUESTIONS=[
 
 // ════════════ API ════════════
 async function callClaude(system,user,maxTokens=1000){
+  // Check if we're in a sandboxed preview context
+  if(window.location.hostname !== 'council-of-minds-lime.vercel.app' && 
+     !window.location.hostname.includes('vercel.app') &&
+     window.location.hostname !== 'localhost') {
+    throw new Error('Preview mode — API calls only work on the live site at council-of-minds-lime.vercel.app');
+  }
   const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system,user,maxTokens})});
   if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e.error||'API error '+res.status);}
   const d=await res.json();return d.text||'';
@@ -1047,7 +1053,7 @@ function updateForumChips(){
 }
 function setActiveSpeaker(idx){
   document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active-speaker'));
-  if(idx>=0)document.getElementById('fchip'+idx)?.classList.add('active-speaker');
+  if(idx>=0)var _fc=document.getElementById('fchip'+idx);if(_fc)_fc.classList.add('active-speaker');
   lastSpeakerIdx=idx;
 }
 
@@ -1068,7 +1074,7 @@ function pickSpeaker(){
   const cl=w.find(x=>x.m.isClaude);if(convergenceScore>=5&&cl)cl.w=3;
   const last=w.find(x=>x.i===lastSpeakerIdx);if(last)last.w=0;
   const total=w.reduce((s,x)=>s+x.w,0);let r=Math.random()*total;
-  for(const x of w){r-=x.w;if(r<=0)return x.i;}
+  for(var _wi=0;_wi<w.length;_wi++){var x=w[_wi];r-=x.w;if(r<=0)return x.i;}
   return w[Math.floor(Math.random()*w.length)].i;
 }
 
@@ -1203,7 +1209,7 @@ async function triggerCreative(){
   const voices=active.slice(0,Math.min(active.length,4));
   appendSys('creativeMessages',`The council writes: "${theme}"`);
   const pieces=[];
-  for(const voice of voices){
+  for(var _vi=0;_vi<voices.length;_vi++){var voice=voices[_vi];
     showThinking('creativeMessages',voice.name);
     const sys=`You are ${voice.name} (${voice.era}), known for: ${voice.domain}.\n\nWrite a ${form} about: "${theme}"${tone?`, in a ${tone} tone`:''}.\n\nWrite in your authentic voice. Be genuinely poetic and specific. 8-20 lines.\nRespond with ONLY the ${form} — no title, no preamble.`;
     try{const text=await callClaude(sys,`Write your ${form} about "${theme}".`,600);removeThinking('creativeMessages');appendCreativeVoice('creativeMessages',voice.name,text);pieces.push({name:voice.name,text});}
@@ -1477,7 +1483,7 @@ async function obGenerate(){
     obAsk(`Your council of ${obSuggestedCouncil.length} thinkers is ready. Hit "Apply" below.`);
     document.getElementById('obChat').scrollTop=99999;
   }catch(e){
-    obAsk(`Couldn't generate automatically. Switch to "Name Them" tab to add thinkers directly.`);
+    obAsk(`Could not generate automatically. Switch to "Name Them" tab to add thinkers directly.`);
     switchObTab('direct');
   }
 }
@@ -1556,7 +1562,7 @@ function appendCreativeSynthesis(id,label,text){
   c.appendChild(el);scrollC(id);
 }
 function showThinking(id,name){const c=document.getElementById(id);if(!c)return;const el=document.createElement('div');el.className='thinking';el.id='think_'+id;el.innerHTML=`<span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--golddim)">${name}</span><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>`;c.appendChild(el);scrollC(id);}
-function removeThinking(id){document.getElementById('think_'+id)?.remove();}
+function removeThinking(id){var _th=document.getElementById('think_'+id);if(_th)_th.remove();}
 function scrollC(id){const c=document.getElementById(id);if(c)c.scrollTop=c.scrollHeight;}
 
 // ════════════ UI STATE ════════════
@@ -1619,7 +1625,7 @@ const RANDOM_POOL = [
 function randomCouncil(){
   // Pick 5 random from pool plus keep Claude
   const pool=[...RANDOM_POOL];
-  for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+  for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));var _tmp=pool[i];pool[i]=pool[j];pool[j]=_tmp;}
   const picked=pool.slice(0,5);
   const claude=BASE_COUNCIL.find(m=>m.isClaude);
   if(claude)picked.push(claude);
@@ -1627,7 +1633,7 @@ function randomCouncil(){
   customThinkers=customThinkers.filter(t=>t.vertical!=='random');
   picked.forEach(m=>{
     if(!BASE_COUNCIL.find(b=>b.name===m.name)&&!customThinkers.find(c=>c.name===m.name)){
-      customThinkers.push({...m,isCustom:true,vertical:'random'});
+      customThinkers.push(Object.assign({},m,{isCustom:true,vertical:'random'}));
     }
   });
   manualMode=true;
@@ -1914,7 +1920,7 @@ async function triggerWorkshop() {
   const voices = active.slice(0, 4);
   appendSys('workshopMessages', `The council engages: "${input.substring(0,60)}${input.length>60?'…':''}"`);
   const pieces = [];
-  for (const voice of voices) {
+  for(var _wi2=0;_wi2<voices.length;_wi2++){var voice=voices[_wi2];
     showThinking('workshopMessages', voice.name);
     const sys = `You are ${voice.name} (${voice.era}), known for: ${voice.domain}.
 
