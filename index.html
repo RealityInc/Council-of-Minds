@@ -144,14 +144,8 @@ textarea.input{resize:none;line-height:1.55;min-height:48px;max-height:120px;}
 @media(max-width:680px){.wg-layout{grid-template-columns:1fr;}}
 .wg-map-wrap{background:var(–bg2);border:1px solid var(–border);border-radius:var(–r);overflow:hidden;}
 .wg-map-hdr{padding:10px 14px;border-bottom:1px solid var(–border);font-family:‘JetBrains Mono’,monospace;font-size:9px;letter-spacing:2px;color:var(–golddim);text-transform:uppercase;}
-#worldMap{width:100%;display:block;cursor:pointer;}
-.country{fill:#1e1a14;stroke:#2e2820;stroke-width:0.5;transition:fill .2s;}
-.country:hover{fill:#2e2820;}
-.country.selected{fill:rgba(201,168,76,.15);stroke:var(–gold);}
-.country.high{fill:rgba(42,122,90,.3);}
-.country.med{fill:rgba(201,168,76,.2);}
-.country.low{fill:rgba(201,74,26,.2);}
-.wg-region-label{padding:8px 14px;font-size:12px;color:var(–textdim);font-style:italic;border-bottom:1px solid var(–border);min-height:32px;}
+#worldMap{display:block;width:100%;cursor:pointer;}
+
 .wg-panel{display:flex;flex-direction:column;gap:12px;}
 .wg-metrics{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:4px;}
 .metric-card{background:var(–bg2);border:1px solid var(–border);border-radius:var(–rsm);padding:10px 12px;}
@@ -251,6 +245,19 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
 .auto-banner-label{font-family:‘JetBrains Mono’,monospace;font-size:8px;letter-spacing:2px;color:var(–golddim);flex-shrink:0;padding-top:2px;}
 .saved-indicator{font-family:‘JetBrains Mono’,monospace;font-size:8px;color:var(–jade2);letter-spacing:1px;padding:3px 8px;border:1px solid var(–jade);border-radius:20px;}
 
+/* ── COUNCIL PATH BUTTONS ── */
+.council-path-btn{display:flex;align-items:center;gap:14px;padding:16px 18px;background:var(–bg2);border:1.5px solid var(–border);border-radius:var(–r);cursor:pointer;transition:all .2s;text-align:left;width:100%;font-family:‘Inter’,sans-serif;touch-action:manipulation;box-shadow:var(–shadow);}
+.council-path-btn:hover{border-color:var(–gold2);background:var(–goldbg);}
+.council-path-btn:active{transform:scale(.98);}
+.cpb-icon{font-size:22px;flex-shrink:0;width:32px;text-align:center;}
+.cpb-title{font-size:15px;font-weight:600;color:var(–ink);margin-bottom:3px;}
+.cpb-desc{font-size:13px;color:var(–ink3);}
+
+/* ── WORKSHOP ── */
+.workshop-mode-btn{padding:6px 14px;border-radius:20px;border:1.5px solid var(–border);font-size:12px;font-weight:500;color:var(–ink3);cursor:pointer;background:var(–bg2);transition:all .2s;touch-action:manipulation;font-family:‘Inter’,sans-serif;}
+.workshop-mode-btn:hover{border-color:var(–border2);color:var(–ink);}
+.workshop-mode-btn.active{border-color:var(–ink);color:var(–ink);background:var(–bg3);}
+
 /* ── UPLOAD ── */
 .upload-zone{border:1px dashed var(–bordergold);border-radius:var(–r);padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;}
 .upload-zone:hover,.upload-zone.drag{border-color:var(–golddim);background:rgba(201,168,76,.03);}
@@ -261,7 +268,7 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
 .doc-card-actions{display:flex;gap:6px;}
 
 /* ── OB MODAL ── */
-.modal-overlay{position:fixed;inset:0;background:rgba(8,7,5,.88);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);}
+.modal-overlay{position:fixed;inset:0;background:rgba(248,247,244,.92);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(12px);}
 .modal-overlay.hidden{display:none;}
 .modal{background:var(–bg2);border:1px solid var(–bordergold);border-radius:var(–r);max-width:520px;width:100%;max-height:82vh;overflow-y:auto;}
 .modal-hdr{padding:20px 22px 14px;border-bottom:1px solid var(–border);}
@@ -383,8 +390,8 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
       </button>
       <button class="entry-door door-create" onclick="showScreen('create')">
         <span class="door-icon">✦</span>
-        <div class="door-question">I want to make something</div>
-        <div class="door-desc">Poetry, lyrics, manifestos — art that holds the weight of ideas</div>
+        <div class="door-question">I just want to make something</div>
+        <div class="door-desc">Express an idea, write something, create freely</div>
         <div class="door-arrow">→</div>
       </button>
       <button class="entry-door door-forum" onclick="showScreen('forum')">
@@ -424,28 +431,11 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
       <div class="wg-layout">
         <div>
           <div class="wg-map-wrap">
-            <div class="wg-map-hdr">Planetary View</div>
-            <svg id="worldMap" viewBox="0 0 360 180" xmlns="http://www.w3.org/2000/svg">
-              <!-- Simplified world regions as polygons -->
-              <rect class="country" id="r-na" x="20" y="20" width="80" height="60" rx="4" onclick="selectRegion('North America')" title="North America"/>
-              <rect class="country" id="r-sa" x="60" y="90" width="50" height="65" rx="4" onclick="selectRegion('South America')" title="South America"/>
-              <rect class="country high" id="r-eu" x="140" y="15" width="60" height="50" rx="4" onclick="selectRegion('Europe')" title="Europe"/>
-              <rect class="country med" id="r-af" x="130" y="75" width="65" height="75" rx="4" onclick="selectRegion('Africa')" title="Africa"/>
-              <rect class="country" id="r-me" x="190" y="40" width="45" height="40" rx="4" onclick="selectRegion('Middle East')" title="Middle East"/>
-              <rect class="country high" id="r-as" x="230" y="20" width="90" height="70" rx="4" onclick="selectRegion('Asia')" title="Asia"/>
-              <rect class="country med" id="r-sa2" x="270" y="100" width="50" height="55" rx="4" onclick="selectRegion('Southeast Asia')" title="Southeast Asia"/>
-              <rect class="country" id="r-oc" x="290" y="120" width="55" height="40" rx="4" onclick="selectRegion('Oceania')" title="Oceania"/>
-              <!-- Labels -->
-              <text x="60" y="55" fill="#9a9080" font-size="7" text-anchor="middle" pointer-events="none">N. America</text>
-              <text x="85" y="128" fill="#9a9080" font-size="7" text-anchor="middle" pointer-events="none">S. America</text>
-              <text x="170" y="44" fill="#9a9080" font-size="7" text-anchor="middle" pointer-events="none">Europe</text>
-              <text x="162" y="116" fill="#9a9080" font-size="7" text-anchor="middle" pointer-events="none">Africa</text>
-              <text x="212" y="63" fill="#9a9080" font-size="7" text-anchor="middle" pointer-events="none">M. East</text>
-              <text x="275" y="58" fill="#9a9080" font-size="7" text-anchor="middle" pointer-events="none">Asia</text>
-              <text x="295" y="130" fill="#9a9080" font-size="7" text-anchor="middle" pointer-events="none">SE Asia</text>
-              <text x="317" y="143" fill="#9a9080" font-size="7" text-anchor="middle" pointer-events="none">Oceania</text>
-            </svg>
-            <div class="wg-region-label" id="regionLabel">Click a region to focus</div>
+            <div class="wg-map-hdr" style="display:flex;align-items:center;justify-content:space-between;">
+              <span style="font-size:11px;font-weight:600;letter-spacing:1px;color:var(--ink3);text-transform:uppercase;">Planetary View</span>
+              <span style="font-size:11px;color:var(--ink4)" id="regionLabel">Tap a region</span>
+            </div>
+            <canvas id="worldMap" width="400" height="220" style="display:block;width:100%;cursor:pointer;"></canvas>
           </div>
           <div class="time-row" style="margin-top:10px">
             <span class="time-label">Time horizon:</span>
@@ -590,40 +580,82 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
   <div class="screen" id="screen-create">
     <div class="card" style="margin-top:16px">
       <div class="card-hdr">
-        <span class="card-title">Create — Poetry & Lyrics</span>
+        <span class="card-title">Make Something</span>
         <div class="sdot sdot-idle" id="creativeDot"></div>
       </div>
-      <div class="card-body">
-        <div style="margin-bottom:12px">
+      <!-- Tab switcher -->
+      <div style="display:flex;border-bottom:1px solid var(--border)">
+        <button id="createTab-art" onclick="switchCreateTab('art')" style="flex:1;padding:12px 16px;font-size:13px;font-weight:600;color:var(--gold);background:transparent;border:none;border-bottom:2px solid var(--gold2);cursor:pointer;font-family:'Inter',sans-serif;touch-action:manipulation;transition:all .2s">✦ Make Art</button>
+        <button id="createTab-workshop" onclick="switchCreateTab('workshop')" style="flex:1;padding:12px 16px;font-size:13px;font-weight:500;color:var(--ink3);background:transparent;border:none;border-bottom:2px solid transparent;cursor:pointer;font-family:'Inter',sans-serif;touch-action:manipulation;transition:all .2s">◈ Workshop Ideas</button>
+      </div>
+
+```
+  <!-- ART TAB -->
+  <div id="createPanel-art">
+    <div class="card-body">
+      <p style="font-size:14px;color:var(--ink3);margin-bottom:14px;line-height:1.6">Each council member contributes their voice, then they write as one. Use art to express ideas or draw people into them.</p>
+      <div style="margin-bottom:12px">
+        <div class="section-label">What to write about</div>
+        <textarea class="input" id="creativeTheme" placeholder="A poem about grief. Song lyrics about this city. A manifesto for your project. Anything." rows="3" oninput="autoResize(this)"></textarea>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+        <div>
           <div class="section-label">Form</div>
-          <select class="input input-sm" id="creativeForm" style="font-family:'Crimson Pro',serif">
+          <select class="input" id="creativeForm" style="font-size:14px">
             <option value="poem">Poem</option>
             <option value="lyrics">Song Lyrics</option>
+            <option value="manifesto">Manifesto</option>
+            <option value="short essay">Short Essay</option>
             <option value="haiku sequence">Haiku Sequence</option>
             <option value="prose poem">Prose Poem</option>
+            <option value="letter">Letter</option>
             <option value="elegy">Elegy</option>
-            <option value="ode">Ode</option>
-            <option value="manifesto poem">Manifesto Poem</option>
           </select>
         </div>
-        <div style="margin-bottom:12px">
-          <div class="section-label">Theme or Subject</div>
-          <textarea class="input" id="creativeTheme" placeholder="What should the council write about? e.g. 'the death of truth', 'grief', 'a river at dawn', 'the weight of what we're leaving our children'…" rows="3" oninput="autoResize(this)"></textarea>
-        </div>
-        <div style="margin-bottom:14px">
-          <div class="section-label">Tone / Mood (optional)</div>
-          <input class="input input-sm" id="creativeTone" placeholder="e.g. melancholic, defiant, tender, ecstatic, quietly furious…">
-        </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn btn-primary" onclick="triggerCreative()" id="creativeBtn" style="flex:1">✦ Invoke the Council</button>
-          <button class="btn btn-ghost btn-sm" onclick="generateArtFromScenario()">From World Game scenario</button>
+        <div>
+          <div class="section-label">Tone (optional)</div>
+          <input class="input" id="creativeTone" placeholder="defiant, tender…" style="font-size:14px">
         </div>
       </div>
-      <div class="messages" id="creativeMessages" style="min-height:200px">
-        <div class="empty-state"><div class="empty-glyph">✦</div><div>Each voice will write,<br>then the council weaves one piece.</div></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="triggerCreative()" id="creativeBtn" style="flex:1">✦ Invoke the Council</button>
+        <button class="btn btn-outline btn-sm" onclick="generateArtFromScenario()">From World Game</button>
       </div>
-      <div id="creativeError"></div>
     </div>
+    <div class="messages" id="creativeMessages" style="min-height:180px">
+      <div class="empty-state"><div class="empty-glyph">✦</div><div>Each voice writes,<br>then the council writes as one.</div></div>
+    </div>
+    <div id="creativeError"></div>
+  </div>
+
+  <!-- WORKSHOP TAB -->
+  <div id="createPanel-workshop" style="display:none">
+    <div class="card-body">
+      <p style="font-size:14px;color:var(--ink3);margin-bottom:14px;line-height:1.6">Develop an idea, get feedback, brainstorm. The council engages with what you're building.</p>
+      <div style="margin-bottom:12px">
+        <div class="section-label">What are you working on?</div>
+        <textarea class="input" id="workshopInput" placeholder="Describe your idea, project, or problem. The council will help you develop it, challenge assumptions, find blind spots, or suggest directions." rows="5" oninput="autoResize(this)"></textarea>
+      </div>
+      <div style="margin-bottom:12px">
+        <div class="section-label">What kind of help do you want?</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap" id="workshopMode">
+          <button class="workshop-mode-btn active" onclick="setWorkshopMode('develop',this)">Develop it</button>
+          <button class="workshop-mode-btn" onclick="setWorkshopMode('challenge',this)">Challenge it</button>
+          <button class="workshop-mode-btn" onclick="setWorkshopMode('brainstorm',this)">Brainstorm</button>
+          <button class="workshop-mode-btn" onclick="setWorkshopMode('communicate',this)">Help me explain it</button>
+        </div>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="triggerWorkshop()" id="workshopBtn">◈ Work with the Council</button>
+    </div>
+    <div class="messages" id="workshopMessages" style="min-height:180px">
+      <div class="empty-state"><div class="empty-glyph">◈</div><div>Bring your idea.<br>The council will engage seriously with it.</div></div>
+    </div>
+    <div id="workshopError"></div>
+  </div>
+
+</div>
+```
+
   </div>
 
   <!-- ══ FORUM ══ -->
@@ -716,54 +748,100 @@ input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
   <!-- ══ COUNCIL ══ -->
 
   <div class="screen" id="screen-council">
-    <div class="card" style="margin-top:16px">
-      <div class="card-hdr"><span class="card-title">Council Configuration</span></div>
-      <div class="card-body">
-        <div class="toggle-row">
-          <div>
-            <div style="font-size:14px;color:var(--text);margin-bottom:2px">Auto-select thinkers</div>
-            <div style="font-size:12px;color:var(--textfaint);font-style:italic">The council selects the most relevant voices per problem</div>
-          </div>
-          <div class="toggle-pill on" id="autoToggle" onclick="toggleAutoMode()"><div class="toggle-knob"></div></div>
-        </div>
-        <div id="manualPanel" style="display:none">
-          <div class="section-label">Verticals</div>
-          <div class="verticals-row" id="verticalsRow"></div>
-          <hr style="border:none;border-top:1px solid var(--border);margin:12px 0">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-            <div class="section-label" style="margin-bottom:0">Thinkers</div>
-            <div style="display:flex;gap:6px">
-              <button class="btn btn-ghost btn-sm" onclick="selectAll()">All</button>
-              <button class="btn btn-ghost btn-sm" onclick="selectNone()">None</button>
-            </div>
-          </div>
-          <div class="thinker-list" id="thinkerList"></div>
-          <div class="add-thinker">
-            <div class="section-label">Add a thinker</div>
-            <div style="display:flex;flex-direction:column;gap:7px">
-              <input class="input input-sm" id="newName" placeholder="Name (e.g. Hannah Arendt)">
-              <input class="input input-sm" id="newEra" placeholder="Era (e.g. 1906–1975)">
-              <input class="input input-sm" id="newDomain" placeholder="Key ideas & domain…">
-              <button class="btn btn-jade btn-sm btn-full" onclick="addCustom()">+ Add to Council</button>
-            </div>
-          </div>
-        </div>
-        <div class="auto-banner" id="autoBanner">
-          <span class="auto-banner-label">AUTO</span>
-          The council automatically selects the most relevant thinkers based on the problem at hand. Switch to manual to curate your own roster.
-        </div>
-        <hr style="border:none;border-top:1px solid var(--border);margin:14px 0">
-        <div class="section-label">Saved Councils</div>
-        <div class="preset-row" id="presetRow"></div>
-        <div style="display:flex;gap:8px;margin-bottom:6px">
-          <input class="input input-sm" id="presetNameInput" placeholder="Name this council…" style="flex:1">
-          <button class="btn btn-jade btn-sm" onclick="savePreset()">Save</button>
-        </div>
-        <div id="savedInd" style="display:none;margin-top:6px"></div>
-        <hr style="border:none;border-top:1px solid var(--border);margin:14px 0">
-        <button class="btn btn-ghost btn-sm btn-full" onclick="openOnboarding()">✦ Run the AI questionnaire to build my council</button>
+    <div style="padding:20px 0 8px">
+      <div class="section-label">Your Council</div>
+      <p style="font-size:15px;color:var(--ink3);margin-bottom:20px;line-height:1.6">Choose who advises you. The council speaks when you use the Oracle, Forum, or Create tools.</p>
+
+```
+  <!-- Active council display -->
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-hdr" style="justify-content:space-between">
+      <span class="card-title">Active Council</span>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-outline btn-sm" onclick="randomCouncil()" title="Surprise me">⚄ Random</button>
+        <button class="btn btn-outline btn-sm" onclick="selectAll();manualMode=true;renderCouncilScreen()">All</button>
+        <button class="btn btn-outline btn-sm" onclick="selectNone();manualMode=true;renderCouncilScreen()">None</button>
       </div>
     </div>
+    <div class="card-body" style="padding:14px">
+      <div id="activeCouncilChips" style="display:flex;flex-wrap:wrap;gap:6px;min-height:32px;margin-bottom:12px"></div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <button class="toggle-pill on" id="autoToggle" onclick="toggleAutoMode()"><div class="toggle-knob"></div></button>
+        <span style="font-size:13px;color:var(--ink3)" id="autoLabel">Auto-selecting the best voices per problem</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Three simple paths -->
+  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
+    <button class="council-path-btn" onclick="randomCouncil()">
+      <div class="cpb-icon">⚄</div>
+      <div class="cpb-text">
+        <div class="cpb-title">Surprise me</div>
+        <div class="cpb-desc">Pick 5 thinkers at random from across history</div>
+      </div>
+    </button>
+    <button class="council-path-btn" onclick="openOnboarding()">
+      <div class="cpb-icon">✦</div>
+      <div class="cpb-text">
+        <div class="cpb-title">Build my council with AI</div>
+        <div class="cpb-desc">Answer 2 questions, get a curated council</div>
+      </div>
+    </button>
+    <button class="council-path-btn" onclick="switchObTab('direct');openOnboarding()">
+      <div class="cpb-icon">⊕</div>
+      <div class="cpb-text">
+        <div class="cpb-title">Name who I want</div>
+        <div class="cpb-desc">Type any names — historical figures, thinkers, anyone</div>
+      </div>
+    </button>
+    <button class="council-path-btn" onclick="toggleManualPanel()">
+      <div class="cpb-icon">≡</div>
+      <div class="cpb-text">
+        <div class="cpb-title">Browse and choose</div>
+        <div class="cpb-desc">See the full list and select manually</div>
+      </div>
+    </button>
+  </div>
+
+  <!-- Manual panel — hidden by default -->
+  <div id="manualPanel" style="display:none">
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-hdr"><span class="card-title">Browse Thinkers</span></div>
+      <div class="card-body" style="padding:14px">
+        <div class="section-label">By theme</div>
+        <div class="verticals-row" id="verticalsRow"></div>
+        <div class="thinker-list" id="thinkerList" style="margin-top:10px"></div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-hdr"><span class="card-title">Add Anyone</span></div>
+      <div class="card-body" style="padding:14px">
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <input class="input" id="newName" placeholder="Name (e.g. Hannah Arendt, Ibn Khaldun…)">
+          <input class="input" id="newEra" placeholder="Era or dates (optional)">
+          <input class="input" id="newDomain" placeholder="What are they known for? (optional)">
+          <button class="btn btn-jade btn-full" onclick="addCustom()">+ Add to Council</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Saved councils -->
+  <div class="card">
+    <div class="card-hdr"><span class="card-title">Saved Councils</span></div>
+    <div class="card-body" style="padding:14px">
+      <div id="presetRow"></div>
+      <div style="display:flex;gap:8px">
+        <input class="input" id="presetNameInput" placeholder="Name this council…" style="flex:1">
+        <button class="btn btn-gold btn-sm" onclick="savePreset()">Save</button>
+      </div>
+      <div id="savedInd" style="display:none;margin-top:8px"></div>
+    </div>
+  </div>
+</div>
+```
+
   </div>
 
   <!-- ══ UPLOAD ══ -->
@@ -887,7 +965,29 @@ function toggleAutoMode(){
   if(manualMode&&selectedIndices.size===0) allThinkers().forEach((_,i)=>selectedIndices.add(i));
   renderCouncilScreen();saveState();
 }
-function renderCouncilScreen(){renderVerticals();renderThinkerList();renderPresets();}
+function renderCouncilScreen(){
+  renderVerticals();renderThinkerList();renderPresets();
+  // Update active council chips display
+  const chips=document.getElementById('activeCouncilChips');
+  if(!chips)return;
+  const active=getActiveCouncil();
+  if(!manualMode){
+    chips.innerHTML='<span style="font-size:13px;color:var(--ink4);font-style:italic">The council selects the best voices for each question automatically</span>';
+  } else {
+    chips.innerHTML=active.map(m=>{
+      const cls=m.isClaude?'is-claude':m.isJung?'is-jung':m.isCustom?'is-custom':'';
+      return '<div class="chip '+cls+'" style="cursor:default">'+m.name+'</div>';
+    }).join('');
+  }
+  const lbl=document.getElementById('autoLabel');
+  if(lbl)lbl.textContent=manualMode?'Manual — '+getActiveCouncil().length+' thinkers selected':'Auto-selecting the best voices per problem';
+  setToggle(document.getElementById('autoToggle'),!manualMode);
+}
+function toggleManualPanel(){
+  const p=document.getElementById('manualPanel');
+  if(!p)return;
+  p.style.display=p.style.display==='none'?'block':'none';
+}
 function renderVerticals(){
   const r=document.getElementById('verticalsRow');if(!r)return;
   r.innerHTML=Object.entries(VERTICALS).map(([k,v])=>`<div class="vert-tag${selectedVerticals.has(k)?' active':''}" onclick="toggleVertical('${k}')">${v.label}</div>`).join('');
@@ -1126,14 +1226,6 @@ function generateArtFromScenario(){
 
 // ════════════ WORLD GAME ════════════
 let selectedRegion='Global';
-function selectRegion(name){
-  selectedRegion=name;
-  document.getElementById('regionLabel').textContent=name+' — click sliders to model changes';
-  document.querySelectorAll('.country').forEach(c=>c.classList.remove('selected'));
-  const id='r-'+name.toLowerCase().replace(/ /g,'-').replace('north-america','na').replace('south-america','sa').replace('europe','eu').replace('africa','af').replace('middle-east','me').replace('southeast-asia','sa2').replace('oceania','oc').replace('asia','as');
-  document.getElementById(id)?.classList.add('selected');
-  recalcMetrics();
-}
 function toggleSection(id){document.getElementById('ss-'+id).classList.toggle('collapsed');}
 function updateSlider(id,val,unit){document.getElementById('sv-'+id).textContent=val+unit;}
 const TIMES=['Current (2026)','Near-term (2036)','Long-term (2051)'];
@@ -1484,6 +1576,72 @@ function updateUI(){
 }
 function showErr(id,msg){const el=document.getElementById(id);if(!el)return;el.innerHTML=`<div class="error-toast">${msg}</div>`;setTimeout(()=>{if(el)el.innerHTML='';},6000);}
 
+// ════════════ RANDOM COUNCIL ════════════
+const RANDOM_POOL = [
+  {name:"Socrates",era:"470–399 BCE",domain:"dialogue, ethics, the examined life"},
+  {name:"Aristotle",era:"384–322 BCE",domain:"logic, politics, virtue ethics"},
+  {name:"Lao Tzu",era:"6th c. BCE",domain:"Taoism, effortless action, paradox"},
+  {name:"Confucius",era:"551–479 BCE",domain:"virtue, social harmony, education"},
+  {name:"Ibn Khaldun",era:"1332–1406",domain:"civilizational cycles, social cohesion"},
+  {name:"Rumi",era:"1207–1273",domain:"mystical love, transformation, the divine"},
+  {name:"Michel de Montaigne",era:"1533–1592",domain:"self-examination, skepticism, the essay"},
+  {name:"Baruch Spinoza",era:"1632–1677",domain:"pantheism, freedom, the emotions"},
+  {name:"Mary Wollstonecraft",era:"1759–1797",domain:"feminism, reason, rights"},
+  {name:"Frederick Douglass",era:"1818–1895",domain:"abolition, freedom, rhetoric"},
+  {name:"Harriet Tubman",era:"1822–1913",domain:"liberation, courage, direct action"},
+  {name:"Friedrich Nietzsche",era:"1844–1900",domain:"will to power, revaluation of values"},
+  {name:"Nikola Tesla",era:"1856–1943",domain:"electricity, invention, resonance"},
+  {name:"Sigmund Freud",era:"1856–1939",domain:"the unconscious, desire, civilization"},
+  {name:"W.E.B. Du Bois",era:"1868–1963",domain:"double consciousness, race, democracy"},
+  {name:"Mohandas Gandhi",era:"1869–1948",domain:"nonviolence, civil disobedience, truth"},
+  {name:"Marcel Proust",era:"1871–1922",domain:"memory, time, consciousness"},
+  {name:"Albert Einstein",era:"1879–1955",domain:"relativity, imagination, peace"},
+  {name:"Virginia Woolf",era:"1882–1941",domain:"consciousness, feminism, interiority"},
+  {name:"Simone de Beauvoir",era:"1908–1986",domain:"existentialism, feminism, freedom"},
+  {name:"Hannah Arendt",era:"1906–1975",domain:"totalitarianism, power, the human condition"},
+  {name:"Albert Camus",era:"1913–1960",domain:"absurdism, rebellion, solidarity"},
+  {name:"James Baldwin",era:"1924–1987",domain:"race, love, American identity"},
+  {name:"Paulo Freire",era:"1921–1997",domain:"critical pedagogy, liberation, dialogue"},
+  {name:"Ursula K. Le Guin",era:"1929–2018",domain:"anarchism, ecology, imagination"},
+  {name:"Audre Lorde",era:"1934–1992",domain:"intersectionality, the erotic, survival"},
+  {name:"E.F. Schumacher",era:"1911–1977",domain:"small is beautiful, appropriate technology"},
+  {name:"Marshall McLuhan",era:"1911–1980",domain:"media theory, the medium is the message"},
+  {name:"Jane Jacobs",era:"1916–2006",domain:"urbanism, community, emergence"},
+  {name:"Rachel Carson",era:"1907–1964",domain:"ecology, wonder, the living world"},
+  {name:"Ivan Illich",era:"1926–2002",domain:"deschooling, counterproductivity, tools"},
+  {name:"Gregory Bateson",era:"1904–1980",domain:"systems thinking, mind and nature, ecology"},
+  {name:"Simone Weil",era:"1909–1943",domain:"attention, affliction, the sacred"},
+  {name:"Octavia Butler",era:"1947–2006",domain:"power, evolution, Afrofuturism"},
+  {name:"bell hooks",era:"1952–2021",domain:"love, feminism, race, the margins"},
+  {name:"Robin Wall Kimmerer",era:"1953–",domain:"botany, indigenous knowledge, reciprocity"},
+  {name:"Kate Raworth",era:"1970–",domain:"doughnut economics, planetary boundaries"},
+];
+function randomCouncil(){
+  // Pick 5 random from pool plus keep Claude
+  const pool=[...RANDOM_POOL];
+  for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+  const picked=pool.slice(0,5);
+  const claude=BASE_COUNCIL.find(m=>m.isClaude);
+  if(claude)picked.push(claude);
+  // Clear custom, add picked as custom thinkers if not in base
+  customThinkers=customThinkers.filter(t=>t.vertical!=='random');
+  picked.forEach(m=>{
+    if(!BASE_COUNCIL.find(b=>b.name===m.name)&&!customThinkers.find(c=>c.name===m.name)){
+      customThinkers.push({...m,isCustom:true,vertical:'random'});
+    }
+  });
+  manualMode=true;
+  selectedIndices=new Set();
+  const all=allThinkers();
+  picked.forEach(m=>{const i=all.findIndex(t=>t.name===m.name);if(i>=0)selectedIndices.add(i);});
+  setToggle(document.getElementById('autoToggle'),false);
+  document.getElementById('manualPanel').style.display='none';
+  renderCouncilScreen();updateForumChips();saveState();
+  // Show a brief confirmation
+  const lbl=document.getElementById('autoLabel');
+  if(lbl){lbl.textContent='✓ Random council assembled: '+picked.map(m=>m.name).join(', ');lbl.style.color='var(--jade)';setTimeout(()=>{lbl.style.color='var(--ink3)';renderCouncilScreen();},3000);}
+}
+
 // ════════════ AUTO ════════════
 function toggleAuto(){if(autoRunning)stopAuto();else startAuto();}
 function startAuto(){if(!activeProblem){showErr('forumError','Set a problem first.');return;}if(protoTriggered){showErr('forumError','Problem synthesized. Reset to continue.');return;}autoRunning=true;const btn=document.getElementById('autoBtn');if(btn){btn.textContent='■ Stop';btn.classList.add('btn-running');}scheduleNext();}
@@ -1569,6 +1727,220 @@ function initGlobe(){
   draw();
 }
 
+// ════════════ WORLD MAP ════════════
+// Simplified but geographically accurate continent outlines
+// Each region is an array of [x,y] points scaled to 400x220 canvas
+const MAP_REGIONS = [
+  { id:'na', name:'North America',
+    color:'#2a9060',
+    cx:85, cy:80,
+    path:[[18,28],[85,18],[108,22],[118,38],[115,55],[105,68],[95,88],[80,105],[65,108],[50,98],[28,85],[15,65],[12,45]] },
+  { id:'sa', name:'South America',
+    color:'#b8922a',
+    cx:108, cy:148,
+    path:[[80,105],[95,108],[108,105],[118,115],[122,130],[118,155],[112,172],[100,182],[88,178],[78,162],[72,145],[75,128],[78,112]] },
+  { id:'eu', name:'Europe',
+    color:'#2a9060',
+    cx:195, cy:52,
+    path:[[148,25],[162,20],[178,22],[192,18],[205,22],[215,30],[218,42],[210,52],[198,58],[185,60],[172,55],[158,48],[148,38]] },
+  { id:'af', name:'Africa',
+    color:'#b8922a',
+    cx:195, cy:128,
+    path:[[155,60],[172,55],[190,58],[210,52],[222,62],[228,78],[225,98],[218,118],[212,138],[205,158],[195,168],[182,162],[172,148],[162,128],[155,108],[148,88],[148,72],[152,62]] },
+  { id:'me', name:'Middle East',
+    color:'#c04020',
+    cx:238, cy:72,
+    path:[[218,42],[232,38],[248,40],[258,50],[262,62],[255,72],[245,78],[232,78],[222,72],[218,60]] },
+  { id:'as', name:'Asia',
+    color:'#2a9060',
+    cx:298, cy:72,
+    path:[[218,22],[245,15],[272,12],[302,18],[328,22],[348,35],[355,52],[348,68],[332,75],[315,78],[295,82],[275,78],[258,72],[255,58],[248,40],[232,38],[218,42],[215,30],[215,22]] },
+  { id:'sea', name:'SE Asia',
+    color:'#b8922a',
+    cx:318, cy:118,
+    path:[[295,82],[315,78],[332,88],[342,102],[338,115],[325,122],[312,125],[300,118],[292,105],[295,92]] },
+  { id:'oc', name:'Oceania',
+    color:'#5040a0',
+    cx:338, cy:162,
+    path:[[308,148],[328,142],[348,148],[358,160],[355,172],[342,178],[325,175],[312,165],[308,155]] },
+];
+
+let selectedRegionId = null;
+
+function drawWorldMap(highlightId) {
+  const canvas = document.getElementById('worldMap');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  // Ocean background
+  ctx.fillStyle = '#f0ede8';
+  ctx.fillRect(0, 0, W, H);
+
+  // Latitude grid lines
+  ctx.strokeStyle = 'rgba(180,170,150,0.3)';
+  ctx.lineWidth = 0.5;
+  for (let y = 20; y < H; y += 30) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+  for (let x = 20; x < W; x += 30) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+
+  // Draw each region
+  MAP_REGIONS.forEach(reg => {
+    const isSelected = reg.id === highlightId;
+    ctx.beginPath();
+    reg.path.forEach((pt, i) => {
+      if (i === 0) ctx.moveTo(pt[0], pt[1]);
+      else ctx.lineTo(pt[0], pt[1]);
+    });
+    ctx.closePath();
+
+    // Fill
+    const alpha = isSelected ? 'cc' : '55';
+    ctx.fillStyle = reg.color + alpha;
+    ctx.fill();
+
+    // Stroke
+    ctx.strokeStyle = isSelected ? reg.color : reg.color + '88';
+    ctx.lineWidth = isSelected ? 2 : 1;
+    ctx.stroke();
+
+    // Glow for selected
+    if (isSelected) {
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = reg.color;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+    }
+
+    // Label
+    ctx.fillStyle = isSelected ? reg.color : '#8a8580';
+    ctx.font = isSelected ? 'bold 9px Inter, sans-serif' : '8px Inter, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(reg.name, reg.cx, reg.cy);
+  });
+}
+
+function getMapRegionAt(canvas, clientX, clientY) {
+  const rect = canvas.getBoundingClientRect();
+  const sx = canvas.width / rect.width;
+  const sy = canvas.height / rect.height;
+  const x = (clientX - rect.left) * sx;
+  const y = (clientY - rect.top) * sy;
+  // Find closest region center
+  let best = null, bestD = 999;
+  MAP_REGIONS.forEach(reg => {
+    const d = Math.hypot(x - reg.cx, y - reg.cy);
+    if (d < bestD) { bestD = d; best = reg; }
+  });
+  return bestD < 45 ? best : null;
+}
+
+function initWorldMap() {
+  const canvas = document.getElementById('worldMap');
+  if (!canvas) return;
+  drawWorldMap(null);
+
+  function handleTap(e) {
+    let cx, cy;
+    if (e.changedTouches) {
+      cx = e.changedTouches[0].clientX;
+      cy = e.changedTouches[0].clientY;
+    } else {
+      cx = e.clientX; cy = e.clientY;
+    }
+    const reg = getMapRegionAt(canvas, cx, cy);
+    if (reg) {
+      selectedRegion = reg.name;
+      selectedRegionId = reg.id;
+      document.getElementById('regionLabel').textContent = reg.name + ' — adjust sliders';
+      drawWorldMap(reg.id);
+      recalcMetrics();
+    }
+  }
+  canvas.addEventListener('click', handleTap);
+  canvas.addEventListener('touchend', e => { e.preventDefault(); handleTap(e); }, { passive: false });
+}
+
+// ════════════ WORKSHOP ════════════
+let workshopMode = 'develop';
+function switchCreateTab(tab) {
+  const isArt = tab === 'art';
+  document.getElementById('createPanel-art').style.display = isArt ? 'block' : 'none';
+  document.getElementById('createPanel-workshop').style.display = isArt ? 'none' : 'block';
+  const artBtn = document.getElementById('createTab-art');
+  const wsBtn = document.getElementById('createTab-workshop');
+  if (artBtn) {
+    artBtn.style.color = isArt ? 'var(--gold)' : 'var(--ink3)';
+    artBtn.style.borderBottom = isArt ? '2px solid var(--gold2)' : '2px solid transparent';
+    artBtn.style.fontWeight = isArt ? '600' : '500';
+  }
+  if (wsBtn) {
+    wsBtn.style.color = isArt ? 'var(--ink3)' : 'var(--ink)';
+    wsBtn.style.borderBottom = isArt ? '2px solid transparent' : '2px solid var(--ink)';
+    wsBtn.style.fontWeight = isArt ? '500' : '600';
+  }
+}
+function setWorkshopMode(mode, el) {
+  workshopMode = mode;
+  document.querySelectorAll('.workshop-mode-btn').forEach(b => b.classList.remove('active'));
+  if (el) el.classList.add('active');
+}
+async function triggerWorkshop() {
+  const input = document.getElementById('workshopInput').value.trim();
+  if (!input) { showErr('workshopError', 'Describe what you're working on first.'); return; }
+  if (isLoading) return;
+  setLoading(true, 'creative');
+  document.getElementById('creativeDot').className = 'sdot sdot-active';
+  clearMsgs('workshopMessages');
+  const modeInstructions = {
+    develop: 'Help develop this idea further. Identify its strongest elements, suggest how it could grow, and offer specific next steps.',
+    challenge: 'Rigorously challenge this idea. Find the weak assumptions, the blind spots, the things the person might not want to hear. Be honest and specific.',
+    brainstorm: 'Brainstorm expansively from this starting point. Generate unexpected directions, connections, and possibilities the person might not have considered.',
+    communicate: 'Help this person explain their idea clearly and compellingly to others. Identify what makes it interesting, what needs more explanation, and suggest how to frame it.'
+  };
+  const active = getActiveCouncil();
+  const voices = active.slice(0, 4);
+  appendSys('workshopMessages', `The council engages: "${input.substring(0,60)}${input.length>60?'…':''}"`);
+  const pieces = [];
+  for (const voice of voices) {
+    showThinking('workshopMessages', voice.name);
+    const sys = `You are ${voice.name} (${voice.era}), known for: ${voice.domain}.
+
+${modeInstructions[workshopMode]}
+
+Respond in your authentic voice. Be specific and useful. 3-5 sentences. No preamble.`;
+    try {
+      const text = await callClaude(sys, `The idea: "${input}"`, 500);
+      removeThinking('workshopMessages');
+      appendSpeech('workshopMessages', voice.name, voice.era, text, !!voice.isClaude, !!voice.isJung, !!voice.isCustom);
+      pieces.push({ name: voice.name, text });
+    } catch(e) { removeThinking('workshopMessages'); }
+  }
+  // Synthesis
+  if (pieces.length > 0) {
+    showThinking('workshopMessages', 'Claude — synthesizing');
+    const all = pieces.map(p => `${p.name}: ${p.text}`).join('
+
+');
+    const synSys = `You are Claude. Synthesize these council perspectives on this idea into 2-3 sentences of actionable insight. What is the most important thing this person should take away?
+
+Idea: "${input}"
+Mode: ${workshopMode}`;
+    try {
+      const synth = await callClaude(synSys, all, 400);
+      removeThinking('workshopMessages');
+      appendConsensus('workshopMessages', synth);
+    } catch(e) { removeThinking('workshopMessages'); }
+  }
+  setLoading(false, 'creative');
+  document.getElementById('creativeDot').className = 'sdot sdot-idle';
+}
+
 // ════════════ INIT ════════════
 function init(){
   loadState();
@@ -1578,6 +1950,7 @@ function init(){
   document.getElementById('autoBanner').style.display=manualMode?'none':'flex';
   renderCouncilScreen();
   initGlobe();
+  initWorldMap();
   recalcMetrics();
   // Seed gallery with example items if empty
   if(galleryItems.length===0){
