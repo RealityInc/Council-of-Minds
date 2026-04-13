@@ -1003,12 +1003,12 @@ function initWorldMap() {
   // When zooming in past threshold on a selected country, load sub-national
   leafletMap.on('zoomend', function() {
     var z = leafletMap.getZoom();
-    if (z >= 4 && selectedPlace.code && selectedPlace.type === 'country') {
-      loadSubLayer(selectedPlace.code, selectedPlace.iso3, selectedPlace.name);
-    }
-    if (z < 4 && subLayer) {
-      leafletMap.removeLayer(subLayer);
-      subLayer = null;
+    if (z >= 3 && selectedPlace.code && selectedPlace.type === 'country') {
+      if (selectedPlace.code === 'US') {
+        loadUSStateLayer();
+      } else if (selectedPlace.iso3) {
+        loadSubLayer(selectedPlace.code, selectedPlace.iso3, selectedPlace.name);
+      }
     }
   });
 
@@ -1050,11 +1050,9 @@ function loadCountryLayer() {
 
 // Load sub-national boundaries via geoBoundaries API
 function loadSubLayer(iso2, iso3, countryName) {
-  if (!iso3) return;
-  if (subLayer && subLayer._countryISO3 === iso3) return; // already loaded
-
-  // US gets special treatment with our existing detailed layer
+  if (!iso3) { setMapStatus('No region code for ' + countryName); return; }
   if (iso2 === 'US') { loadUSStateLayer(); return; }
+  if (subLayer && subLayer._countryISO3 === iso3) return; // already loaded
 
   var cacheKey = 'geo_' + iso3;
   if (geoCache[cacheKey]) {
@@ -1064,25 +1062,40 @@ function loadSubLayer(iso2, iso3, countryName) {
 
   setMapStatus('Loading regions for ' + countryName + '...');
 
-  // geoBoundaries API - returns metadata with downloadURL
-  var apiUrl = 'https://www.geoboundaries.org/api/current/gbOpen/' + iso3 + '/ADM1/';
-  fetch(apiUrl)
-    .then(function(r) { return r.json(); })
-    .then(function(meta) {
-      if (!meta || !meta.gjDownloadURL) {
-        setMapStatus('Regional boundaries not available for ' + countryName);
-        return;
-      }
-      return fetch(meta.gjDownloadURL);
+  // Try geoBoundaries CDN direct URL first (faster, no CORS issue)
+  // Format: https://github.com/wmgeolab/geoBoundaries/raw/main/releaseData/gbOpen/{ISO3}/ADM1/geoBoundaries-{ISO3}-ADM1.geojson
+  var directUrl = 'https://raw.githubusercontent.com/wmgeolab/geoBoundaries/main/releaseData/gbOpen/' + iso3 + '/ADM1/geoBoundaries-' + iso3 + '-ADM1.geojson';
+
+  fetch(directUrl)
+    .then(function(r) {
+      if (!r.ok) throw new Error('Direct URL failed: ' + r.status);
+      return r.json();
     })
-    .then(function(r) { if (r) return r.json(); })
     .then(function(geojson) {
-      if (!geojson) return;
+      if (!geojson || !geojson.features || geojson.features.length === 0) {
+        throw new Error('Empty GeoJSON');
+      }
       geoCache[cacheKey] = geojson;
       renderSubLayer(geojson, iso2, iso3, countryName);
     })
-    .catch(function() {
-      setMapStatus('Regional data unavailable for ' + countryName + '.');
+    .catch(function(e1) {
+      // Fallback: try geoBoundaries API metadata route
+      setMapStatus('Trying alternate source for ' + countryName + '...');
+      var apiUrl = 'https://www.geoboundaries.org/api/current/gbOpen/' + iso3 + '/ADM1/';
+      fetch(apiUrl)
+        .then(function(r) { return r.json(); })
+        .then(function(meta) {
+          if (!meta || !meta.gjDownloadURL) throw new Error('No download URL');
+          return fetch(meta.gjDownloadURL);
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(geojson) {
+          geoCache[cacheKey] = geojson;
+          renderSubLayer(geojson, iso2, iso3, countryName);
+        })
+        .catch(function() {
+          setMapStatus('Regional boundaries not available for ' + countryName + '. Try zooming in and tapping.');
+        });
     });
 }
 
@@ -1152,11 +1165,15 @@ function onCountryClick(iso2, iso3, name, latlng) {
     .setContent('<div class="popup-title">' + name + '</div><div style="color:#8a8580;font-size:12px">Loading...</div>')
     .openOn(leafletMap);
 
-  // Auto-load sub-layer if zoomed in enough
-  if (leafletMap.getZoom() >= 4) {
+  // Always start loading sub-layer in background
+  if (iso2 === 'US') {
+    setMapStatus(name + ' — zoom in to see states, or tap map');
+    loadUSStateLayer();
+  } else if (iso3) {
+    setMapStatus('Loading regions for ' + name + '...');
     loadSubLayer(iso2, iso3, name);
   } else {
-    setMapStatus(name + ' — zoom in to see regions');
+    setMapStatus(name + ' — no ISO3 code, cannot load regions');
   }
   fetchWorldBankData(iso2, name, latlng);
 }
