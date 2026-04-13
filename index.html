@@ -1591,7 +1591,8 @@ function initWorldMap() {
   });
 
   leafletMap.on('click', function(e) {
-    if (leafletMap.getZoom() >= 5) reverseGeocode(e.latlng.lat, e.latlng.lng);
+    var z = leafletMap.getZoom();
+    if (z >= 4) reverseGeocode(e.latlng.lat, e.latlng.lng);
   });
 }
 
@@ -1663,7 +1664,7 @@ function loadSubLayer(iso2, iso3, countryName) {
           geoCache[cacheKey] = filtered;
           renderSubLayer(filtered, iso2, iso3, countryName);
         } else {
-          setMapStatus(countryName + ' regions not available. The base map shows boundaries when zoomed in.');
+          setMapStatus(countryName + ' — zoom in and tap any region to see local data.');
         }
         return;
       }
@@ -1881,7 +1882,7 @@ function loadCountyLayer(stateFips, stateName) {
 // ── REVERSE GEOCODE ──
 function reverseGeocode(lat, lng) {
   var z = leafletMap.getZoom();
-  var zl = z >= 9 ? 10 : z >= 6 ? 8 : 6;
+  var zl = z >= 9 ? 10 : z >= 6 ? 8 : 5;
   fetch('https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lng+'&format=json&zoom='+zl, {
     headers: {'Accept-Language':'en'}
   })
@@ -1890,17 +1891,17 @@ function reverseGeocode(lat, lng) {
     if (!d || !d.address) return;
     var addr = d.address;
     var cc = (addr.country_code||'').toUpperCase();
+
     if (z >= 9 && cc === 'US' && addr.county) {
       var county = addr.county.replace(' County','').replace(' Parish','');
-      var fips = US_STATE_FIPS[addr.state] || '';
-      onCountyClick(county, '', addr.state||'', fips, {lat:lat,lng:lng});
-    } else if (z >= 5 && cc === 'US' && addr.state) {
+      onCountyClick(county, '', addr.state||'', US_STATE_FIPS[addr.state]||'', {lat:lat,lng:lng});
+    } else if (z >= 4 && cc === 'US' && addr.state) {
       onStateClick(addr.state, {lat:lat,lng:lng});
-    } else if (z >= 5 && addr.state) {
-      var iso2 = cc;
-      var iso3 = ISO2_TO_ISO3[iso2] || '';
-      var regionName = addr.state || addr.county || addr.city || '';
-      if (regionName) onRegionClick(regionName, iso2, iso3, addr.country||'', {lat:lat,lng:lng});
+    } else if (z >= 4 && addr.state && cc !== selectedPlace.code) {
+      // Tapped into a region of a country
+      onRegionClick(addr.state, cc, ISO2_TO_ISO3[cc]||'', addr.country||'', {lat:lat,lng:lng});
+    } else if (z >= 4 && addr.state) {
+      onRegionClick(addr.state, cc, ISO2_TO_ISO3[cc]||'', addr.country||'', {lat:lat,lng:lng});
     }
   })
   .catch(function() {});
@@ -2036,10 +2037,9 @@ function displayCountryData(data, name, latlng) {
     L.popup().setLatLng(latlng).setContent(ph).openOn(leafletMap);
   }
   setMapStatus(name + ' data loaded. Sliders updated. Zoom in for regions.');
-  // Auto-load sub-national boundaries regardless of zoom
-  // Use selectedPlace which was set in onCountryClick before this async call
-  if (leafletMap && selectedPlace.code && selectedPlace.iso3) {
-    loadSubLayer(selectedPlace.code, selectedPlace.iso3, name);
+  // Sub-national boundaries: US uses GeoJSON overlay, others use base map + reverse geocode
+  if (leafletMap && selectedPlace.code === 'US') {
+    loadUSStateLayer();
   }
 }
 
