@@ -2095,14 +2095,14 @@ function displayCountryData(data, name, latlng) {
   var ren = data['EG.ELC.RNEW.ZS'], hunger = data['SN.ITK.DEFC.ZS'];
   var water = data['SH.H2O.SMDW.ZS'], land = data['ER.LND.PTLD.ZS'];
   var gini = data['SI.POV.GINI'], gdp = data['NY.GDP.PCAP.CD'];
-BASE_METRICS = computeMetrics(getSliders());
-recalc();
+
   if (ren) setSlider('sl-ren', ren.value, 'sv-ren');
   if (hunger) setSlider('sl-food', Math.max(0,100-hunger.value), 'sv-food');
   if (water) setSlider('sl-water', water.value, 'sv-water');
   if (land) setSlider('sl-land', land.value, 'sv-land');
   if (gini) setSlider('sl-wealth', Math.max(0,100-gini.value), 'sv-wealth');
-  recalc();
+ BASE_METRICS = computeMetrics(getSliders());
+recalc();
 
   var hasAny = ren || hunger || water || land || gini || gdp;
   if (!hasAny) { showNoData(name); return; }
