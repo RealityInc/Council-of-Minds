@@ -2101,8 +2101,8 @@ function displayCountryData(data, name, latlng) {
   if (water) setSlider('sl-water', water.value, 'sv-water');
   if (land) setSlider('sl-land', land.value, 'sv-land');
   if (gini) setSlider('sl-wealth', Math.max(0,100-gini.value), 'sv-wealth');
- BASE_METRICS = computeMetrics(getSliders());
-recalc();
+ recalc();
+BASE_METRICS = computeMetrics(getSliders());
 
   var hasAny = ren || hunger || water || land || gini || gdp;
   if (!hasAny) { showNoData(name); return; }
