@@ -286,17 +286,20 @@ textarea{resize:none;min-height:80px;}
   <div class="card" style="padding:10px">
     <div style="font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580;margin-bottom:3px">Flourishing</div>
     <div style="font-size:26px;font-weight:700;color:#1a6b4a" id="metFl">--</div>
-    <div style="height:3px;background:#e8e4dc;border-radius:2px;margin-top:5px"><div id="deltaFl" style="font-size:11px;font-weight:600;margin-top:2px;min-height:14px"></div></div>
+    <div style="height:3px;background:#e8e4dc;border-radius:2px;margin-top:5px"></div>
+    <div id="deltaFl" style="font-size:11px;font-weight:600;margin-top:2px;min-height:14px"></div>
   </div>
   <div class="card" style="padding:10px">
     <div style="font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580;margin-bottom:3px">Ecological</div>
     <div style="font-size:26px;font-weight:700;color:#b8922a" id="metEc">--</div>
-    <div style="height:3px;background:#e8e4dc;border-radius:2px;margin-top:5px"><div id="deltaEc" style="height:100%;background:#d4aa44;border-radius:2px;width:0%;transition:width .5s"></div></div>
+    <div style="height:3px;background:#e8e4dc;border-radius:2px;margin-top:5px"><div style="height:100%;background:#d4aa44;border-radius:2px;width:0%;transition:width .5s"></div></div>
+    <div id="deltaEc" style="font-size:11px;font-weight:600;margin-top:2px;min-height:14px"></div>
   </div>
   <div class="card" style="padding:10px">
     <div style="font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580;margin-bottom:3px">Stability</div>
     <div style="font-size:26px;font-weight:700;color:#5040a0" id="metSt">--</div>
-    <div style="height:3px;background:#e8e4dc;border-radius:2px;margin-top:5px"><div id="deltaSt" style="height:100%;background:#7060c0;border-radius:2px;width:0%;transition:width .5s"></div></div>
+    <div style="height:3px;background:#e8e4dc;border-radius:2px;margin-top:5px"><div style="height:100%;background:#7060c0;border-radius:2px;width:0%;transition:width .5s"></div></div>
+    <div id="deltaSt" style="font-size:11px;font-weight:600;margin-top:2px;min-height:14px"></div>
   </div>
 </div>
 
@@ -2101,8 +2104,7 @@ function displayCountryData(data, name, latlng) {
   if (water) setSlider('sl-water', water.value, 'sv-water');
   if (land) setSlider('sl-land', land.value, 'sv-land');
   if (gini) setSlider('sl-wealth', Math.max(0,100-gini.value), 'sv-wealth');
- recalc();
-BASE_METRICS = computeMetrics(getSliders());
+  BASE_METRICS = computeMetrics(getSliders()); recalc();
 
   var hasAny = ren || hunger || water || land || gini || gdp;
   if (!hasAny) { showNoData(name); return; }
