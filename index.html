@@ -286,17 +286,17 @@ textarea{resize:none;min-height:80px;}
   <div class="card" style="padding:10px">
     <div style="font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580;margin-bottom:3px">Flourishing</div>
     <div style="font-size:26px;font-weight:700;color:#1a6b4a" id="metFl">--</div>
-    <div style="height:3px;background:#e8e4dc;border-radius:2px;margin-top:5px"><div id="fillFl" style="height:100%;background:#2a9060;border-radius:2px;width:0%;transition:width .5s"></div></div>
+    <div style="height:3px;background:#e8e4dc;border-radius:2px;margin-top:5px"><div id="deltaFl" style="font-size:11px;font-weight:600;margin-top:2px;min-height:14px"></div></div>
   </div>
   <div class="card" style="padding:10px">
     <div style="font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580;margin-bottom:3px">Ecological</div>
     <div style="font-size:26px;font-weight:700;color:#b8922a" id="metEc">--</div>
-    <div style="height:3px;background:#e8e4dc;border-radius:2px;margin-top:5px"><div id="fillEc" style="height:100%;background:#d4aa44;border-radius:2px;width:0%;transition:width .5s"></div></div>
+    <div style="height:3px;background:#e8e4dc;border-radius:2px;margin-top:5px"><div id="deltaEc" style="height:100%;background:#d4aa44;border-radius:2px;width:0%;transition:width .5s"></div></div>
   </div>
   <div class="card" style="padding:10px">
     <div style="font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580;margin-bottom:3px">Stability</div>
     <div style="font-size:26px;font-weight:700;color:#5040a0" id="metSt">--</div>
-    <div style="height:3px;background:#e8e4dc;border-radius:2px;margin-top:5px"><div id="fillSt" style="height:100%;background:#7060c0;border-radius:2px;width:0%;transition:width .5s"></div></div>
+    <div style="height:3px;background:#e8e4dc;border-radius:2px;margin-top:5px"><div id="deltaSt" style="height:100%;background:#7060c0;border-radius:2px;width:0%;transition:width .5s"></div></div>
   </div>
 </div>
 
@@ -318,6 +318,7 @@ textarea{resize:none;min-height:80px;}
 
 <!-- Sliders -->
 <div class="card">
+  <div id="interdepAlert" style="display:none;background:#fdf8ee;border:1px solid #f0cc70;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#8a6020;line-height:1.5"></div>
   <div style="padding:10px 14px;border-bottom:1px solid #e8e4dc;display:flex;justify-content:space-between;align-items:center">
     <span style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580">Model a Scenario</span>
     <button class="btn btn-outline" style="font-size:10px;padding:3px 10px" onclick="resetSliders()">Reset to Baseline</button>
@@ -1372,25 +1373,86 @@ function getSlider(id, def) {
   var el = document.getElementById(id);
   return el ? parseInt(el.value) || def : def;
 }
+var BASE_METRICS = null; // set when country data loads
+
+function computeMetrics(s) {
+  // Food effectiveness is dampened by wealth inequality
+  var foodEff = s.food * (0.5 + 0.5 * Math.min(1, s.wealth / 50));
+  // Rapid renewable transition creates short-term instability
+  var renStab = s.ren > 60 ? -((s.ren - 60) * 0.15) : 0;
+  // Rapid wealth redistribution creates short-term disruption
+  var wShock = s.wealth > 50 ? -((s.wealth - 50) * 0.1) : 0;
+
+  var fl = Math.min(99, Math.max(1, Math.round(
+    foodEff*0.24 + s.water*0.20 + s.wealth*0.20 + s.kl*0.18 + s.ren*0.10 + s.land*0.05 + wShock
+  )));
+  var ec = Math.min(99, Math.max(1, Math.round(
+    s.ren*0.38 + s.land*0.34 + s.kl*0.14 + (s.food < 80 ? 8 : 4) + (s.ren > 80 ? 4 : 0)
+  )));
+  var st = Math.min(99, Math.max(1, Math.round(
+    s.food*0.24 + s.kl*0.22 + s.wealth*0.18 + s.ren*0.14 + s.water*0.14 + renStab + wShock*0.5
+  )));
+  return { fl:fl, ec:ec, st:st };
+}
+
+var INTERDEP_RULES = [
+  { fn: function(s){ return s.land > 40 && s.food < 70; },
+    msg: '⚠ <strong>Tension:</strong> Expanding protected land may constrain food production unless efficiency gains or redistribution compensates.' },
+  { fn: function(s){ return s.ren > 70 && s.kl < 20; },
+    msg: '⚠ <strong>Implementation gap:</strong> High renewable targets need major public investment. Without redirecting military spend, debt may destabilize.' },
+  { fn: function(s){ return s.wealth > 60 && s.kl < 15; },
+    msg: '⚠ <strong>Historical pattern:</strong> Rapid wealth redistribution without governance investment correlates with short-term instability (Quigley).' },
+  { fn: function(s){ return s.food > 90 && s.wealth < 20; },
+    msg: '⚠ <strong>Access problem:</strong> Food production can increase while hunger persists if wealth inequality stays high. Hunger is about access, not supply.' }
+];
+
+function checkInterdeps() {
+  // Look for an interdep alert div — add one near your sliders if needed
+  var el = document.getElementById('interdepAlert');
+  if (!el) return;
+  var hit = INTERDEP_RULES.find(function(r){ return r.fn(getSliders()); });
+  if (hit) { el.innerHTML = hit.msg; el.style.display = 'block'; }
+  else el.style.display = 'none';
+}
+
+function getSliders() {
+  return {
+    ren:  getSlider('sl-ren',  34),
+    food: getSlider('sl-food', 72),
+    kl:   getSlider('sl-kl',   8),
+    land: getSlider('sl-land', 17),
+    water:getSlider('sl-water',74),
+    wealth:getSlider('sl-wealth',12)
+  };
+}
+
 function recalc() {
-  var ren = getSlider('sl-ren', 34);
-  var food = getSlider('sl-food', 72);
-  var kl = getSlider('sl-kl', 8);
-  var land = getSlider('sl-land', 17);
-  var water = getSlider('sl-water', 74);
-  var wealth = getSlider('sl-wealth', 12);
+  var s = getSliders();
+  var m = computeMetrics(s);
 
-  var fl = Math.min(100, Math.round(food*0.25 + water*0.2 + wealth*0.2 + kl*0.2 + ren*0.1 + land*0.05));
-  var ec = Math.min(100, Math.round(ren*0.4 + land*0.35 + kl*0.15 + (100-food*0.01)));
-  var st = Math.min(100, Math.round(food*0.25 + kl*0.25 + wealth*0.2 + ren*0.15 + water*0.15));
+  document.getElementById('metFl').textContent = m.fl;
+  document.getElementById('metEc').textContent = m.ec;
+  document.getElementById('metSt').textContent = m.st;
+  document.getElementById('fillFl').style.width = m.fl + '%';
+  document.getElementById('fillEc').style.width = m.ec + '%';
+  document.getElementById('fillSt').style.width = m.st + '%';
 
-  document.getElementById('metFl').textContent = fl;
-  document.getElementById('metEc').textContent = ec;
-  document.getElementById('metSt').textContent = st;
-  document.getElementById('fillFl').style.width = fl + '%';
-  document.getElementById('fillEc').style.width = ec + '%';
-  document.getElementById('fillSt').style.width = st + '%';
+  // Show deltas if we have a country baseline loaded
+  if (BASE_METRICS) {
+    showDelta('deltaFl', m.fl - BASE_METRICS.fl);
+    showDelta('deltaEc', m.ec - BASE_METRICS.ec);
+    showDelta('deltaSt', m.st - BASE_METRICS.st);
+  }
 
+  checkInterdeps();
+}
+
+function showDelta(id, d) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  if (d === 0) { el.textContent = ''; return; }
+  el.textContent = (d > 0 ? '+' : '') + d;
+  el.style.color = d > 0 ? '#2a9060' : '#c04020';
 }
 
 function askCouncil() {
@@ -2033,7 +2095,8 @@ function displayCountryData(data, name, latlng) {
   var ren = data['EG.ELC.RNEW.ZS'], hunger = data['SN.ITK.DEFC.ZS'];
   var water = data['SH.H2O.SMDW.ZS'], land = data['ER.LND.PTLD.ZS'];
   var gini = data['SI.POV.GINI'], gdp = data['NY.GDP.PCAP.CD'];
-
+BASE_METRICS = computeMetrics(getSliders());
+recalc();
   if (ren) setSlider('sl-ren', ren.value, 'sv-ren');
   if (hunger) setSlider('sl-food', Math.max(0,100-hunger.value), 'sv-food');
   if (water) setSlider('sl-water', water.value, 'sv-water');
