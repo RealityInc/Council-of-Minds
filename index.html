@@ -3251,7 +3251,7 @@ function showAvatarBuilder() {
       var sel = (key === 'paletteIdx') ? (avatarState.paletteIdx === v) : (avatarState[key] === v);
       if (key === 'paletteIdx') {
         var pal = PALETTES[v];
-        return '<div class="color-dot' + (sel?' sel':'') + '" style="background:'+pal.p+'" data-v="'+v+'" onclick="setAv(this.dataset.v,true)" title="'+pal.name+'"></div>';
+        return '<div class="color-dot' + (sel?' sel':'') + '" style="background:'+pal.p+'" data-v="'+v+'" onclick="setAvPalette(this.dataset.v)" title="'+pal.name+'"></div>';
       }
       return '<button class="builder-opt' + (sel?' sel':'') + '" data-k="'+key+'" data-v="'+v+'" onclick="setAv(this.dataset.k,this.dataset.v)">'+v+'</button>';
     }).join('');
@@ -3270,7 +3270,7 @@ function showAvatarBuilder() {
 
     '<div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">' +
     '<div style="flex:1;padding:10px 14px;background:#141414;border:1.5px solid #2a2820;border-radius:8px;color:#f0ede8;font-size:15px;font-weight:600;font-family:inherit" id="usernameDisplay">' + (avatarState.username||generateUsername()) + '</div>' +
-    '<button onclick="avatarState.username=generateUsername();document.getElementById('usernameDisplay').textContent=avatarState.username" style="padding:10px 14px;background:#1a1814;border:1.5px solid #2a2820;border-radius:8px;color:#5a5650;font-size:12px;cursor:pointer;touch-action:manipulation;white-space:nowrap;font-family:inherit">New name</button>' +
+    '<button onclick="avatarState.username=generateUsername();var el=document.getElementById(\'usernameDisplay\');if(el)el.textContent=avatarState.username;" style="padding:10px 14px;background:#1a1814;border:1.5px solid #2a2820;border-radius:8px;color:#5a5650;font-size:12px;cursor:pointer;touch-action:manipulation;white-space:nowrap;font-family:inherit">New name</button>' +
     '</div>' +
 
     '<div style="display:flex;flex-direction:column;gap:16px;background:#0e0e14;border-radius:12px;padding:16px;margin-bottom:20px">' +
@@ -3321,21 +3321,69 @@ function generateUsername() {
   return pre + suf;
 }
 
-function setAv(key, val, isPalette) {
-  if (isPalette) {
-    avatarState.paletteIdx = parseInt(val);
-  } else {
-    avatarState[key] = val;
-  }
-  // Update button selected states using data attributes
+function refreshBuilderUI() {
+  // Update all builder-opt sel states to match current avatarState
   var btns = document.querySelectorAll('.builder-opt');
   for (var i = 0; i < btns.length; i++) {
     var b = btns[i];
     var bk = b.getAttribute('data-k');
     var bv = b.getAttribute('data-v');
     if (!bk) continue;
-    var actualKey = isPalette ? 'paletteIdx' : key;
-    if (bk === actualKey) {
+    var curVal = bk === 'paletteIdx' ? String(avatarState.paletteIdx) : String(avatarState[bk] || '');
+    var match = bv === curVal;
+    b.classList.toggle('sel', match);
+    if (bk === 'type' && match && TYPES[bv]) {
+      b.style.borderColor = TYPES[bv].color;
+      b.style.color = TYPES[bv].color;
+    } else if (bk === 'type') {
+      b.style.borderColor = '';
+      b.style.color = '';
+    }
+  }
+  // Update color dots
+  var dots = document.querySelectorAll('.color-dot');
+  for (var j = 0; j < dots.length; j++) {
+    dots[j].classList.toggle('sel', dots[j].getAttribute('data-v') === String(avatarState.paletteIdx));
+  }
+  drawAvatar('builderCanvas', avatarState);
+}
+
+function setAvPalette(idx) {
+  avatarState.paletteIdx = parseInt(idx);
+  var dots = document.querySelectorAll('.color-dot');
+  for (var j = 0; j < dots.length; j++) {
+    dots[j].classList.toggle('sel', dots[j].getAttribute('data-v') === String(idx));
+  }
+  drawAvatar('builderCanvas', avatarState);
+}
+
+function setAv(key, val, isPalette) {
+  // isPalette = true means key is actually the palette index value
+  if (isPalette) {
+    avatarState.paletteIdx = parseInt(key);
+  } else {
+    avatarState[key] = val;
+    // If type changed, apply its preset
+    if (key === 'type' && TYPES[val]) {
+      var td = TYPES[val];
+      avatarState.animal = td.animal;
+      avatarState.tech = td.tech;
+      avatarState.paletteIdx = td.paletteIdx;
+      var SHAPE_MAP = { analyst:'geometric', probe:'angular', synthesizer:'smooth', anomaly:'fragmented' };
+      avatarState.shape = SHAPE_MAP[td.silhouette] || 'geometric';
+      // Re-render all button states
+      refreshBuilderUI();
+    }
+  }
+
+  // Update builder-opt selected states
+  var btns = document.querySelectorAll('.builder-opt');
+  for (var i = 0; i < btns.length; i++) {
+    var b = btns[i];
+    var bk = b.getAttribute('data-k');
+    var bv = b.getAttribute('data-v');
+    if (!bk || isPalette) continue;
+    if (bk === key) {
       var match = bv === String(val);
       b.classList.toggle('sel', match);
       if (bk === 'type' && match && TYPES[val]) {
@@ -3347,12 +3395,15 @@ function setAv(key, val, isPalette) {
       }
     }
   }
+
   // Update color dots
-  var dots = document.querySelectorAll('.color-dot');
-  for (var j = 0; j < dots.length; j++) {
-    var dv = dots[j].getAttribute('data-v');
-    dots[j].classList.toggle('sel', dv === String(val) && isPalette);
+  if (isPalette) {
+    var dots = document.querySelectorAll('.color-dot');
+    for (var j = 0; j < dots.length; j++) {
+      dots[j].classList.toggle('sel', dots[j].getAttribute('data-v') === String(key));
+    }
   }
+
   drawAvatar('builderCanvas', avatarState);
 }
 
@@ -3406,7 +3457,8 @@ function drawAvatar(canvasId, state) {
   drawBG(ctx,W,H,state.bgField,g);
 
   // Silhouette
-  var sil = state.type ? (TYPES[state.type].silhouette||'analyst') : 'analyst';
+  var SHAPE_TO_SIL = { geometric:'analyst', angular:'probe', smooth:'synthesizer', fragmented:'anomaly' };
+  var sil = (state.shape && SHAPE_TO_SIL[state.shape]) ? SHAPE_TO_SIL[state.shape] : (state.type ? (TYPES[state.type].silhouette||'analyst') : 'analyst');
   drawSilhouette(ctx,cx,cy,W,sil,p,s,g);
 
   // Animal
