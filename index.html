@@ -2847,9 +2847,8 @@ function fetchInfraData(place, fips, iso2, type) {
     fetchCensusInfra(fips, type);
     fetchBLSData(fips, type);
   }
-  if (type === 'country') {
-    fetchEIAProxy(iso2);
-  }
+  // EIA energy data - future integration
+  // if (type === 'country') { fetchEIAProxy(iso2); }
   // OSM data for transport — works for any place
   if (place && place.lat && place.lng) {
     fetchOSMTransport(place.lat, place.lng);
@@ -4309,6 +4308,7 @@ var proj = {
   date: new Date().toLocaleDateString()
 };
 
+window._pendingProj = proj;
 result.innerHTML = 
   '<div style="background:#f0f8f4;border:1px solid #2a906044;border-radius:8px;padding:12px;margin-top:4px">' +
     '<div style="font-size:11px;font-weight:600;color:#2a9060;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Estimated Impact</div>' +
@@ -4318,7 +4318,7 @@ result.innerHTML =
       '<span style="font-size:13px;color:#5040a0;font-weight:600">+' + proj.impactSt + ' Stability</span>' +
     '</div>' +
     '<div style="font-size:12px;color:#4a4640;line-height:1.5;margin-bottom:10px">' + proj.reasoning + '</div>' +
-    '<button class="btn btn-dark btn-full" onclick="confirmAddCommunityProject(' + JSON.stringify(proj).replace(/"/g, '&quot;') + ')">Add to Map</button>' +
+    '<button class="btn btn-dark btn-full" onclick="confirmAddCommunityProject(window._pendingProj)">Add to Map</button>' + ')">Add to Map</button>' +
   '</div>';
 
 btn.disabled = false;
