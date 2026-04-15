@@ -199,6 +199,9 @@ textarea{resize:none;min-height:80px;}
     <ellipse cx="12" cy="12" rx="11" ry="3.5" stroke="#b8922a" stroke-width="1" fill="none"/>
   </svg>
   <span class="header-title">The World Game</span>
+  <div id="resourceBar" style="margin-left:8px;display:flex;align-items:center;gap:4px;flex:1;overflow:hidden">
+    <div id="resourceChips" style="display:flex;gap:4px;flex-wrap:nowrap;overflow:hidden"></div>
+  </div>
   <button onclick="openProfile()" style="margin-left:auto;background:transparent;border:none;cursor:pointer;touch-action:manipulation;padding:2px" title="Your profile">
     <canvas id="headerAvatarCanvas" width="36" height="36" style="border-radius:50%;border:1.5px solid #2a2820;display:block"></canvas>
   </button>
@@ -563,6 +566,7 @@ textarea{resize:none;min-height:80px;}
       <button class="btn btn-outline" style="padding:6px 12px;font-size:11px" onclick="filterGallery('creative',this)">Creative</button>
       <button class="btn btn-outline" style="padding:6px 12px;font-size:11px" onclick="filterGallery('debate',this)">Debate</button>
       <button class="btn btn-outline" style="padding:6px 12px;font-size:11px" onclick="filterGallery('insight',this)">Insight</button>
+      <button class="btn btn-outline" style="padding:6px 12px;font-size:11px" onclick="filterGallery('scenario',this)">Projects</button>
     </div>
   </div>
   <div id="galleryGrid" style="display:flex;flex-direction:column;gap:10px"></div>
@@ -871,7 +875,7 @@ function api(system, user, maxTok, cb) {
   .then(function(r) { return r.json(); })
   .then(function(d) {
     if (d.error) cb(null, d.error);
-    else cb(d.text, null);
+    else { trackResource('Claude', d.text ? Math.round(d.text.length/4) : 0); cb(d.text, null); }
   })
   .catch(function(e) { cb(null, e.message); });
 }
@@ -1121,11 +1125,28 @@ function renderCouncil() {
 
 // ── GALLERY ──
 var galleryItems = [
-  {id:1,type:'creative',title:'On the Weight of Water',content:'The river does not ask permission to find its way to sea. A collective poem on resource equity.',date:'Apr 2026',appreciations:12},
-  {id:2,type:'insight',title:"Fuller's Ephemeralization in the Age of AI",content:'We built a working World Game in under an hour. The question is no longer whether we can do more with less. The question is whether we will.',date:'Apr 2026',appreciations:8},
-  {id:3,type:'debate',title:'Should AI replace human decision-making in resource allocation?',content:'Jung noted the shadow of optimization: efficiency without wisdom produces systems that are perfectly wrong.',date:'Apr 2026',appreciations:15}
+  {id:1,type:'creative',title:'On the Weight of Water',
+   content:'The river does not ask permission to find its way to sea. A collective poem on resource equity — modeled against real water access data.',
+   fullContent:'The river does not ask permission\nto find its way to sea.\n\nWe have mapped the distance\nbetween abundance and thirst.\nIt is not measured in kilometers\nbut in political will.\n\nFuller said: we already have enough.\nThe question was never the river.\nThe question was always the valve.',
+   place:'Bolivia', date:'Apr 2026', appreciations:12, author:'Anonymous'},
+  {id:2,type:'insight',title:"Fuller's Ephemeralization in the Age of AI",
+   content:'We built a working World Game in under an hour. The question is no longer whether we can do more with less. The question is whether we will.',
+   fullContent:'Fuller called it ephemeralization: doing more and more with less and less until you can do everything with nothing. He meant it as technological prophecy. We are living inside its fulfillment.\n\nThe World Game took me under an hour to build with AI assistance. The tool that Fuller imagined would require a Manhattan Project-scale effort now emerges from a conversation. The question has shifted entirely: not whether we can model planetary resource flows, but whether we will choose to act on what the model shows us.',
+   place:'Global', date:'Apr 2026', appreciations:8, author:'Mike R.'},
+  {id:3,type:'debate',title:'Should AI replace human decision-making in resource allocation?',
+   content:'Jung noted the shadow of optimization: efficiency without wisdom produces systems that are perfectly wrong. The council reached a surprising synthesis.',
+   fullContent:'JUNG: The danger is not that the machine will think like a human — it is that humans will think like machines. Optimization without shadow is the most dangerous kind of certainty.\n\nFULLER: Every tool is a prosthetic. The question is whether it extends human wisdom or substitutes for it.\n\nCONSENSUS: AI should model and surface — never decide. The World Game\'s purpose was always to reveal that enough exists. Acting on that revelation remains irreducibly human.',
+   place:'Global', date:'Apr 2026', appreciations:15, author:'Forum Session'}
 ];
 var galleryFilter = 'all';
+var appreciatedItems = {};
+
+// Load appreciated items from localStorage
+try { appreciatedItems = JSON.parse(localStorage.getItem('wg_appreciated') || '{}'); } catch(e) {}
+
+function saveAppreciated() {
+  try { localStorage.setItem('wg_appreciated', JSON.stringify(appreciatedItems)); } catch(e) {}
+}
 
 function filterGallery(type, btn) {
   galleryFilter = type;
@@ -1145,34 +1166,95 @@ function renderGallery() {
   var items = galleryFilter === 'all' ? galleryItems : galleryItems.filter(function(i) { return i.type === galleryFilter; });
   if (items.length === 0) { grid.innerHTML = ''; empty.style.display = 'block'; return; }
   empty.style.display = 'none';
+  
+  var typeColors = {creative:'#7060c0', debate:'#b8922a', insight:'#c04020', scenario:'#1a6b4a', project:'#2a9060'};
+  var typeIcons = {creative:'✦', debate:'⬡', insight:'◎', scenario:'🌍', project:'📍'};
+  
   var html = '';
   for (var i = 0; i < items.length; i++) {
     var item = items[i];
-    var typeColor = {creative:'#7060c0',debate:'#b8922a',insight:'#c04020',scenario:'#1a6b4a'}[item.type] || '#8a8580';
-    html += '<div style="background:#fff;border:1px solid #e8e4dc;border-radius:12px;overflow:hidden">';
-    html += '<div style="padding:10px 14px;border-bottom:1px solid #e8e4dc;display:flex;justify-content:space-between;align-items:center">';
-    html += '<span style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:'+typeColor+'">'+item.type+'</span>';
-    html += '<span style="font-size:11px;color:#b8b4ae">'+item.date+'</span></div>';
-    html += '<div style="padding:14px"><div style="font-size:15px;font-weight:600;color:#1a1814;margin-bottom:6px">'+item.title+'</div>';
-    html += '<div style="font-size:13px;color:#8a8580;line-height:1.5">'+item.content+'</div></div>';
-    html += '<div style="padding:8px 14px;border-top:1px solid #e8e4dc;display:flex;justify-content:space-between;align-items:center">';
-    html += '<span style="font-size:11px;color:#b8b4ae">'+( item.appreciations || 0)+' appreciations</span>';
-    html += '<button class="btn btn-outline" style="font-size:11px;padding:4px 12px" onclick="appreciateItem('+item.id+')">Appreciate</button>';
-    html += '</div></div>';
+    var color = typeColors[item.type] || '#8a8580';
+    var icon = typeIcons[item.type] || '★';
+    var hasAppreciated = appreciatedItems[item.id];
+    var isExpanded = item._expanded;
+    
+    html += '<div style="background:#fff;border:1px solid #e8e4dc;border-radius:12px;overflow:hidden" id="gallery-item-' + item.id + '">';
+    
+    // Header
+    html += '<div style="padding:10px 14px;border-bottom:1px solid #f4f0e8;display:flex;justify-content:space-between;align-items:center">';
+    html += '<div style="display:flex;align-items:center;gap:8px">';
+    html += '<span style="font-size:14px">' + icon + '</span>';
+    html += '<span style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:' + color + '">' + item.type + '</span>';
+    if (item.place) html += '<span style="font-size:10px;color:#b8b4ae">· ' + item.place + '</span>';
+    html += '</div>';
+    html += '<span style="font-size:11px;color:#b8b4ae">' + item.date + '</span>';
+    html += '</div>';
+    
+    // Body
+    html += '<div style="padding:14px">';
+    html += '<div style="font-size:15px;font-weight:600;color:#1a1814;margin-bottom:6px">' + item.title + '</div>';
+    html += '<div style="font-size:13px;color:#4a4640;line-height:1.6">' + item.content + '</div>';
+    
+    // Full content (expandable)
+    if (item.fullContent) {
+      if (isExpanded) {
+        html += '<div style="margin-top:10px;padding:12px;background:#f8f7f4;border-radius:8px;font-size:13px;color:#4a4640;line-height:1.7;white-space:pre-wrap">' + item.fullContent + '</div>';
+      }
+      html += '<button onclick="toggleGalleryExpand(' + item.id + ')" style="background:none;border:none;font-size:12px;color:#b8922a;cursor:pointer;padding:6px 0;font-family:inherit;touch-action:manipulation">' + 
+        (isExpanded ? '↑ Show less' : '↓ Read full') + '</button>';
+    }
+    
+    if (item.author) html += '<div style="font-size:11px;color:#b8b4ae;margin-top:4px">— ' + item.author + '</div>';
+    html += '</div>';
+    
+    // Footer
+    html += '<div style="padding:8px 14px;border-top:1px solid #f4f0e8;display:flex;justify-content:space-between;align-items:center">';
+    html += '<span style="font-size:12px;color:#8a8580">♥ ' + (item.appreciations||0) + ' appreciate this</span>';
+    html += '<button class="btn btn-outline" style="font-size:11px;padding:4px 12px;' + 
+      (hasAppreciated ? 'border-color:#b8922a;color:#b8922a;background:#fdf8ee' : '') + '" ' +
+      'onclick="appreciateItem(' + item.id + ')" ' +
+      (hasAppreciated ? 'disabled' : '') + '>' + 
+      (hasAppreciated ? '♥ Appreciated' : 'Appreciate') + '</button>';
+    html += '</div>';
+    
+    html += '</div>';
   }
   grid.innerHTML = html;
 }
 
-function appreciateItem(id) {
+function toggleGalleryExpand(id) {
   for (var i = 0; i < galleryItems.length; i++) {
-    if (galleryItems[i].id === id) { galleryItems[i].appreciations = (galleryItems[i].appreciations || 0) + 1; break; }
+    if (galleryItems[i].id === id) {
+      galleryItems[i]._expanded = !galleryItems[i]._expanded;
+      break;
+    }
+  }
+  renderGallery();
+}
+
+function appreciateItem(id) {
+  if (appreciatedItems[id]) return; // already appreciated
+  for (var i = 0; i < galleryItems.length; i++) {
+    if (galleryItems[i].id === id) {
+      galleryItems[i].appreciations = (galleryItems[i].appreciations || 0) + 1;
+      appreciatedItems[id] = true;
+      saveAppreciated();
+      break;
+    }
   }
   renderGallery();
 }
 
 function shareToGallery(type, title, content) {
   var id = Date.now();
-  galleryItems.unshift({id:id, type:type, title:title, content:content.substring(0,200), date:new Date().toLocaleDateString(), appreciations:0});
+  galleryItems.unshift({
+    id: id, type: type, title: title,
+    content: content.substring(0, 200),
+    fullContent: content.length > 200 ? content : null,
+    date: new Date().toLocaleDateString(),
+    appreciations: 0,
+    author: (typeof avatarState !== 'undefined' && avatarState.username) ? avatarState.username : 'Anonymous'
+  });
   show('gallery');
 }
 
@@ -1834,6 +1916,7 @@ function initWorldMap() {
   }).addTo(leafletMap);
 
   loadCountryLayer();
+  setTimeout(renderCommunityMarkers, 1000);
 
   // When zooming in past threshold on a selected country, load sub-national
   leafletMap.on('zoomend', function() {
@@ -2201,7 +2284,7 @@ function fetchWorldBankData(code, name, latlng) {
           }
         }
         results[ind] = val; pending--;
-        if (pending <= 0) { clearTimeout(tid); wbCache[cacheKey] = results; displayCountryData(results, name, latlng); }
+        if (pending <= 0) { clearTimeout(tid); wbCache[cacheKey] = results; trackResource('World Bank'); displayCountryData(results, name, latlng); }
       })
       .catch(function() {
         results[ind] = null; pending--;
@@ -2243,6 +2326,7 @@ function fetchStateData(stateName, fips, latlng) {
       var r = d[1];
       var data = { name:r[0], medianIncome:parseInt(r[1])||null, poverty:parseInt(r[2])||null, pop:parseInt(r[3])||null, bachelors:parseInt(r[4])||null };
       subCache[cacheKey] = data;
+      trackResource('Census');
       displayStateData(data, stateName, latlng);
     })
     .catch(function() { showNoData(stateName); });
@@ -2410,12 +2494,26 @@ function showNoData(name) {
 }
 
 // ── HELPERS ──
-function showDataPanel(title, html) {
+function showDataPanel(title, content) {
   document.getElementById('dataPanel').style.display = 'block';
   document.getElementById('dataPanelTitle').textContent = title;
-  // Always include project button slot at bottom
-  document.getElementById('dataPanelContent').innerHTML = html + 
-    '<div id="startProjectSlot"></div>';
+  var btns = '<div id="startProjectSlot"></div>';
+  btns += '<div style="margin-top:8px;display:flex;flex-direction:column;gap:6px">';
+  btns += '<button class="btn btn-outline btn-full" style="font-size:11px;padding:6px 14px" ';
+  btns += 'onclick="showUserDataUpload(this)">📊 Add your own data</button>';
+  btns += '<button class="btn btn-outline btn-full" style="font-size:11px;padding:6px 14px;border-color:#2a9060;color:#2a9060" ';
+  btns += 'onclick="startAddCommunityProjectFromPanel()">📍 Add a real project here</button>';
+  btns += '</div>';
+  btns += '<div id="userDataPanel" style="display:none;border:1px solid #e8e4dc;border-radius:10px;margin-top:8px;overflow:hidden;background:#fff"></div>';
+  btns += '<div id="addProjectPanel" style="display:none;border:1px solid #2a906044;border-radius:10px;margin-top:8px;overflow:hidden;background:#fff"></div>';
+  document.getElementById('dataPanelContent').innerHTML = content + btns;
+}
+
+function startAddCommunityProjectFromPanel() {
+  var title = document.getElementById('dataPanelTitle').textContent;
+  var lat = selectedPlace && selectedPlace.latlng ? selectedPlace.latlng.lat : 20;
+  var lng = selectedPlace && selectedPlace.latlng ? selectedPlace.latlng.lng : 0;
+  startAddCommunityProject(title, lat, lng);
 }
 
 function dataRow(label, value, year) {
@@ -3896,10 +3994,371 @@ function drawSym(ctx,cx,cy,r,sym,p) {
   ctx.restore();
 }
 
+
+// ── RESOURCE TRACKER ──
+var resourceUsage = {
+  apiCalls: 0,
+  dataSources: {},
+  tokensEst: 0,
+  lastUpdate: null
+};
+
+function trackResource(source, tokens) {
+  resourceUsage.apiCalls++;
+  resourceUsage.dataSources[source] = (resourceUsage.dataSources[source] || 0) + 1;
+  resourceUsage.tokensEst += tokens || 0;
+  resourceUsage.lastUpdate = new Date();
+  updateResourceBar();
+}
+
+function updateResourceBar() {
+  var el = document.getElementById('resourceChips');
+  if (!el) return;
+  var sources = Object.keys(resourceUsage.dataSources);
+  if (sources.length === 0) return;
+  
+  var chips = [];
+  if (resourceUsage.tokensEst > 0) {
+    chips.push('<span style="font-size:9px;background:#f4f0e8;border:1px solid #e8e4dc;border-radius:10px;padding:2px 7px;color:#8a8580;white-space:nowrap">~' + 
+      (resourceUsage.tokensEst > 1000 ? Math.round(resourceUsage.tokensEst/1000) + 'k' : resourceUsage.tokensEst) + ' tokens</span>');
+  }
+  sources.forEach(function(s) {
+    var colors = {'World Bank':'#2a9060','Census':'#b8922a','BLS':'#5040a0','OSM':'#c04020','Claude':'#7060c0'};
+    var color = colors[s] || '#8a8580';
+    chips.push('<span style="font-size:9px;background:' + color + '18;border:1px solid ' + color + '44;border-radius:10px;padding:2px 7px;color:' + color + ';white-space:nowrap">' + s + '</span>');
+  });
+  el.innerHTML = chips.join('');
+}
+
+
+// ── USER DATA UPLOAD ──
+var userUploadedData = {}; // placeKey -> {indicator: value}
+
+function showUserDataUpload() {
+  var placeName = document.getElementById('dataPanelTitle').textContent;
+  var existing = userUploadedData[placeName] || {};
+  var panel = document.getElementById('userDataPanel');
+  if (!panel) return;
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  if (panel.style.display === 'none') return;
+
+  var fields = [
+    {label:'Renewable energy %', key:'ren'},
+    {label:'Food security %', key:'food'},
+    {label:'Safe water access %', key:'water'},
+    {label:'Wealth equity (0-100)', key:'wealth'},
+    {label:'Healthcare access %', key:'health'},
+    {label:'Education index (0-100)', key:'education'}
+  ];
+
+  var rows = fields.map(function(f) {
+    return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">' +
+      '<span style="font-size:12px;color:#4a4640;flex:1">' + f.label + '</span>' +
+      '<input id="ud-' + f.key + '" type="number" min="0" max="100" value="' + (existing[f.key]||'') + '" placeholder="—" ' +
+      'style="width:64px;padding:4px 8px;border:1.5px solid #e8e4dc;border-radius:6px;font-size:13px;font-family:inherit;text-align:center;background:#f8f7f4">' +
+    '</div>';
+  }).join('');
+
+  panel.innerHTML =
+    '<div style="padding:12px 14px;border-bottom:1px solid #e8e4dc;display:flex;justify-content:space-between;align-items:center">' +
+      '<span style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580">Upload Your Data</span>' +
+      '<button onclick="hideUserDataPanel()" style="background:none;border:none;cursor:pointer;font-size:16px;color:#8a8580">×</button>' +
+    '</div>' +
+    '<div style="padding:12px 14px;display:flex;flex-direction:column;gap:8px">' +
+      '<div style="font-size:12px;color:#8a8580;line-height:1.5">When official data is missing, add your own. Overrides World Bank sliders.</div>' +
+      rows +
+      '<div style="display:flex;gap:8px;margin-top:4px">' +
+        '<button class="btn btn-dark" style="flex:1;font-size:12px" onclick="applyUserDataFromPanel()">Apply</button>' +
+        '<label style="flex:1;display:flex;align-items:center;justify-content:center;padding:8px 14px;border:1.5px solid #d8d4cc;border-radius:20px;font-size:12px;color:#4a4640;cursor:pointer;text-align:center">' +
+          '📎 CSV<input type="file" accept=".csv,.txt" style="display:none" onchange="parseUserCSVFromPanel(this)">' +
+        '</label>' +
+      '</div>' +
+      '<div style="font-size:10px;color:#b8b4ae;text-align:center">CSV: indicator,value (one per line)</div>' +
+    '</div>';
+}
+
+function applyUserDataFromPanel() {
+  var placeName = document.getElementById('dataPanelTitle').textContent;
+  applyUserData(placeName);
+}
+
+function parseUserCSVFromPanel(input) {
+  var placeName = document.getElementById('dataPanelTitle').textContent;
+  parseUserCSV(input, placeName);
+}
+
+function makeUserDataField(label, key, val) {
+  return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">' +
+    '<span style="font-size:12px;color:#4a4640;flex:1">' + label + '</span>' +
+    '<input id="ud-' + key + '" type="number" min="0" max="100" value="' + (val||'') + '" placeholder="—" ' +
+    'style="width:64px;padding:4px 8px;border:1.5px solid #e8e4dc;border-radius:6px;font-size:13px;font-family:inherit;text-align:center;background:#f8f7f4">' +
+  '</div>';
+}
+
+function parseUserCSV(input, placeName) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var lines = e.target.result.split('\n');
+    var data = {};
+    var KEY_MAP = {
+      'renewable':'ren','energy':'ren','food':'food','water':'water',
+      'wealth':'wealth','equity':'wealth','health':'health','education':'education',
+      'healthcare':'health'
+    };
+    lines.forEach(function(line) {
+      var parts = line.split(',');
+      if (parts.length >= 2) {
+        var key = parts[0].trim().toLowerCase();
+        var val = parseFloat(parts[1].trim());
+        if (!isNaN(val)) {
+          var mappedKey = KEY_MAP[key] || key;
+          data[mappedKey] = val;
+          var inputEl = document.getElementById('ud-' + mappedKey);
+          if (inputEl) inputEl.value = val;
+        }
+      }
+    });
+    if (Object.keys(data).length > 0) {
+      userUploadedData[placeName] = Object.assign(userUploadedData[placeName] || {}, data);
+    }
+  };
+  reader.readAsText(file);
+}
+
+function applyUserData(placeName) {
+  var fields = ['ren','food','water','wealth','health','education'];
+  var data = {};
+  fields.forEach(function(k) {
+    var el = document.getElementById('ud-' + k);
+    if (el && el.value !== '') {
+      data[k] = parseFloat(el.value);
+    }
+  });
+  
+  if (Object.keys(data).length === 0) return;
+  userUploadedData[placeName] = data;
+  trackResource('User Data');
+  
+  // Apply to sliders
+  if (data.ren !== undefined) setSlider('sl-ren', data.ren, 'sv-ren');
+  if (data.food !== undefined) setSlider('sl-food', data.food, 'sv-food');
+  if (data.water !== undefined) setSlider('sl-water', data.water, 'sv-water');
+  if (data.wealth !== undefined) setSlider('sl-wealth', data.wealth, 'sv-wealth');
+  BASE_METRICS = computeMetrics(getSliders());
+  recalc();
+  
+  document.getElementById('userDataPanel').style.display = 'none';
+  setMapStatus(placeName + ' — using your data. Sliders updated.');
+}
+
+
+// ── COMMUNITY PROJECTS ──
+var communityProjects = []; // loaded from storage
+var communityMarkers = []; // leaflet markers
+
+function loadCommunityProjects() {
+  try {
+    var stored = JSON.parse(localStorage.getItem('wg_community_projects') || '[]');
+    communityProjects = stored;
+    renderCommunityMarkers();
+  } catch(e) { communityProjects = []; }
+}
+
+function saveCommunityProjects() {
+  try { localStorage.setItem('wg_community_projects', JSON.stringify(communityProjects)); } catch(e) {}
+}
+
+function renderCommunityMarkers() {
+  if (!leafletMap) return;
+  communityMarkers.forEach(function(m) { leafletMap.removeLayer(m); });
+  communityMarkers = [];
+  
+  communityProjects.forEach(function(proj) {
+    if (!proj.lat || !proj.lng) return;
+    var color = {health:'#c04020', education:'#2a9060', energy:'#b8922a', 
+                 environment:'#1a6b4a', economic:'#5040a0', other:'#8a8580'}[proj.category] || '#8a8580';
+    
+    var icon = L.divIcon({
+      className: '',
+      html: '<div style="width:28px;height:28px;border-radius:50%;background:' + color + ';border:2.5px solid #fff;' +
+            'box-shadow:0 2px 8px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;' +
+            'font-size:13px;cursor:pointer" title="' + proj.name + '">' + 
+            ({health:'♥',education:'✦',energy:'◎',environment:'⬡',economic:'⊕',other:'★'}[proj.category]||'★') + 
+            '</div>',
+      iconSize: [28, 28], iconAnchor: [14, 14]
+    });
+    
+    var marker = L.marker([proj.lat, proj.lng], {icon: icon});
+    marker.on('click', function() { showCommunityProject(proj); });
+    marker.addTo(leafletMap);
+    communityMarkers.push(marker);
+  });
+}
+
+function showCommunityProject(proj) {
+  var color = {health:'#c04020', education:'#2a9060', energy:'#b8922a', 
+               environment:'#1a6b4a', economic:'#5040a0', other:'#8a8580'}[proj.category] || '#8a8580';
+  var popup = '<div style="min-width:200px">' +
+    '<div style="font-weight:700;font-size:14px;color:#1a1814;margin-bottom:4px">' + proj.name + '</div>' +
+    '<div style="font-size:11px;font-weight:600;color:' + color + ';text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">' + (proj.category||'project') + '</div>' +
+    '<div style="font-size:12px;color:#4a4640;line-height:1.5;margin-bottom:8px">' + proj.description + '</div>' +
+    (proj.peopleServed ? '<div style="font-size:11px;color:#8a8580">👥 ' + proj.peopleServed.toLocaleString() + ' people served</div>' : '') +
+    (proj.impactFl ? '<div style="font-size:11px;color:#2a9060;margin-top:4px">Impact: +' + proj.impactFl + ' FL · +' + proj.impactEc + ' EC · +' + proj.impactSt + ' ST</div>' : '') +
+    '<div style="font-size:10px;color:#b8b4ae;margin-top:6px">Added ' + proj.date + '</div>' +
+  '</div>';
+  
+  L.popup().setLatLng([proj.lat, proj.lng]).setContent(popup).openOn(leafletMap);
+}
+
+function startAddCommunityProject(placeName, lat, lng) {
+  var panel = document.getElementById('addProjectPanel');
+  if (!panel) return;
+  window._newProjLat = lat;
+  window._newProjLng = lng;
+  window._newProjPlace = placeName;
+  panel.style.display = 'block';
+
+  var catOptions = ['health','education','energy','environment','economic','other'].map(function(c) {
+    return '<option value="' + c + '">' + c.charAt(0).toUpperCase() + c.slice(1) + '</option>';
+  }).join('');
+
+  panel.innerHTML =
+    '<div style="padding:12px 14px;border-bottom:1px solid #2a906044;display:flex;justify-content:space-between;align-items:center">' +
+      '<span style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#2a9060">Add a Real Project</span>' +
+      '<button onclick="hideAddProjectPanel()" style="background:none;border:none;cursor:pointer;font-size:16px;color:#8a8580">×</button>' +
+    '</div>' +
+    '<div style="padding:12px 14px;display:flex;flex-direction:column;gap:10px">' +
+      '<div style="font-size:12px;color:#8a8580;line-height:1.5">Add a real-world project in <strong>' + placeName + '</strong>. The council will estimate its impact on scores.</div>' +
+      '<input id="np-name" placeholder="Project name (e.g. Santa Cruz Free Medical Clinic)" style="font-size:13px;padding:10px 12px;border:1.5px solid #e8e4dc;border-radius:8px;font-family:inherit">' +
+      '<textarea id="np-desc" placeholder="What does it do? Who does it serve?" rows="2" style="font-size:13px;padding:10px 12px;border:1.5px solid #e8e4dc;border-radius:8px;font-family:inherit;resize:none"></textarea>' +
+
+```
+  '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">' +
+    '<div>' +
+      '<div style="font-size:11px;color:#8a8580;margin-bottom:4px">Category</div>' +
+      '<select id="np-cat" style="font-size:13px;padding:8px;border:1.5px solid #e8e4dc;border-radius:8px;font-family:inherit;background:#f8f7f4;width:100%">' + catOptions + '</select>' +
+    '</div>' +
+    '<div>' +
+      '<div style="font-size:11px;color:#8a8580;margin-bottom:4px">People served / yr</div>' +
+      '<input id="np-people" type="number" placeholder="e.g. 2000" style="font-size:13px;padding:8px;border:1.5px solid #e8e4dc;border-radius:8px;font-family:inherit;width:100%;box-sizing:border-box">' +
+    '</div>' +
+  '</div>' +
+  '<button class="btn btn-dark btn-full" onclick="submitCommunityProject()" id="np-submit">Ask the Council to Estimate Impact</button>' +
+  '<div id="np-result" style="display:none"></div>' +
+'</div>';
+```
+
+}
+
+async function submitCommunityProject() {
+var name = document.getElementById(‘np-name’).value.trim();
+var desc = document.getElementById(‘np-desc’).value.trim();
+var cat = document.getElementById(‘np-cat’).value;
+var people = parseInt(document.getElementById(‘np-people’).value) || 0;
+
+if (!name || !desc) { alert(‘Please fill in the project name and description.’); return; }
+
+var btn = document.getElementById(‘np-submit’);
+var result = document.getElementById(‘np-result’);
+btn.disabled = true;
+btn.textContent = ‘Estimating impact…’;
+result.style.display = ‘block’;
+result.innerHTML = ‘<div class="thinking"><span>Council estimating…</span><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div></div>’;
+
+var sys = ’You are estimating the real-world impact of a community project on three scores (0-100): ’ +
+’Flourishing (human wellbeing), Ecological (environmental health), Stability (social/economic stability). ’ +
+’Be conservative and realistic. Respond ONLY with valid JSON like: ’ +
+‘{“fl”:2,“ec”:1,“st”:3,“reasoning”:“one sentence explanation”}. No other text.’;
+
+var prompt = ’Project: ’ + name + ’. Description: ’ + desc + ’. Category: ’ + cat + ’. ’ +
+’People served per year: ’ + (people||‘unknown’) + ’. Location: ’ + window._newProjPlace + ’. ’ +
+’Estimate the realistic impact on Flourishing, Ecological, and Stability scores (0-100 scale for the region). ’ +
+‘Most projects have small but real impacts — typically 0-5 points per metric.’;
+
+try {
+var response = await fetch(’/api/chat’, {
+method:‘POST’, headers:{‘Content-Type’:‘application/json’},
+body: JSON.stringify({system: sys, user: prompt, maxTokens: 150})
+});
+var data = await response.json();
+trackResource(‘Claude’, 150);
+
+```
+var text = data.text || '';
+var start = text.indexOf('{'), end = text.lastIndexOf('}');
+var impact = {fl:1, ec:0, st:1, reasoning:'Estimated based on project scope.'};
+if (start >= 0 && end > start) {
+  try { impact = JSON.parse(text.substring(start, end+1)); } catch(e) {}
+}
+
+var proj = {
+  id: Date.now(),
+  name: name,
+  description: desc,
+  category: cat,
+  peopleServed: people,
+  place: window._newProjPlace,
+  lat: window._newProjLat,
+  lng: window._newProjLng,
+  impactFl: impact.fl || 0,
+  impactEc: impact.ec || 0,
+  impactSt: impact.st || 0,
+  reasoning: impact.reasoning || '',
+  date: new Date().toLocaleDateString()
+};
+
+result.innerHTML = 
+  '<div style="background:#f0f8f4;border:1px solid #2a906044;border-radius:8px;padding:12px;margin-top:4px">' +
+    '<div style="font-size:11px;font-weight:600;color:#2a9060;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Estimated Impact</div>' +
+    '<div style="display:flex;gap:12px;margin-bottom:8px">' +
+      '<span style="font-size:13px;color:#1a6b4a;font-weight:600">+' + proj.impactFl + ' Flourishing</span>' +
+      '<span style="font-size:13px;color:#b8922a;font-weight:600">+' + proj.impactEc + ' Ecological</span>' +
+      '<span style="font-size:13px;color:#5040a0;font-weight:600">+' + proj.impactSt + ' Stability</span>' +
+    '</div>' +
+    '<div style="font-size:12px;color:#4a4640;line-height:1.5;margin-bottom:10px">' + proj.reasoning + '</div>' +
+    '<button class="btn btn-dark btn-full" onclick="confirmAddCommunityProject(' + JSON.stringify(proj).replace(/"/g, '&quot;') + ')">Add to Map</button>' +
+  '</div>';
+
+btn.disabled = false;
+btn.textContent = 'Re-estimate';
+```
+
+} catch(e) {
+result.innerHTML = ’<div style="color:#c04020;font-size:12px">Could not estimate impact. ’ + e.message + ‘</div>’;
+btn.disabled = false;
+btn.textContent = ‘Try Again’;
+}
+}
+
+function confirmAddCommunityProject(proj) {
+communityProjects.push(proj);
+saveCommunityProjects();
+renderCommunityMarkers();
+document.getElementById(‘addProjectPanel’).style.display = ‘none’;
+
+// Also add to gallery
+shareToGallery(‘scenario’, proj.name + ’ (’ + proj.place + ‘)’,
+proj.description + ’ Estimated impact: +’ + proj.impactFl + ’ FL, +’ + proj.impactEc + ’ EC, +’ + proj.impactSt + ’ ST.’);
+
+setMapStatus(‘Project added to map! Tap the marker to see details.’);
+}
+
+function hideUserDataPanel() {
+var el = document.getElementById(‘userDataPanel’);
+if (el) el.style.display = ‘none’;
+}
+function hideAddProjectPanel() {
+var el = document.getElementById(‘addProjectPanel’);
+if (el) el.style.display = ‘none’;
+}
+
 // ── INIT ──
 renderCouncil();
 renderGallery();
 initGlobe();
+loadCommunityProjects();
 recalc();
 loadAvatar();
 drawHeaderAvatar();
