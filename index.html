@@ -226,6 +226,10 @@ textarea{resize:none;min-height:80px;}
       <div class="nasa-attribution">— R. Buckminster Fuller, 1961</div>
 
 ```
+  <div style="display:flex;justify-content:center;margin:20px 0 8px">
+    <canvas id="globeCanvas" width="120" height="120" style="display:block;opacity:0.85"></canvas>
+  </div>
+
   <div class="why-box" id="whyBox">
     <div class="why-title">Why are you here?</div>
     <div class="why-sub">Select your entry point</div>
@@ -827,6 +831,7 @@ var council = BASE.slice(0, 5);
 council.push(BASE[BASE.length-1]); // always include Claude
 var msgs = [];
 var problem = '';
+var activeProblem = '';
 var loading = false;
 
 // ── SCREENS ──
@@ -2456,11 +2461,11 @@ function initGlobe() {
   var canvas = document.getElementById('globeCanvas');
   if (!canvas) return;
   var ctx = canvas.getContext('2d');
-  var cx = 70, cy = 70, r = 60;
+  var cx = 60, cy = 60, r = 52;
   var angle = 0;
 
   function draw() {
-    ctx.clearRect(0, 0, 140, 140);
+    ctx.clearRect(0, 0, 120, 120);
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
     ctx.strokeStyle = 'rgba(184,146,42,0.25)';
