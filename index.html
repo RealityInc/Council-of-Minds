@@ -781,17 +781,2886 @@ textarea{resize:none;min-height:80px;}
   </div>
 </div>
 
-<script src="council.js"></script>
-
-<script src="oracle.js"></script>
-
-<script src="world.js"></script>
-
-<script src="project.js"></script>
-
-<script src="avatar.js"></script>
-
 <script>
+// ── COUNCIL DATA ──
+var BASE = [
+  {name:"Buddha",era:"5th c. BCE",domain:"liberation, impermanence"},
+  {name:"Alan Watts",era:"1915-1973",domain:"Zen, non-dualism"},
+  {name:"Buckminster Fuller",era:"1895-1983",domain:"systems thinking, design science"},
+  {name:"Carl Jung",era:"1875-1961",domain:"shadow, archetypes, individuation"},
+  {name:"Bell Hooks",era:"1952-2021",domain:"love as politics, intersectionality"},
+  {name:"Frantz Fanon",era:"1925-1961",domain:"decolonization, liberation"},
+  {name:"Vandana Shiva",era:"1952-",domain:"ecofeminism, seed sovereignty"},
+  {name:"Emma Goldman",era:"1869-1940",domain:"anarchism, direct action"},
+  {name:"Antonio Gramsci",era:"1891-1937",domain:"hegemony, organic intellectuals"},
+  {name:"Rosa Luxemburg",era:"1871-1919",domain:"democratic socialism"},
+  {name:"Jean Baudrillard",era:"1929-2007",domain:"simulation, hyperreality"},
+  {name:"Carroll Quigley",era:"1910-1977",domain:"civilizational cycles"},
+  {name:"Claude",era:"Present",domain:"synthesis, convergence detection",isClaude:true}
+];
+
+var POOL = [
+  {name:"Socrates",era:"470-399 BCE",domain:"dialogue, ethics"},
+  {name:"Aristotle",era:"384-322 BCE",domain:"logic, virtue ethics"},
+  {name:"Lao Tzu",era:"6th c. BCE",domain:"Taoism, effortless action"},
+  {name:"Ibn Khaldun",era:"1332-1406",domain:"civilizational cycles"},
+  {name:"Rumi",era:"1207-1273",domain:"mystical love, transformation"},
+  {name:"Mary Wollstonecraft",era:"1759-1797",domain:"feminism, reason"},
+  {name:"Frederick Douglass",era:"1818-1895",domain:"abolition, freedom"},
+  {name:"Harriet Tubman",era:"1822-1913",domain:"liberation, courage"},
+  {name:"Friedrich Nietzsche",era:"1844-1900",domain:"will to power, revaluation"},
+  {name:"Albert Einstein",era:"1879-1955",domain:"relativity, imagination"},
+  {name:"Virginia Woolf",era:"1882-1941",domain:"consciousness, feminism"},
+  {name:"Hannah Arendt",era:"1906-1975",domain:"power, the human condition"},
+  {name:"Albert Camus",era:"1913-1960",domain:"absurdism, rebellion"},
+  {name:"James Baldwin",era:"1924-1987",domain:"race, love, American identity"},
+  {name:"Paulo Freire",era:"1921-1997",domain:"critical pedagogy, liberation"},
+  {name:"Ursula K. Le Guin",era:"1929-2018",domain:"anarchism, ecology"},
+  {name:"Audre Lorde",era:"1934-1992",domain:"intersectionality, survival"},
+  {name:"E.F. Schumacher",era:"1911-1977",domain:"small is beautiful"},
+  {name:"Rachel Carson",era:"1907-1964",domain:"ecology, wonder"},
+  {name:"Jane Jacobs",era:"1916-2006",domain:"urbanism, emergence"},
+  {name:"Robin Wall Kimmerer",era:"1953-",domain:"indigenous knowledge, reciprocity"},
+  {name:"Nikola Tesla",era:"1856-1943",domain:"electricity, invention"},
+  {name:"W.E.B. Du Bois",era:"1868-1963",domain:"race, democracy"},
+  {name:"Simone Weil",era:"1909-1943",domain:"attention, the sacred"},
+  {name:"Octavia Butler",era:"1947-2006",domain:"power, Afrofuturism"}
+];
+
+var council = BASE.slice(0, 5);
+council.push(BASE[BASE.length-1]); // always include Claude
+var msgs = [];
+var problem = '';
+var activeProblem = '';
+var loading = false;
+
+// ── SCREENS ──
+function show(name) {
+  var screens = ['home','oracle','forum','create','world','gallery','council','about','project','quiz'];
+  for (var i = 0; i < screens.length; i++) {
+    var s = screens[i];
+    document.getElementById('screen-'+s).style.display = s === name ? 'block' : 'none';
+    var n = document.getElementById('nav-'+s);
+    if (n) n.className = s === name ? 'active' : '';
+  }
+  window.scrollTo(0,0);
+  if (name === 'council') renderCouncil();
+  if (name === 'gallery') renderGallery();
+  if (name === 'world') {
+    setTimeout(function() {
+      if (!leafletMap) { initWorldMap(); }
+      else { leafletMap.invalidateSize(); }
+    }, 150);
+  }
+}
+
+function skipWhy() {
+  var wb = document.getElementById('whyBox');
+  var hd = document.getElementById('homeDoors');
+  if (wb) wb.style.display = 'none';
+  if (hd) hd.style.display = 'block';
+}
+
+// ── API ──
+function api(system, user, maxTok, cb) {
+  fetch('/api/chat', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({system:system, user:user, maxTokens:maxTok||800})
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    if (d.error) cb(null, d.error);
+    else cb(d.text, null);
+  })
+  .catch(function(e) { cb(null, e.message); });
+}
+
+// ── COUNCIL ──
+function getCouncilNames() {
+  return council.map(function(m) { return m.name; }).join(', ');
+}
+
+function randomCouncil() {
+  var pool = POOL.slice();
+  for (var i = pool.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = pool[i]; pool[i] = pool[j]; pool[j] = tmp;
+  }
+  council = pool.slice(0, 5);
+  council.push(BASE[BASE.length-1]); // keep Claude
+  renderCouncil();
+}
+
+function showCouncilPanel(panel) {
+  var panels = ['ai', 'name', 'browse'];
+  panels.forEach(function(p) {
+    var el = document.getElementById('councilPanel' + p.charAt(0).toUpperCase() + p.slice(1));
+    if (el) el.style.display = p === panel ? 'block' : 'none';
+  });
+  if (panel === 'browse') renderBrowseList();
+}
+
+function showNameInput() {
+  showCouncilPanel('name');
+}
+
+function renderBrowseList() {
+  var el = document.getElementById('browseList');
+  if (!el) return;
+  var all = BASE.concat(POOL);
+  var html = '';
+  for (var i = 0; i < all.length; i++) {
+    var t = all[i];
+    var inCouncil = council.some(function(c) { return c.name === t.name; });
+    var bg = inCouncil ? 'background:#f0f8f4;' : '';
+    var check = inCouncil ? '✓ ' : '';
+    var safeName = t.name.replace(/'/g, "");
+    html += '<div onclick="toggleBrowseThinker("' + '"' + safeName + '"' + ')" style="padding:10px 16px;cursor:pointer;border-bottom:1px solid #f4f0e8;' + bg + 'display:flex;justify-content:space-between;align-items:center">';
+    html += '<div><div style="font-size:14px;font-weight:' + (inCouncil?'600':'400') + ';color:#1a1814">' + check + t.name + '</div>';
+    html += '<div style="font-size:11px;color:#b8b4ae">' + t.era + ' — ' + t.domain + '</div></div>';
+    html += '<div style="font-size:11px;color:' + (inCouncil?'#2a9060':'#e8e4dc') + '">' + (inCouncil?'✓':'') + '</div>';
+    html += '</div>';
+  }
+  el.innerHTML = html;
+}
+
+function toggleBrowseThinker(name) {
+  var all = BASE.concat(POOL);
+  var thinker = null;
+  for (var i = 0; i < all.length; i++) {
+    if (all[i].name === name) { thinker = all[i]; break; }
+  }
+  if (!thinker) return;
+  var idx = -1;
+  for (var j = 0; j < council.length; j++) {
+    if (council[j].name === name) { idx = j; break; }
+  }
+  if (idx >= 0) {
+    council.splice(idx, 1);
+  } else {
+    council.push(thinker);
+  }
+  renderCouncil();
+  renderBrowseList();
+}
+
+function selectAllCouncil() {
+  council = BASE.concat(POOL).slice();
+  renderCouncil(); renderBrowseList();
+}
+
+function clearCouncil() {
+  var claude = BASE[BASE.length-1];
+  council = [claude];
+  renderCouncil(); renderBrowseList();
+}
+
+// Saved councils
+function saveCouncil() {
+  var name = document.getElementById('saveCouncilName').value.trim();
+  if (!name) return;
+  var saved = getSavedCouncils();
+  saved[name] = council.map(function(m) { return m.name; });
+  localStorage.setItem('wg_councils', JSON.stringify(saved));
+  document.getElementById('saveCouncilName').value = '';
+  renderSavedCouncils();
+}
+
+function getSavedCouncils() {
+  try { return JSON.parse(localStorage.getItem('wg_councils') || '{}'); } catch(e) { return {}; }
+}
+
+function loadSavedCouncil(nameOrEl) {
+  var name = typeof nameOrEl === 'string' ? nameOrEl : nameOrEl;
+  var saved = getSavedCouncils();
+  var names = saved[name];
+  if (!names) return;
+  var all = BASE.concat(POOL);
+  council = [];
+  names.forEach(function(n) {
+    for (var i = 0; i < all.length; i++) {
+      if (all[i].name === n) { council.push(all[i]); return; }
+    }
+    // Custom thinker
+    council.push({ name:n, era:'', domain:'Custom thinker' });
+  });
+  renderCouncil();
+  renderSavedCouncils();
+}
+
+function deleteSavedCouncil(nameOrEl) {
+  var name = typeof nameOrEl === 'string' ? nameOrEl : nameOrEl;
+  var saved = getSavedCouncils();
+  delete saved[name];
+  localStorage.setItem('wg_councils', JSON.stringify(saved));
+  renderSavedCouncils();
+}
+
+function renderSavedCouncils() {
+  var el = document.getElementById('savedCouncilsList');
+  if (!el) return;
+  var saved = getSavedCouncils();
+  var keys = Object.keys(saved);
+  if (keys.length === 0) {
+    el.innerHTML = '<div style="font-size:13px;color:#b8b4ae;padding:4px 0">No saved councils yet.</div>';
+    return;
+  }
+  var html = '';
+  keys.forEach(function(k) {
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f4f0e8">';
+    html += '<div>';
+    html += '<div style="font-size:14px;font-weight:500;color:#1a1814">' + k + '</div>';
+    html += '<div style="font-size:11px;color:#b8b4ae">' + saved[k].join(', ').substring(0,60) + '...</div>';
+    html += '</div>';
+    html += '<div style="display:flex;gap:6px">';
+    html += '<button class="btn btn-outline" style="font-size:11px;padding:3px 10px" onclick="loadSavedCouncil(this.dataset.k)" data-k="' + k + '">Load</button>';
+    html += '<button class="btn btn-outline" style="font-size:11px;padding:3px 10px;color:#c04020;border-color:#e8c4b8" onclick="deleteSavedCouncil(this.dataset.k)" data-k="' + k + '">&#x2715;</button>';
+    html += '</div></div>';
+  });
+  el.innerHTML = html;
+}
+
+async function aiCurateCouncil() {
+  var input = document.getElementById('aiCurateInput').value.trim();
+  if (!input) return;
+  var btn = document.getElementById('aiCurateBtn');
+  var result = document.getElementById('aiCurateResult');
+  btn.disabled = true;
+  btn.textContent = 'Assembling...';
+  result.innerHTML = '<div style="color:#8a8580;font-size:13px">Consulting the archives...</div>';
+
+  var all = BASE.concat(POOL);
+  var names = all.map(function(m) { return m.name; }).join(', ');
+  var sys = 'You are a council curator. Given a persons situation or question, select 5 thinkers from this list who would offer the most valuable and distinct perspectives: ' + names + '. Respond with ONLY a JSON array of exactly 5 names, e.g. ["Name1","Name2","Name3","Name4","Name5"]. No explanation.';
+
+  fetch('/api/chat', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ system: sys, user: input, maxTokens: 100 })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    btn.disabled = false;
+    btn.textContent = 'Assemble My Council';
+    if (d.error) { result.innerHTML = '<div style="color:#c04020;font-size:13px">' + d.error + '</div>'; return; }
+    try {
+      var text = d.text.trim();
+      var start = text.indexOf('[');
+      var end = text.lastIndexOf(']');
+      if (start < 0 || end < 0) throw new Error('No array found');
+      var picked = JSON.parse(text.substring(start, end+1));
+      council = [];
+      picked.forEach(function(name) {
+        for (var i = 0; i < all.length; i++) {
+          if (all[i].name === name) { council.push(all[i]); return; }
+        }
+        council.push({ name:name, era:'', domain:'Selected thinker' });
+      });
+      var claude = BASE[BASE.length-1];
+      var hasClaude = council.some(function(m) { return m.isClaude; });
+      if (!hasClaude) council.push(claude);
+      renderCouncil();
+      result.innerHTML = '<div style="color:#2a9060;font-size:13px;padding:6px 0">Council assembled: ' + council.map(function(m){return m.name;}).join(', ') + '</div>';
+    } catch(e) {
+      result.innerHTML = '<div style="color:#c04020;font-size:13px">Could not parse response. Try again.</div>';
+    }
+  })
+  .catch(function(e) {
+    btn.disabled = false;
+    btn.textContent = 'Assemble My Council';
+    result.innerHTML = '<div style="color:#c04020;font-size:13px">' + e.message + '</div>';
+  });
+}
+
+function applyNames() {
+  var raw = document.getElementById('nameInput').value;
+  var names = raw.split(',');
+  council = [];
+  for (var i = 0; i < names.length; i++) {
+    var n = names[i].trim();
+    if (n) council.push({name:n, era:'', domain:'Custom thinker'});
+  }
+  council.push(BASE[BASE.length-1]); // keep Claude
+  document.getElementById('nameInput').value = '';
+  document.getElementById('nameInputArea').style.display = 'none';
+  renderCouncil();
+}
+
+function renderCouncil() {
+  var el = document.getElementById('councilList');
+  if (!el) return;
+  el.innerHTML = '';
+  for (var i = 0; i < council.length; i++) {
+    var m = council[i];
+    var chip = document.createElement('div');
+    var color = m.isClaude ? '#7060c0' : '#2a9060';
+    chip.style.cssText = 'padding:4px 12px;border:1.5px solid ' + color + '33;border-radius:20px;font-size:12px;font-weight:500;color:' + color + ';background:' + color + '11;cursor:pointer;transition:all .15s';
+    chip.textContent = m.name;
+    chip.title = m.era + (m.domain ? ' — ' + m.domain : '');
+    (function(name) {
+      chip.onclick = function() {
+        var idx = -1;
+        for (var j = 0; j < council.length; j++) {
+          if (council[j].name === name) { idx = j; break; }
+        }
+        if (idx >= 0 && council.length > 1) {
+          council.splice(idx, 1);
+          renderCouncil();
+          renderBrowseList();
+        }
+      };
+    })(m.name);
+    el.appendChild(chip);
+  }
+  if (council.length === 0) {
+    el.innerHTML = '<div style="font-size:13px;color:#b8b4ae">No council selected. Choose below.</div>';
+  }
+  renderSavedCouncils();
+}
+
+// ── GALLERY ──
+var galleryItems = [
+  {id:1,type:'creative',title:'On the Weight of Water',content:'The river does not ask permission to find its way to sea. A collective poem on resource equity.',date:'Apr 2026',appreciations:12},
+  {id:2,type:'insight',title:"Fuller's Ephemeralization in the Age of AI",content:'We built a working World Game in under an hour. The question is no longer whether we can do more with less. The question is whether we will.',date:'Apr 2026',appreciations:8},
+  {id:3,type:'debate',title:'Should AI replace human decision-making in resource allocation?',content:'Jung noted the shadow of optimization: efficiency without wisdom produces systems that are perfectly wrong.',date:'Apr 2026',appreciations:15}
+];
+var galleryFilter = 'all';
+
+function filterGallery(type, btn) {
+  galleryFilter = type;
+  var btns = document.getElementById('galleryFilters').getElementsByTagName('button');
+  for (var i = 0; i < btns.length; i++) {
+    btns[i].style.borderColor = '';
+    btns[i].style.color = '';
+  }
+  if (btn) { btn.style.borderColor = '#b8922a'; btn.style.color = '#b8922a'; }
+  renderGallery();
+}
+
+function renderGallery() {
+  var grid = document.getElementById('galleryGrid');
+  var empty = document.getElementById('galleryEmpty');
+  if (!grid) return;
+  var items = galleryFilter === 'all' ? galleryItems : galleryItems.filter(function(i) { return i.type === galleryFilter; });
+  if (items.length === 0) { grid.innerHTML = ''; empty.style.display = 'block'; return; }
+  empty.style.display = 'none';
+  var html = '';
+  for (var i = 0; i < items.length; i++) {
+    var item = items[i];
+    var typeColor = {creative:'#7060c0',debate:'#b8922a',insight:'#c04020',scenario:'#1a6b4a'}[item.type] || '#8a8580';
+    html += '<div style="background:#fff;border:1px solid #e8e4dc;border-radius:12px;overflow:hidden">';
+    html += '<div style="padding:10px 14px;border-bottom:1px solid #e8e4dc;display:flex;justify-content:space-between;align-items:center">';
+    html += '<span style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:'+typeColor+'">'+item.type+'</span>';
+    html += '<span style="font-size:11px;color:#b8b4ae">'+item.date+'</span></div>';
+    html += '<div style="padding:14px"><div style="font-size:15px;font-weight:600;color:#1a1814;margin-bottom:6px">'+item.title+'</div>';
+    html += '<div style="font-size:13px;color:#8a8580;line-height:1.5">'+item.content+'</div></div>';
+    html += '<div style="padding:8px 14px;border-top:1px solid #e8e4dc;display:flex;justify-content:space-between;align-items:center">';
+    html += '<span style="font-size:11px;color:#b8b4ae">'+( item.appreciations || 0)+' appreciations</span>';
+    html += '<button class="btn btn-outline" style="font-size:11px;padding:4px 12px" onclick="appreciateItem('+item.id+')">Appreciate</button>';
+    html += '</div></div>';
+  }
+  grid.innerHTML = html;
+}
+
+function appreciateItem(id) {
+  for (var i = 0; i < galleryItems.length; i++) {
+    if (galleryItems[i].id === id) { galleryItems[i].appreciations = (galleryItems[i].appreciations || 0) + 1; break; }
+  }
+  renderGallery();
+}
+
+function shareToGallery(type, title, content) {
+  var id = Date.now();
+  galleryItems.unshift({id:id, type:type, title:title, content:content.substring(0,200), date:new Date().toLocaleDateString(), appreciations:0});
+  show('gallery');
+}
+
+// ── SHARE HELPERS ──
+var lastSynthText = '';
+var lastCreateTheme = '';
+var lastCreateText = '';
+
+function shareForumToGallery() {
+  shareToGallery('debate', problem.substring(0, 60), lastSynthText.substring(0, 300));
+}
+
+function shareCreateToGallery() {
+  shareToGallery('creative', lastCreateTheme.substring(0, 60), lastCreateText.substring(0, 300));
+}
+
+// ── ORACLE ──
+// ── ORACLE EXTRAS ──
+var oracleMode = 'personal';
+var oracleDoc = null;
+var oracleConvHistory = [];
+
+var ORACLE_MODE_DESC = {
+  personal: 'Bring your real questions — personal, professional, existential. Completely private.',
+  global: 'Ask about world events, civilizational questions, historical patterns, or geopolitical dynamics.',
+  synthesis: 'Upload a document or describe an idea. The council will analyze, challenge, and synthesize.'
+};
+
+function setOracleMode(mode) {
+  oracleMode = mode;
+  document.getElementById('oracleModeDesc').textContent = ORACLE_MODE_DESC[mode];
+  var btns = { personal:'oModePers', global:'oModeGlob', synthesis:'oModeSync' };
+  Object.keys(btns).forEach(function(m) {
+    var btn = document.getElementById(btns[m]);
+    if (btn) {
+      btn.style.borderColor = m === mode ? '#1a1814' : '';
+      btn.style.color = m === mode ? '#1a1814' : '';
+      btn.style.fontWeight = m === mode ? '600' : '';
+    }
+  });
+  var placeholder = {
+    personal: 'What is on your mind?',
+    global: 'What is happening in the world that you want to understand?',
+    synthesis: 'Describe what you want the council to analyze...'
+  };
+  var input = document.getElementById('oracleInput');
+  if (input) input.placeholder = placeholder[mode] || placeholder.personal;
+}
+
+function handleOracleDoc(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    oracleDoc = { name: file.name, text: e.target.result.substring(0, 8000) };
+    document.getElementById('oracleDocName').textContent = file.name + ' loaded';
+    document.getElementById('oracleDocName').style.display = 'block';
+    document.getElementById('oracleDocClear').style.display = 'inline-flex';
+    document.getElementById('oracleDocLabel').textContent = file.name;
+  };
+  reader.readAsText(file);
+}
+
+function clearOracleDoc() {
+  oracleDoc = null;
+  document.getElementById('oracleDocFile').value = '';
+  document.getElementById('oracleDocName').style.display = 'none';
+  document.getElementById('oracleDocClear').style.display = 'none';
+  document.getElementById('oracleDocLabel').innerHTML = '📎 Attach a document (PDF or text)<input type="file" accept=".txt,.pdf,.md" id="oracleDocFile" style="display:none" onchange="handleOracleDoc(this)">';
+}
+
+function oracleFollowUp() {
+  var input = document.getElementById('oracleFollowInput');
+  if (!input || !input.value.trim()) return;
+  var q = input.value.trim();
+  input.value = '';
+  // Append to oracle messages as a new user question
+  var msgs = document.getElementById('oracleMsgs');
+  var userDiv = document.createElement('div');
+  userDiv.className = 'chat-msg-user';
+  userDiv.style.cssText = 'align-self:flex-end;max-width:85%;background:#1a1814;color:#fff;padding:8px 12px;border-radius:12px;font-size:14px;margin:4px 0';
+  userDiv.textContent = q;
+  msgs.appendChild(userDiv);
+  msgs.scrollTop = msgs.scrollHeight;
+  // Re-run oracle with follow-up context
+  oracleConvHistory.push({ role:'user', content: q });
+  doOracleCall(q);
+}
+
+function doOracleCall(q) {
+  if (loading) return;
+  loading = true;
+  document.getElementById('oracleBtn').disabled = true;
+  var msgs = document.getElementById('oracleMsgs');
+
+  var think = document.createElement('div');
+  think.className = 'thinking';
+  think.id = 'think-oracle';
+  think.innerHTML = '<span>The Council</span><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>';
+  msgs.appendChild(think);
+  msgs.scrollTop = msgs.scrollHeight;
+
+  var docContext = oracleDoc ? 'Document provided: "' + oracleDoc.name + '"\n\n' + oracleDoc.text.substring(0,3000) + '\n\n' : '';
+  var modeHint = {
+    personal: 'This is a personal question. Be warm, specific, and practically useful.',
+    global: 'This is a question about world affairs. Draw on historical patterns and your unique perspective.',
+    synthesis: 'Analyze this carefully. Identify what is strong, what is missing, and what matters most.'
+  }[oracleMode] || '';
+
+  var histContext = oracleConvHistory.slice(-4).map(function(m){
+    return (m.role === 'user' ? 'Person: ' : 'Council: ') + m.content;
+  }).join('\n');
+
+  var sys = 'You are facilitating wisdom from a council: ' + getCouncilNames() + '.\n\n' +
+    modeHint + '\n\n' +
+    'Select 3 most relevant voices. For each:\nSPEAKER: [name]\n[1-2 sentences]\n\nThen:\nCONSENSUS:\n[2-3 sentence synthesis]\n\n' +
+    (histContext ? 'Prior conversation:\n' + histContext + '\n\n' : '') +
+    (docContext ? docContext : '') +
+    'Be specific and honest. No platitudes.';
+
+  api(sys, q, 1200, function(text, err) {
+    loading = false;
+    document.getElementById('oracleBtn').disabled = false;
+    var t = document.getElementById('think-oracle');
+    if (t) t.parentNode.removeChild(t);
+    if (err) {
+      document.getElementById('oracleErr').innerHTML = '<div class="error">' + err + '</div>';
+      return;
+    }
+    oracleConvHistory.push({ role:'assistant', content: text });
+    var parsed = tryParseOracle(text);
+    if (parsed) {
+      msgs.appendChild(parsed);
+    } else {
+      var div = document.createElement('div');
+      div.className = 'msg-consensus';
+      div.innerHTML = '<div class="lbl">The Council</div><div class="txt">' + text.split('\n').join('<br>') + '</div>';
+      msgs.appendChild(div);
+    }
+    msgs.scrollTop = msgs.scrollHeight;
+    document.getElementById('oracleFollowUp').style.display = 'block';
+  });
+}
+
+function oracleQuery() {
+  var q = document.getElementById('oracleInput').value.trim();
+  if (!q || loading) return;
+  oracleConvHistory = [];
+  var msgs = document.getElementById('oracleMsgs');
+  msgs.innerHTML = '';
+  var userDiv = document.createElement('div');
+  userDiv.className = 'chat-msg-user';
+  userDiv.style.cssText = 'align-self:flex-end;background:#1a1814;color:#fff;padding:8px 12px;border-radius:12px;font-size:14px;margin-bottom:4px';
+  userDiv.textContent = q;
+  msgs.appendChild(userDiv);
+  document.getElementById('oracleFollowUp').style.display = 'none';
+  loading = false; // reset for doOracleCall
+  doOracleCall(q);
+  return; // rest of old code skipped
+  loading = true;
+  document.getElementById('oracleBtn').disabled = true;
+  var msgs_el = document.getElementById('oracleMsgs');
+  msgs_el.innerHTML = '<div class="msg-sys">You ask: "' + q + '"</div><div class="thinking" id="think-oracle"><span>The Council</span><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div></div>';
+
+  var sys = 'You are facilitating wisdom for someone with a real question. Council: ' + getCouncilNames() + '.\n\nSelect 3 most relevant voices. For each write:\nSPEAKER: [name]\n[1-2 sentence perspective]\n\nThen:\nCONSENSUS:\n[2-3 sentence distilled wisdom]\n\nBe warm and specific.';
+
+  api(sys, q, 1000, function(text, err) {
+    loading = false;
+    document.getElementById('oracleBtn').disabled = false;
+    var think = document.getElementById('think-oracle');
+    if (think) think.parentNode.removeChild(think);
+    if (err) {
+      document.getElementById('oracleErr').innerHTML = '<div class="error">' + err + '</div>';
+      return;
+    }
+    // Try structured parse first, fallback to raw display
+    var parsed = tryParseOracle(text);
+    if (parsed) {
+      msgs_el.appendChild(parsed);
+    } else {
+      // Fallback: show raw response in consensus style
+      var div = document.createElement('div');
+      div.className = 'msg-consensus';
+      div.innerHTML = '<div class="lbl">The Council</div><div class="txt">' + text.replace(/\n/g,'<br>') + '</div>';
+      msgs_el.appendChild(div);
+    }
+    // Share button
+    var shareDiv = document.createElement('div');
+    shareDiv.style.cssText = 'padding:8px 20px;border-top:1px solid #e8e4dc';
+    shareDiv.innerHTML = '<button class="btn btn-outline" style="font-size:12px;padding:6px 14px" onclick="shareOracleToGallery()">Share to Gallery</button>';
+    msgs_el.parentNode.appendChild(shareDiv);
+    lastOracleQ = q;
+    lastOracleText = text;
+  });
+}
+
+var lastOracleQ = '';
+var lastOracleText = '';
+
+function shareOracleToGallery() {
+  shareToGallery('insight', 'Oracle: ' + lastOracleQ.substring(0,50), lastOracleText.substring(0,300));
+}
+
+function tryParseOracle(text) {
+  var lines = text.split('\n');
+  var hasSpeaker = false;
+  for (var li = 0; li < lines.length; li++) {
+    if (lines[li].trim().indexOf('SPEAKER:') === 0) { hasSpeaker = true; break; }
+  }
+  if (!hasSpeaker) return null;
+
+  var frag = document.createDocumentFragment();
+  var i = 0;
+  while (i < lines.length) {
+    var line = lines[i].trim();
+    if (line.indexOf('SPEAKER:') === 0) {
+      var name = line.replace('SPEAKER:', '').trim();
+      var buf = [];
+      i++;
+      while (i < lines.length && lines[i].trim().indexOf('SPEAKER:') !== 0 && lines[i].trim().indexOf('CONSENSUS:') !== 0) {
+        if (lines[i].trim()) buf.push(lines[i].trim());
+        i++;
+      }
+      if (buf.length) {
+        var div = document.createElement('div');
+        div.className = 'msg-speech';
+        div.innerHTML = '<div class="spk">' + name + '</div><div class="body">' + buf.join(' ') + '</div>';
+        frag.appendChild(div);
+      }
+    } else if (line.indexOf('CONSENSUS:') === 0) {
+      i++;
+      var cbuf = [];
+      while (i < lines.length) {
+        if (lines[i].trim()) cbuf.push(lines[i].trim());
+        i++;
+      }
+      if (cbuf.length) {
+        var cdiv = document.createElement('div');
+        cdiv.className = 'msg-consensus';
+        cdiv.innerHTML = '<div class="lbl">Council Synthesis</div><div class="txt">' + cbuf.join(' ') + '</div>';
+        frag.appendChild(cdiv);
+      }
+    } else { i++; }
+  }
+  return frag;
+}
+
+// ── FORUM ──
+function startDebate() {
+  var val = document.getElementById('forumInput').value.trim();
+  if (!val) return;
+  problem = val;
+  msgs = [];
+  document.getElementById('forumSetup').style.display = 'none';
+  document.getElementById('forumActive').style.display = 'block';
+  document.getElementById('debateBanner').textContent = val;
+  document.getElementById('forumMsgs').innerHTML = '<div class="msg-sys">The council convenes</div>';
+  nextTurn();
+}
+
+function resetForum() {
+  problem = '';
+  msgs = [];
+  document.getElementById('forumSetup').style.display = 'block';
+  document.getElementById('forumActive').style.display = 'none';
+  document.getElementById('forumInput').value = '';
+}
+
+var lastIdx = -1;
+function pickSpeaker() {
+  var available = [];
+  for (var i = 0; i < council.length; i++) {
+    if (i !== lastIdx) available.push(i);
+  }
+  var idx = available[Math.floor(Math.random() * available.length)];
+  lastIdx = idx;
+  return idx;
+}
+
+function nextTurn() {
+  if (loading) return;
+  loading = true;
+  document.getElementById('nextBtn').disabled = true;
+
+  var idx = pickSpeaker();
+  var speaker = council[idx];
+  var hist = '';
+  for (var i = 0; i < msgs.length && i < 6; i++) {
+    hist += msgs[i].name + ': "' + msgs[i].text + '"\n';
+  }
+
+  var sys = 'You are ' + speaker.name + ' (' + speaker.era + '), known for: ' + speaker.domain + '.\n\nCouncil debate on: "' + problem + '".\nOther voices: ' + getCouncilNames() + '.\n' + (hist ? 'Recent:\n' + hist : '') + '\nSpeak as ' + speaker.name + '. 2-4 sentences. Specific, provocative. No preamble.';
+
+  var container = document.getElementById('forumMsgs');
+  var think = document.createElement('div');
+  think.className = 'thinking';
+  think.id = 'think-forum';
+  think.innerHTML = '<span>' + speaker.name + '</span><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>';
+  container.appendChild(think);
+  container.scrollTop = container.scrollHeight;
+
+  api(sys, 'Continue the debate.', 500, function(text, err) {
+    loading = false;
+    document.getElementById('nextBtn').disabled = false;
+    var t = document.getElementById('think-forum');
+    if (t) t.parentNode.removeChild(t);
+    if (err) {
+      document.getElementById('forumErr').innerHTML = '<div class="error">' + err + '</div>';
+      return;
+    }
+    msgs.push({name: speaker.name, text: text});
+    var div = document.createElement('div');
+    div.className = 'msg-speech';
+    div.innerHTML = '<div class="spk">' + speaker.name + '</div><div class="body">' + text + '</div>';
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+  });
+}
+
+function synthesize() {
+  if (loading || msgs.length < 2) return;
+  loading = true;
+  document.getElementById('synthBtn').disabled = true;
+
+  var hist = '';
+  for (var i = 0; i < msgs.length; i++) {
+    hist += msgs[i].name + ': "' + msgs[i].text + '"\n';
+  }
+
+  var sys = 'You are Claude, synthesizer. Debate on: "' + problem + '".\n\nWrite a 2-3 sentence synthesis of the key insight from this debate. Then write one actionable next step.\n\nFormat:\nSYNTHESIS: [synthesis]\nACTION: [one concrete action]';
+
+  var container = document.getElementById('forumMsgs');
+  var think = document.createElement('div');
+  think.className = 'thinking';
+  think.id = 'think-synth';
+  think.innerHTML = '<span>Claude synthesizing...</span><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>';
+  container.appendChild(think);
+
+  api(sys, 'Debate:\n' + hist, 600, function(text, err) {
+    loading = false;
+    document.getElementById('synthBtn').disabled = false;
+    var t = document.getElementById('think-synth');
+    if (t) t.parentNode.removeChild(t);
+    if (err) return;
+    var div = document.createElement('div');
+    div.className = 'msg-consensus';
+    div.innerHTML = '<div class="lbl">Synthesis</div><div class="txt">' + text + '</div><div style="margin-top:10px"><button class="btn btn-outline" style="font-size:12px;padding:6px 14px" onclick="shareForumToGallery()">Share to Gallery</button></div>';
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight;
+    lastSynthText = text;
+  });
+}
+
+// ── CREATE ──
+function triggerCreate() {
+  var theme = document.getElementById('createTheme').value.trim();
+  if (!theme || loading) return;
+  var form = document.getElementById('createForm').value;
+  var tone = document.getElementById('createTone').value.trim();
+  loading = true;
+  document.getElementById('createBtn').disabled = true;
+
+  var container = document.getElementById('createMsgs');
+  container.innerHTML = '<div class="msg-sys">The council writes: "' + theme + '"</div>';
+
+  var voices = council.slice(0, 3);
+  var idx = 0;
+  var pieces = [];
+
+  function nextVoice() {
+    if (idx >= voices.length) {
+      doSynthesis();
+      return;
+    }
+    var voice = voices[idx];
+    idx++;
+    var think = document.createElement('div');
+    think.className = 'thinking';
+    think.id = 'think-create';
+    think.innerHTML = '<span>' + voice.name + '</span><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>';
+    container.appendChild(think);
+
+    var sys = 'You are ' + voice.name + ' (' + voice.era + '), known for: ' + voice.domain + '.\n\nWrite a ' + form + ' about: "' + theme + '"' + (tone ? ', tone: ' + tone : '') + '.\n\nWrite in your authentic voice. 6-16 lines. Only the ' + form + ', no title or preamble.';
+
+    api(sys, 'Write your ' + form, 500, function(text, err) {
+      var t = document.getElementById('think-create');
+      if (t) t.parentNode.removeChild(t);
+      if (!err && text) {
+        pieces.push({name: voice.name, text: text});
+        var div = document.createElement('div');
+        div.className = 'msg-speech';
+        div.innerHTML = '<div class="spk">' + voice.name + '</div><div class="body" style="font-style:italic;white-space:pre-wrap">' + text + '</div>';
+        container.appendChild(div);
+        container.scrollTop = container.scrollHeight;
+      }
+      nextVoice();
+    });
+  }
+
+  function doSynthesis() {
+    if (pieces.length === 0) {
+      loading = false;
+      document.getElementById('createBtn').disabled = false;
+      return;
+    }
+    var think = document.createElement('div');
+    think.className = 'thinking';
+    think.id = 'think-synth2';
+    think.innerHTML = '<span>The council weaves...</span><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>';
+    container.appendChild(think);
+
+    var all = '';
+    for (var i = 0; i < pieces.length; i++) {
+      all += pieces[i].name + ':\n' + pieces[i].text + '\n\n';
+    }
+    var sys2 = 'Synthesize a collective ' + form + ' weaving these voices into one coherent piece. Not a summary. A new creation. Only the ' + form + '.';
+
+    api(sys2, all, 700, function(text, err) {
+      loading = false;
+      document.getElementById('createBtn').disabled = false;
+      var t = document.getElementById('think-synth2');
+      if (t) t.parentNode.removeChild(t);
+      if (!err && text) {
+        var div = document.createElement('div');
+        div.className = 'msg-consensus';
+        div.innerHTML = '<div class="lbl">The Council Writes as One</div><div class="txt" style="white-space:pre-wrap">' + text + '</div><div style="margin-top:10px"><button class="btn btn-outline" style="font-size:12px;padding:6px 14px" onclick="shareCreateToGallery()">Share to Gallery</button></div>';
+        container.appendChild(div);
+        container.scrollTop = container.scrollHeight;
+        lastCreateTheme = document.getElementById('createTheme').value;
+        lastCreateText = text;
+      }
+    });
+  }
+
+  nextVoice();
+}
+
+// ── WORLD GAME ──
+function getSlider(id, def) {
+  var el = document.getElementById(id);
+  return el ? parseInt(el.value) || def : def;
+}
+var BASE_METRICS = null;
+
+var INTERDEP_RULES = [
+  { fn: function(s){ return s.land > 40 && s.food < 70; },
+    msg: '<strong>Tension:</strong> Expanding protected land may constrain food production unless efficiency gains or redistribution compensates.' },
+  { fn: function(s){ return s.ren > 70 && s.kl < 20; },
+    msg: '<strong>Implementation gap:</strong> High renewable targets need major public investment. Without redirecting military spend, debt may destabilize.' },
+  { fn: function(s){ return s.wealth > 60 && s.kl < 15; },
+    msg: '<strong>Historical pattern:</strong> Rapid wealth redistribution without governance investment correlates with short-term instability (Quigley).' },
+  { fn: function(s){ return s.food > 90 && s.wealth < 20; },
+    msg: '<strong>Access problem:</strong> Food production can increase while hunger persists if wealth inequality stays high. Hunger is about access, not supply.' }
+];
+
+function getSliders() {
+  return {
+    ren:   getSlider('sl-ren',   34),
+    food:  getSlider('sl-food',  72),
+    kl:    getSlider('sl-kl',    8),
+    land:  getSlider('sl-land',  17),
+    water: getSlider('sl-water', 74),
+    wealth:getSlider('sl-wealth',12)
+  };
+}
+
+function computeMetrics(s) {
+  var foodEff = s.food * (0.5 + 0.5 * Math.min(1, s.wealth / 50));
+  var renStab = s.ren > 60 ? -((s.ren - 60) * 0.15) : 0;
+  var wShock  = s.wealth > 50 ? -((s.wealth - 50) * 0.1) : 0;
+  var fl = Math.min(99, Math.max(1, Math.round(
+    foodEff*0.24 + s.water*0.20 + s.wealth*0.20 + s.kl*0.18 + s.ren*0.10 + s.land*0.05 + wShock
+  )));
+  var ec = Math.min(99, Math.max(1, Math.round(
+    s.ren*0.38 + s.land*0.34 + s.kl*0.14 + (s.food < 80 ? 8 : 4) + (s.ren > 80 ? 4 : 0)
+  )));
+  var st = Math.min(99, Math.max(1, Math.round(
+    s.food*0.24 + s.kl*0.22 + s.wealth*0.18 + s.ren*0.14 + s.water*0.14 + renStab + wShock*0.5
+  )));
+  return { fl:fl, ec:ec, st:st };
+}
+
+function showDelta(id, d) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  if (d === 0) { el.textContent = ''; return; }
+  el.textContent = (d > 0 ? '+' : '') + d;
+  el.style.color = d > 0 ? '#2a9060' : '#c04020';
+}
+
+function checkInterdeps() {
+  var el = document.getElementById('interdepAlert');
+  if (!el) return;
+  var s = getSliders();
+  var hit = null;
+  for (var i = 0; i < INTERDEP_RULES.length; i++) {
+    if (INTERDEP_RULES[i].fn(s)) { hit = INTERDEP_RULES[i]; break; }
+  }
+  if (hit) { el.innerHTML = hit.msg; el.style.display = 'block'; }
+  else el.style.display = 'none';
+}
+
+function recalc() {
+  var s = getSliders();
+  var m = computeMetrics(s);
+
+  document.getElementById('metFl').textContent = m.fl;
+  document.getElementById('metEc').textContent = m.ec;
+  document.getElementById('metSt').textContent = m.st;
+  document.getElementById('fillFl').style.width = m.fl + '%';
+  document.getElementById('fillEc').style.width = m.ec + '%';
+  document.getElementById('fillSt').style.width = m.st + '%';
+
+  // Sync to home screen
+  var hFl = document.getElementById('homeFl');
+  var hEc = document.getElementById('homeEc');
+  var hSt = document.getElementById('homeSt');
+  if (hFl) hFl.textContent = m.fl;
+  if (hEc) hEc.textContent = m.ec;
+  if (hSt) hSt.textContent = m.st;
+
+  if (BASE_METRICS) {
+    showDelta('deltaFl', m.fl - BASE_METRICS.fl);
+    showDelta('deltaEc', m.ec - BASE_METRICS.ec);
+    showDelta('deltaSt', m.st - BASE_METRICS.st);
+  }
+
+  checkInterdeps();
+}
+
+function askCouncil() {
+  var ren = getSlider('sl-ren', 32);
+  var food = getSlider('sl-food', 61);
+  var fl = document.getElementById('metFl').textContent;
+  var ec = document.getElementById('metEc').textContent;
+  problem = 'World Game scenario: renewable energy ' + ren + '%, food distribution ' + food + '%, flourishing ' + fl + '/100, ecological ' + ec + '/100. What are the philosophical and ethical implications?';
+  document.getElementById('forumInput').value = problem;
+  show('forum');
+  setTimeout(startDebate, 100);
+}
+
+function makeArt() {
+  var ren = getSlider('sl-ren', 32);
+  var food = getSlider('sl-food', 61);
+  var theme = 'the current state of the world: renewable energy at ' + ren + '%, food distribution at ' + food + '%';
+  document.getElementById('createTheme').value = theme;
+  show('create');
+}
+
+// ── WORLD MAP (LEAFLET) ──
+var leafletMap = null;
+var countryLayer = null;
+var subLayer = null;
+var selectedPlace = { name:'Global', code:null, iso3:null, type:'world' };
+var wbCache = {};
+var subCache = {};
+var geoCache = {};
+
+// ISO2 to ISO3 (for geoBoundaries API which needs ISO3)
+var ISO2_TO_ISO3 = {
+  'AF':'AFG','AL':'ALB','DZ':'DZA','AD':'AND','AO':'AGO','AG':'ATG','AR':'ARG',
+  'AM':'ARM','AU':'AUS','AT':'AUT','AZ':'AZE','BS':'BHS','BH':'BHR','BD':'BGD',
+  'BB':'BRB','BY':'BLR','BE':'BEL','BZ':'BLZ','BJ':'BEN','BT':'BTN','BO':'BOL',
+  'BA':'BIH','BW':'BWA','BR':'BRA','BN':'BRN','BG':'BGR','BF':'BFA','BI':'BDI',
+  'CV':'CPV','KH':'KHM','CM':'CMR','CA':'CAN','CF':'CAF','TD':'TCD','CL':'CHL',
+  'CN':'CHN','CO':'COL','KM':'COM','CG':'COG','CD':'COD','CR':'CRI','CI':'CIV',
+  'HR':'HRV','CU':'CUB','CY':'CYP','CZ':'CZE','DK':'DNK','DJ':'DJI','DM':'DMA',
+  'DO':'DOM','EC':'ECU','EG':'EGY','SV':'SLV','GQ':'GNQ','ER':'ERI','EE':'EST',
+  'SZ':'SWZ','ET':'ETH','FJ':'FJI','FI':'FIN','FR':'FRA','GA':'GAB','GM':'GMB',
+  'GE':'GEO','DE':'DEU','GH':'GHA','GR':'GRC','GD':'GRD','GT':'GTM','GN':'GIN',
+  'GW':'GNB','GY':'GUY','HT':'HTI','HN':'HND','HU':'HUN','IS':'ISL','IN':'IND',
+  'ID':'IDN','IR':'IRN','IQ':'IRQ','IE':'IRL','IL':'ISR','IT':'ITA','JM':'JAM',
+  'JP':'JPN','JO':'JOR','KZ':'KAZ','KE':'KEN','KI':'KIR','KP':'PRK','KR':'KOR',
+  'KW':'KWT','KG':'KGZ','LA':'LAO','LV':'LVA','LB':'LBN','LS':'LSO','LR':'LBR',
+  'LY':'LBY','LI':'LIE','LT':'LTU','LU':'LUX','MG':'MDG','MW':'MWI','MY':'MYS',
+  'MV':'MDV','ML':'MLI','MT':'MLT','MH':'MHL','MR':'MRT','MU':'MUS','MX':'MEX',
+  'FM':'FSM','MD':'MDA','MC':'MCO','MN':'MNG','ME':'MNE','MA':'MAR','MZ':'MOZ',
+  'MM':'MMR','NA':'NAM','NR':'NRU','NP':'NPL','NL':'NLD','NZ':'NZL','NI':'NIC',
+  'NE':'NER','NG':'NGA','NO':'NOR','OM':'OMN','PK':'PAK','PW':'PLW','PA':'PAN',
+  'PG':'PNG','PY':'PRY','PE':'PER','PH':'PHL','PL':'POL','PT':'PRT','QA':'QAT',
+  'RO':'ROU','RU':'RUS','RW':'RWA','KN':'KNA','LC':'LCA','VC':'VCT','WS':'WSM',
+  'SM':'SMR','ST':'STP','SA':'SAU','SN':'SEN','RS':'SRB','SC':'SYC','SL':'SLE',
+  'SG':'SGP','SK':'SVK','SI':'SVN','SB':'SLB','SO':'SOM','ZA':'ZAF','SS':'SSD',
+  'ES':'ESP','LK':'LKA','SD':'SDN','SR':'SUR','SE':'SWE','CH':'CHE','SY':'SYR',
+  'TW':'TWN','TJ':'TJK','TZ':'TZA','TH':'THA','TL':'TLS','TG':'TGO','TO':'TON',
+  'TT':'TTO','TN':'TUN','TR':'TUR','TM':'TKM','TV':'TUV','UG':'UGA','UA':'UKR',
+  'AE':'ARE','GB':'GBR','US':'USA','UY':'URY','UZ':'UZB','VU':'VUT','VE':'VEN',
+  'VN':'VNM','YE':'YEM','ZM':'ZMB','ZW':'ZWE'
+};
+
+var ISO3_TO_ISO2 = {};
+for (var k in ISO2_TO_ISO3) { ISO3_TO_ISO2[ISO2_TO_ISO3[k]] = k; }
+
+var NAME_TO_ISO2 = {
+  'UNITED STATES OF AMERICA':'US','UNITED STATES':'US','USA':'US',
+  'UNITED KINGDOM':'GB','UK':'GB','SOUTH KOREA':'KR','NORTH KOREA':'KP',
+  'RUSSIA':'RU','RUSSIAN FEDERATION':'RU','IRAN':'IR','TAIWAN':'TW',
+  'CZECHIA':'CZ','CZECH REPUBLIC':'CZ','IVORY COAST':'CI',
+  'DEMOCRATIC REPUBLIC OF THE CONGO':'CD','DR CONGO':'CD','CONGO, DEM. REP.':'CD',
+  'REPUBLIC OF CONGO':'CG','TANZANIA':'TZ','UNITED REPUBLIC OF TANZANIA':'TZ',
+  'SOUTH AFRICA':'ZA','VIETNAM':'VN','VIET NAM':'VN','MYANMAR':'MM','BURMA':'MM',
+  'EGYPT':'EG','ETHIOPIA':'ET','KENYA':'KE','NIGERIA':'NG','GHANA':'GH',
+  'SOUTH SUDAN':'SS','SUDAN':'SD','ANGOLA':'AO','MOZAMBIQUE':'MZ','ZAMBIA':'ZM',
+  'ZIMBABWE':'ZW','MADAGASCAR':'MG','CAMEROON':'CM','SENEGAL':'SN','MALI':'ML',
+  'ALGERIA':'DZ','MOROCCO':'MA','TUNISIA':'TN','LIBYA':'LY',
+  'SAUDI ARABIA':'SA','IRAQ':'IQ','YEMEN':'YE','JORDAN':'JO','LEBANON':'LB',
+  'ISRAEL':'IL','UNITED ARAB EMIRATES':'AE','KUWAIT':'KW','QATAR':'QA','OMAN':'OM',
+  'AFGHANISTAN':'AF','PAKISTAN':'PK','BANGLADESH':'BD','SRI LANKA':'LK','NEPAL':'NP',
+  'THAILAND':'TH','MALAYSIA':'MY','INDONESIA':'ID','PHILIPPINES':'PH',
+  'SINGAPORE':'SG','CAMBODIA':'KH','BRAZIL':'BR','ARGENTINA':'AR','CHILE':'CL',
+  'COLOMBIA':'CO','PERU':'PE','ECUADOR':'EC','PARAGUAY':'PY','URUGUAY':'UY',
+  'MEXICO':'MX','CUBA':'CU','GUATEMALA':'GT','GERMANY':'DE','FRANCE':'FR',
+  'ITALY':'IT','SPAIN':'ES','PORTUGAL':'PT','NETHERLANDS':'NL','BELGIUM':'BE',
+  'SWITZERLAND':'CH','AUSTRIA':'AT','SWEDEN':'SE','NORWAY':'NO','DENMARK':'DK',
+  'FINLAND':'FI','POLAND':'PL','HUNGARY':'HU','ROMANIA':'RO','BULGARIA':'BG',
+  'GREECE':'GR','CROATIA':'HR','UKRAINE':'UA','TURKEY':'TR','TURKIYE':'TR',
+  'CANADA':'CA','AUSTRALIA':'AU','NEW ZEALAND':'NZ','JAPAN':'JP','CHINA':'CN',
+  'INDIA':'IN','KAZAKHSTAN':'KZ','UZBEKISTAN':'UZ','VENEZUELA':'VE','BOLIVIA':'BO'
+};
+
+function getISO2(props) {
+  var code = props.ISO_A2 || props.iso_a2 || props.ISO2 || props.iso2 || '';
+  if (code && code !== '-99' && code !== '-1' && code.length === 2) return code.toUpperCase();
+  var code3 = props.ISO_A3 || props.iso_a3 || props.adm0_a3 || props.ISO3 || '';
+  if (code3 && ISO3_TO_ISO2[code3.toUpperCase()]) return ISO3_TO_ISO2[code3.toUpperCase()];
+  var names = [props.ADMIN||'',props.admin||'',props.name||'',props.NAME||'',props.NAME_LONG||''];
+  for (var i = 0; i < names.length; i++) {
+    var n = names[i].toUpperCase().trim();
+    if (n && NAME_TO_ISO2[n]) return NAME_TO_ISO2[n];
+  }
+  return '';
+}
+
+// US state FIPS
+var US_STATE_FIPS = {
+  'Alabama':'01','Alaska':'02','Arizona':'04','Arkansas':'05','California':'06',
+  'Colorado':'08','Connecticut':'09','Delaware':'10','Florida':'12','Georgia':'13',
+  'Hawaii':'15','Idaho':'16','Illinois':'17','Indiana':'18','Iowa':'19',
+  'Kansas':'20','Kentucky':'21','Louisiana':'22','Maine':'23','Maryland':'24',
+  'Massachusetts':'25','Michigan':'26','Minnesota':'27','Mississippi':'28','Missouri':'29',
+  'Montana':'30','Nebraska':'31','Nevada':'32','New Hampshire':'33','New Jersey':'34',
+  'New Mexico':'35','New York':'36','North Carolina':'37','North Dakota':'38','Ohio':'39',
+  'Oklahoma':'40','Oregon':'41','Pennsylvania':'42','Rhode Island':'44','South Carolina':'45',
+  'South Dakota':'46','Tennessee':'47','Texas':'48','Utah':'49','Vermont':'50',
+  'Virginia':'51','Washington':'53','West Virginia':'54','Wisconsin':'55','Wyoming':'56',
+  'District of Columbia':'11','Puerto Rico':'72'
+};
+
+function initWorldMap() {
+  if (typeof L === 'undefined') { setTimeout(initWorldMap, 500); return; }
+  if (leafletMap) { leafletMap.remove(); leafletMap = null; countryLayer = null; subLayer = null; }
+
+  leafletMap = L.map('leafletMap', {
+    center:[20,0], zoom:2, minZoom:2, maxZoom:14, zoomControl:true
+  });
+
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution:'OpenStreetMap, CartoDB', subdomains:'abcd', maxZoom:19
+  }).addTo(leafletMap);
+
+  loadCountryLayer();
+
+  // When zooming in past threshold on a selected country, load sub-national
+  leafletMap.on('zoomend', function() {
+    var z = leafletMap.getZoom();
+    if (z >= 3 && selectedPlace.code && selectedPlace.type === 'country') {
+      if (selectedPlace.code === 'US') {
+        loadUSStateLayer();
+      } else if (selectedPlace.iso3) {
+        loadSubLayer(selectedPlace.code, selectedPlace.iso3, selectedPlace.name);
+      }
+    }
+  });
+
+  leafletMap.on('click', function(e) {
+    var z = leafletMap.getZoom();
+    if (z >= 4 && selectedPlace.code) {
+      reverseGeocode(e.latlng.lat, e.latlng.lng);
+    }
+  });
+}
+
+function loadCountryLayer() {
+  setMapStatus('Loading map...');
+  fetch('https://raw.githubusercontent.com/datasets/geo-countries/master/data/countries.geojson')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      countryLayer = L.geoJSON(data, {
+        style: function() {
+          return { fillColor:'#2a9060', fillOpacity:0.08, color:'#2a9060', weight:0.8, opacity:0.4 };
+        },
+        onEachFeature: function(feature, layer) {
+          layer.on('click', function(e) {
+            var z = leafletMap.getZoom();
+            var props = feature.properties;
+            var name = props.ADMIN || props.name || props.NAME || 'Unknown';
+            var iso2 = getISO2(props);
+            var iso3 = ISO2_TO_ISO3[iso2] || '';
+            // If zoomed in and already on this country, use reverse geocode for region
+            if (z >= 5 && selectedPlace.code === iso2) {
+              L.DomEvent.stopPropagation(e);
+              reverseGeocode(e.latlng.lat, e.latlng.lng);
+              return;
+            }
+            L.DomEvent.stopPropagation(e);
+            onCountryClick(iso2, iso3, name, e.latlng);
+          });
+          layer.on('mouseover', function() {
+            layer.setStyle({ fillOpacity:0.22, weight:1.5, color:'#1a6b4a' });
+          });
+          layer.on('mouseout', function() {
+            layer.setStyle({ fillOpacity:0.08, weight:0.8, color:'#2a9060' });
+          });
+        }
+      }).addTo(leafletMap);
+      setMapStatus('Tap any country for real data. Zoom in for regions.');
+    })
+    .catch(function() { setMapStatus('Tap to explore. Country layer loading...'); });
+}
+
+// Load sub-national boundaries via per-country GeoJSON from GADM CDN
+function loadSubLayer(iso2, iso3, countryName) {
+  if (!iso2) { setMapStatus('No region code for ' + countryName); return; }
+  if (iso2 === 'US') { loadUSStateLayer(); return; }
+  if (subLayer && subLayer._countryISO3 === iso3) return;
+
+  var cacheKey = 'geo_' + iso3;
+  if (geoCache[cacheKey]) {
+    renderSubLayer(geoCache[cacheKey], iso2, iso3, countryName);
+    return;
+  }
+
+  setMapStatus('Loading regions for ' + countryName + '...');
+
+  // Use gadm.org CDN - serves per-country GeoJSON, excellent CORS
+  // URL: https://geodata.ucdavis.edu/gadm/gadm4.1/json/gadm41_{ISO3}_1.json
+  var gadmUrl = 'https://geodata.ucdavis.edu/gadm/gadm4.1/json/gadm41_' + iso3 + '_1.json';
+
+  fetch(gadmUrl)
+    .then(function(r) {
+      if (!r.ok) throw new Error('GADM ' + r.status);
+      return r.json();
+    })
+    .then(function(data) {
+      if (!data || !data.features || data.features.length === 0) throw new Error('Empty');
+      geoCache[cacheKey] = data;
+      renderSubLayer(data, iso2, iso3, countryName);
+    })
+    .catch(function(e1) {
+      // Fallback: try Natural Earth via jsDelivr (different CDN, better CORS)
+      var neUrl = 'https://cdn.jsdelivr.net/gh/nvkelso/natural-earth-vector@master/geojson/ne_50m_admin_1_states_provinces.geojson';
+      if (geoCache['_ne_adm1']) {
+        var filtered = filterByISO(geoCache['_ne_adm1'], iso2, iso3);
+        if (filtered.features.length > 0) {
+          geoCache[cacheKey] = filtered;
+          renderSubLayer(filtered, iso2, iso3, countryName);
+        } else {
+          setMapStatus(countryName + ' — zoom in and tap any region to see local data.');
+        }
+        return;
+      }
+      fetch(neUrl)
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          geoCache['_ne_adm1'] = data;
+          var filtered = filterByISO(data, iso2, iso3);
+          if (filtered.features.length > 0) {
+            geoCache[cacheKey] = filtered;
+            renderSubLayer(filtered, iso2, iso3, countryName);
+          } else {
+            setMapStatus(countryName + ' — zoom in to see regions on the base map.');
+          }
+        })
+        .catch(function() {
+          setMapStatus(countryName + ' — zoom in to see regions. Tap any area for local data.');
+        });
+    });
+}
+
+// Separate clean filter function for Natural Earth
+function filterByISO(data, iso2, iso3) {
+  var i2 = (iso2||'').toUpperCase();
+  var i3 = (iso3||'').toUpperCase();
+  var features = (data.features||[]).filter(function(f) {
+    var p = f.properties||{};
+    // GADM uses GID_0 for country ISO3
+    if (p.GID_0 && p.GID_0.toUpperCase() === i3) return true;
+    // Natural Earth uses adm0_a3
+    if (p.adm0_a3 && p.adm0_a3.toUpperCase() === i3) return true;
+    if (p.ADM0_A3 && p.ADM0_A3.toUpperCase() === i3) return true;
+    // ISO2 fallbacks
+    if (p.iso_a2 && p.iso_a2.toUpperCase() === i2) return true;
+    if (p.ISO_A2 && p.ISO_A2.toUpperCase() === i2) return true;
+    return false;
+  });
+  return { type:'FeatureCollection', features: features };
+}
+
+function filterADM1(data, iso2, iso3) {
+  if (!data || !data.features) return { type:'FeatureCollection', features:[] };
+  var iso2up = (iso2 || '').toUpperCase();
+  var iso3up = (iso3 || '').toUpperCase();
+
+  var features = data.features.filter(function(f) {
+    var p = f.properties || {};
+    // Scan every string property for ISO3 match (broadest possible search)
+    var keys = Object.keys(p);
+    for (var i = 0; i < keys.length; i++) {
+      var val = p[keys[i]];
+      if (typeof val === 'string') {
+        var vup = val.toUpperCase().trim();
+        if (iso3up && vup === iso3up) return true;
+        if (iso2up && vup === iso2up && val.length === 2) return true;
+      }
+    }
+    // Country name match
+    var nameChecks = [p.admin, p.ADMIN, p.adm0_name, p.ADM0_NAME, p.geonunit, p.sovereignt, p.name, p.NAME];
+    for (var k = 0; k < nameChecks.length; k++) {
+      if (nameChecks[k] && NAME_TO_ISO2[nameChecks[k].toUpperCase()] === iso2up) return true;
+    }
+    return false;
+  });
+
+  if (features.length === 0 && data.features.length > 0) {
+    var fp = data.features[0].properties;
+    var propKeys = Object.keys(fp).join(', ');
+    var sample = JSON.stringify(fp).substring(0, 200);
+    console.log('ADM1 miss for', iso2up, iso3up, '| Props:', propKeys, '| Sample:', sample);
+    // Show diagnostic in map status
+    setMapStatus('No regions for ' + iso2up + '/' + iso3up + '. File has ' + data.features.length + ' features. Keys: ' + propKeys.substring(0,60));
+  }
+  return { type:'FeatureCollection', features: features };
+}
+
+function renderSubLayer(geojson, iso2, iso3, countryName) {
+  if (subLayer) { leafletMap.removeLayer(subLayer); subLayer = null; }
+  subLayer = L.geoJSON(geojson, {
+    style: function() {
+      return { fillColor:'#5040a0', fillOpacity:0.06, color:'#5040a0', weight:1, opacity:0.5 };
+    },
+    onEachFeature: function(feature, layer) {
+      var regionName = feature.properties.shapeName ||
+                       feature.properties.NAME_1 ||
+                       feature.properties.name ||
+                       feature.properties.NAME || 'Region';
+      layer.bindTooltip(regionName, { permanent:false, direction:'center', className:'state-tooltip' });
+      layer.on('click', function(e) {
+        L.DomEvent.stopPropagation(e);
+        onRegionClick(regionName, iso2, iso3, countryName, e.latlng);
+      });
+      layer.on('mouseover', function() { layer.setStyle({ fillOpacity:0.2, weight:2 }); });
+      layer.on('mouseout', function() { layer.setStyle({ fillOpacity:0.06, weight:1 }); });
+    }
+  }).addTo(leafletMap);
+  subLayer._countryISO3 = iso3;
+  setMapStatus(countryName + ' regions loaded. Tap a region for data.');
+}
+
+function loadUSStateLayer() {
+  if (subLayer && subLayer._countryISO3 === 'USA') return;
+  setMapStatus('Loading US states...');
+  var cacheKey = 'geo_USA';
+  if (geoCache[cacheKey]) { renderUSStates(geoCache[cacheKey]); return; }
+  fetch('https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json')
+    .then(function(r) { return r.json(); })
+    .then(function(data) { geoCache[cacheKey] = data; renderUSStates(data); })
+    .catch(function() { setMapStatus('State boundaries unavailable.'); });
+}
+
+function renderUSStates(data) {
+  if (subLayer) { leafletMap.removeLayer(subLayer); subLayer = null; }
+  subLayer = L.geoJSON(data, {
+    style: function() {
+      return { fillColor:'#5040a0', fillOpacity:0.06, color:'#5040a0', weight:1, opacity:0.5 };
+    },
+    onEachFeature: function(feature, layer) {
+      var stateName = feature.properties.name || feature.properties.NAME || '';
+      layer.bindTooltip(stateName, { permanent:false, direction:'center', className:'state-tooltip' });
+      layer.on('click', function(e) {
+        L.DomEvent.stopPropagation(e);
+        onStateClick(stateName, e.latlng);
+      });
+      layer.on('mouseover', function() { layer.setStyle({ fillOpacity:0.2, weight:2, color:'#3020a0' }); });
+      layer.on('mouseout', function() { layer.setStyle({ fillOpacity:0.06, weight:1, color:'#5040a0' }); });
+    }
+  }).addTo(leafletMap);
+  subLayer._countryISO3 = 'USA';
+  setMapStatus('Tap a state for Census data. Zoom in for counties.');
+}
+
+// ── CLICK HANDLERS ──
+
+function onCountryClick(iso2, iso3, name, latlng) {
+  selectedPlace = { name:name, code:iso2, iso3:iso3, type:'country' };
+  document.getElementById('viewingLabel').textContent = name;
+  showDataPanel(name, '<div style="color:#8a8580;font-size:13px">Fetching World Bank data...</div>');
+  L.popup().setLatLng(latlng)
+    .setContent('<div class="popup-title">' + name + '</div><div style="color:#8a8580;font-size:12px">Loading...</div>')
+    .openOn(leafletMap);
+
+  // Always start loading sub-layer in background
+  if (iso2 === 'US') {
+    setMapStatus(name + ' — zoom in to see states, or tap map');
+    loadUSStateLayer();
+  } else if (iso3) {
+    setMapStatus('Loading regions for ' + name + '...');
+    loadSubLayer(iso2, iso3, name);
+  } else {
+    setMapStatus(name + ' — no ISO3 code, cannot load regions');
+  }
+  fetchWorldBankData(iso2, name, latlng);
+}
+
+function onRegionClick(regionName, iso2, iso3, countryName, latlng) {
+  var fullName = regionName + ', ' + countryName;
+  selectedPlace = { name:fullName, code:iso2, iso3:iso3, type:'region' };
+  document.getElementById('viewingLabel').textContent = fullName;
+  showDataPanel(fullName, '<div style="color:#8a8580;font-size:13px">Fetching regional data...</div>');
+  fetchRegionData(regionName, iso2, countryName, latlng);
+}
+
+function onStateClick(stateName, latlng) {
+  var fips = US_STATE_FIPS[stateName] || '';
+  selectedPlace = { name:stateName+', USA', code:'US', iso3:'USA', type:'state', fips:fips };
+  document.getElementById('viewingLabel').textContent = stateName + ', USA';
+  showDataPanel(stateName + ', USA', '<div style="color:#8a8580;font-size:13px">Fetching Census data...</div>');
+  if (fips) loadCountyLayer(fips, stateName);
+  fetchStateData(stateName, fips, latlng);
+}
+
+function onCountyClick(countyName, fips, stateName, stateFips, latlng) {
+  var fullName = countyName + ' County, ' + stateName;
+  selectedPlace = { name:fullName, code:'US', type:'county' };
+  document.getElementById('viewingLabel').textContent = fullName;
+  showDataPanel(fullName, '<div style="color:#8a8580;font-size:13px">Fetching Census data...</div>');
+  fetchCountyData(countyName, fips, stateFips, latlng);
+}
+
+function loadCountyLayer(stateFips, stateName) {
+  var countyLayerKey = 'counties_' + stateFips;
+  // Remove previous county layer if different state
+  if (subLayer && subLayer._countyFips && subLayer._countyFips !== stateFips) {
+    leafletMap.removeLayer(subLayer);
+    subLayer = null;
+  }
+  if (subLayer && subLayer._countyFips === stateFips) return;
+
+  fetch('https://raw.githubusercontent.com/plotly/datasets/master/geojson-counties-fips.json')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var filtered = { type:'FeatureCollection', features: data.features.filter(function(f) {
+        return f.id && f.id.toString().substring(0,2) === stateFips;
+      })};
+      if (filtered.features.length === 0) return;
+      var cl = L.geoJSON(filtered, {
+        style: function() { return { fillColor:'#c04020', fillOpacity:0.05, color:'#c04020', weight:0.6, opacity:0.4 }; },
+        onEachFeature: function(feature, layer) {
+          layer.on('click', function(e) {
+            L.DomEvent.stopPropagation(e);
+            var name = feature.properties.NAME || feature.properties.name || '';
+            onCountyClick(name, feature.id||'', stateName, stateFips, e.latlng);
+          });
+          layer.on('mouseover', function() { layer.setStyle({ fillOpacity:0.18, weight:1 }); });
+          layer.on('mouseout', function() { layer.setStyle({ fillOpacity:0.05, weight:0.6 }); });
+        }
+      }).addTo(leafletMap);
+      cl._countyFips = stateFips;
+      setMapStatus('Tap a county for detailed data.');
+    })
+    .catch(function() {});
+}
+
+// ── REVERSE GEOCODE ──
+function reverseGeocode(lat, lng) {
+  var z = leafletMap.getZoom();
+  var zl = z >= 9 ? 10 : z >= 6 ? 8 : 5;
+  fetch('https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lng+'&format=json&zoom='+zl, {
+    headers: {'Accept-Language':'en'}
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    if (!d || !d.address) return;
+    var addr = d.address;
+    var cc = (addr.country_code||'').toUpperCase();
+
+    if (z >= 9 && cc === 'US' && addr.county) {
+      var county = addr.county.replace(' County','').replace(' Parish','');
+      onCountyClick(county, '', addr.state||'', US_STATE_FIPS[addr.state]||'', {lat:lat,lng:lng});
+    } else if (z >= 4 && cc === 'US' && addr.state) {
+      onStateClick(addr.state, {lat:lat,lng:lng});
+    } else if (z >= 4 && addr.state && cc !== selectedPlace.code) {
+      // Tapped into a region of a country
+      onRegionClick(addr.state, cc, ISO2_TO_ISO3[cc]||'', addr.country||'', {lat:lat,lng:lng});
+    } else if (z >= 4 && addr.state) {
+      onRegionClick(addr.state, cc, ISO2_TO_ISO3[cc]||'', addr.country||'', {lat:lat,lng:lng});
+    }
+  })
+  .catch(function() {});
+}
+
+// ── WORLD BANK DATA ──
+function fetchWorldBankData(code, name, latlng) {
+  if (!code) { showNoData(name); return; }
+  var cacheKey = 'wb_' + code;
+  if (wbCache[cacheKey]) { displayCountryData(wbCache[cacheKey], name, latlng); return; }
+
+  var inds = ['EG.ELC.RNEW.ZS','SN.ITK.DEFC.ZS','SH.H2O.SMDW.ZS','ER.LND.PTLD.ZS','SI.POV.GINI','NY.GDP.PCAP.CD'];
+  var results = {};
+  var pending = inds.length;
+
+  var tid = setTimeout(function() {
+    if (pending > 0) { pending = 0; wbCache[cacheKey] = results; displayCountryData(results, name, latlng); }
+  }, 8000);
+
+  inds.forEach(function(ind) {
+    fetch('https://api.worldbank.org/v2/country/'+code+'/indicator/'+ind+'?format=json&mrv=5&per_page=5')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var val = null;
+        if (data && data[1]) {
+          for (var i = 0; i < data[1].length; i++) {
+            if (data[1][i].value !== null) {
+              val = { value: Math.round(data[1][i].value*10)/10, year: data[1][i].date };
+              break;
+            }
+          }
+        }
+        results[ind] = val; pending--;
+        if (pending <= 0) { clearTimeout(tid); wbCache[cacheKey] = results; displayCountryData(results, name, latlng); }
+      })
+      .catch(function() {
+        results[ind] = null; pending--;
+        if (pending <= 0) { clearTimeout(tid); wbCache[cacheKey] = results; displayCountryData(results, name, latlng); }
+      });
+  });
+}
+
+// Region data - try World Bank subnational, fall back to country data
+function fetchRegionData(regionName, iso2, countryName, latlng) {
+  // Show region name, use country-level data as context
+  var cacheKey = 'wb_' + iso2;
+  if (wbCache[cacheKey]) {
+    displayRegionData(regionName, countryName, wbCache[cacheKey], latlng);
+  } else {
+    // Fetch country data first then display with region context
+    fetchWorldBankData(iso2, countryName, null);
+    // Show interim message
+    var html = '<div style="font-size:13px;color:#4a4640;margin-bottom:10px">';
+    html += 'Region-level statistics are limited for most countries. ';
+    html += 'Showing national data for ' + countryName + ' as context.</div>';
+    showDataPanel(regionName + ', ' + countryName, html + '<div style="color:#8a8580;font-size:13px">Loading national data...</div>');
+    // After a delay, show whatever we have
+    setTimeout(function() {
+      if (wbCache[cacheKey]) displayRegionData(regionName, countryName, wbCache[cacheKey], latlng);
+    }, 4000);
+  }
+  setMapStatus(regionName + ' — showing available data');
+}
+
+function fetchStateData(stateName, fips, latlng) {
+  if (!fips) { showNoData(stateName); return; }
+  var cacheKey = 'state_' + fips;
+  if (subCache[cacheKey]) { displayStateData(subCache[cacheKey], stateName, latlng); return; }
+  fetch('https://api.census.gov/data/2022/acs/acs5?get=NAME,B19013_001E,B17001_002E,B01003_001E,B15003_022E&for=state:' + fips)
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (!d || d.length < 2) { showNoData(stateName); return; }
+      var r = d[1];
+      var data = { name:r[0], medianIncome:parseInt(r[1])||null, poverty:parseInt(r[2])||null, pop:parseInt(r[3])||null, bachelors:parseInt(r[4])||null };
+      subCache[cacheKey] = data;
+      displayStateData(data, stateName, latlng);
+    })
+    .catch(function() { showNoData(stateName); });
+}
+
+function fetchCountyData(countyName, fips, stateFips, latlng) {
+  if (!stateFips) { showNoData(countyName+' County'); return; }
+  var cacheKey = 'county_' + stateFips + '_' + countyName;
+  if (subCache[cacheKey]) { displayCountyData(subCache[cacheKey], countyName, latlng); return; }
+  fetch('https://api.census.gov/data/2022/acs/acs5?get=NAME,B19013_001E,B17001_002E,B01003_001E&for=county:*&in=state:'+stateFips)
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (!d || d.length < 2) { showNoData(countyName); return; }
+      var match = null;
+      for (var i = 1; i < d.length; i++) {
+        if (d[i][0] && d[i][0].toLowerCase().indexOf(countyName.toLowerCase()) >= 0) { match = d[i]; break; }
+      }
+      if (!match) match = d[1];
+      var data = { name:match[0], medianIncome:parseInt(match[1])||null, poverty:parseInt(match[2])||null, pop:parseInt(match[3])||null };
+      subCache[cacheKey] = data;
+      displayCountyData(data, countyName, latlng);
+    })
+    .catch(function() { showNoData(countyName+' County'); });
+}
+
+// ── DISPLAY ──
+function displayCountryData(data, name, latlng) {
+  var ren = data['EG.ELC.RNEW.ZS'], hunger = data['SN.ITK.DEFC.ZS'];
+  var water = data['SH.H2O.SMDW.ZS'], land = data['ER.LND.PTLD.ZS'];
+  var gini = data['SI.POV.GINI'], gdp = data['NY.GDP.PCAP.CD'];
+
+  if (ren) setSlider('sl-ren', ren.value, 'sv-ren');
+  if (hunger) setSlider('sl-food', Math.max(0,100-hunger.value), 'sv-food');
+  if (water) setSlider('sl-water', water.value, 'sv-water');
+  if (land) setSlider('sl-land', land.value, 'sv-land');
+  if (gini) setSlider('sl-wealth', Math.max(0,100-gini.value), 'sv-wealth');
+  BASE_METRICS = computeMetrics(getSliders());
+  recalc();
+
+  var hasAny = ren || hunger || water || land || gini || gdp;
+  if (!hasAny) { showNoData(name); return; }
+
+  var html = '';
+  if (ren) html += dataRow('Renewable electricity', ren.value+'%', ren.year);
+  if (hunger) html += dataRow('Food secure', Math.round(100-hunger.value)+'%', hunger.year);
+  if (water) html += dataRow('Safe water', water.value+'%', water.year);
+  if (land) html += dataRow('Protected land', land.value+'%', land.year);
+  if (gini) html += dataRow('Gini coefficient', gini.value, gini.year);
+  if (gdp) html += dataRow('GDP per capita', '$'+Math.round(gdp.value).toLocaleString(), gdp.year);
+  html += '<div style="font-size:10px;color:#b8b4ae;margin-top:10px;padding-top:6px;border-top:1px solid #f0ece4">World Bank Open Data. Most recent year shown.</div>';
+  showDataPanel(name, html);
+
+  if (latlng && leafletMap) {
+    var ph = '<div class="popup-title">'+name+'</div>';
+    if (ren) ph += '<div class="popup-row"><span class="popup-label">Renewables</span><span class="popup-val">'+ren.value+'%</span></div>';
+    if (water) ph += '<div class="popup-row"><span class="popup-label">Safe water</span><span class="popup-val">'+water.value+'%</span></div>';
+    if (gdp) ph += '<div class="popup-row"><span class="popup-label">GDP/capita</span><span class="popup-val">$'+Math.round(gdp.value/1000)+'k</span></div>';
+    ph += '<div class="popup-source">World Bank</div>';
+    L.popup().setLatLng(latlng).setContent(ph).openOn(leafletMap);
+  }
+  setMapStatus(name + ' data loaded. Sliders updated. Zoom in for regions.');
+  // Add start project button
+  addStartProjectBtn(name, data, 'World Bank');
+  // Sub-national boundaries: US uses GeoJSON overlay, others use base map + reverse geocode
+  if (leafletMap && selectedPlace.code === 'US') {
+    loadUSStateLayer();
+  }
+}
+
+function buildProjectBaseline(countryData) {
+  var ren = countryData['EG.ELC.RNEW.ZS'];
+  var hunger = countryData['SN.ITK.DEFC.ZS'];
+  var water = countryData['SH.H2O.SMDW.ZS'];
+  var land = countryData['ER.LND.PTLD.ZS'];
+  var gini = countryData['SI.POV.GINI'];
+  var renVal = ren ? ren.value : 34;
+  var foodVal = hunger ? Math.max(0,100-hunger.value) : 72;
+  var waterVal = water ? water.value : 74;
+  var landVal = land ? land.value : 17;
+  var wealthVal = gini ? Math.max(0,100-gini.value) : 50;
+  var fl = Math.min(100,Math.round(foodVal*0.25+waterVal*0.2+wealthVal*0.2+8*0.2+renVal*0.1+landVal*0.05));
+  var ec = Math.min(100,Math.round(renVal*0.4+landVal*0.35+8*0.15));
+  var st = Math.min(100,Math.round(foodVal*0.25+8*0.25+wealthVal*0.2+renVal*0.15+waterVal*0.15));
+  return {energy:renVal,water:waterVal,food:foodVal,land:landVal,wealth:wealthVal,conflict:8,
+          flourishing:fl,ecological:ec,stability:st};
+}
+
+function addStartProjectBtn(title, countryData, source) {
+  var slot = document.getElementById('startProjectSlot');
+  if (!slot) return;
+  window.currentPlaceBaseline = (countryData && countryData.flourishing)
+    ? countryData : buildProjectBaseline(countryData || {});
+  window.currentPlaceTitle = title;
+  window.currentPlaceSource = source || 'World Bank';
+  var btn = document.createElement('button');
+  btn.className = 'btn btn-dark btn-full';
+  btn.style.marginTop = '12px';
+  btn.textContent = 'Start a Project Here';
+  btn.onclick = function() {
+    startProject(window.currentPlaceTitle, window.currentPlaceBaseline, window.currentPlaceSource);
+  };
+  slot.innerHTML = '';
+  slot.appendChild(btn);
+}
+
+function displayRegionData(regionName, countryName, countryData, latlng) {
+  var ren = countryData['EG.ELC.RNEW.ZS'];
+  var hunger = countryData['SN.ITK.DEFC.ZS'];
+  var water = countryData['SH.H2O.SMDW.ZS'];
+  var gdp = countryData['NY.GDP.PCAP.CD'];
+
+  var html = '<div style="font-size:11px;color:#8a8580;margin-bottom:10px;padding:6px 8px;background:#f8f6f2;border-radius:6px">';
+  html += 'Sub-national data limited. Showing national figures for ' + countryName + '.</div>';
+  if (ren) html += dataRow('Renewable electricity', ren.value+'%', ren.year);
+  if (hunger) html += dataRow('Food secure', Math.round(100-hunger.value)+'%', hunger.year);
+  if (water) html += dataRow('Safe water', water.value+'%', water.year);
+  if (gdp) html += dataRow('GDP per capita', '$'+Math.round(gdp.value).toLocaleString(), gdp.year);
+  html += '<div style="font-size:10px;color:#b8b4ae;margin-top:8px">World Bank national data. Regional breakdown not available.</div>';
+  showDataPanel(regionName + ', ' + countryName, html);
+  setMapStatus(regionName + ' — national data shown as context.');
+}
+
+function displayStateData(data, stateName, latlng) {
+  if (data.medianIncome) setSlider('sl-wealth', Math.min(100,Math.round(data.medianIncome/1200)), 'sv-wealth');
+  if (data.poverty && data.pop) setSlider('sl-food', Math.max(0,Math.round(100-(data.poverty/data.pop*100)*2)), 'sv-food');
+  recalc();
+  var html = '';
+  if (data.pop) html += dataRow('Population', data.pop.toLocaleString(), '2022');
+  if (data.medianIncome) html += dataRow('Median household income', '$'+data.medianIncome.toLocaleString(), '2022');
+  if (data.poverty && data.pop) html += dataRow('Poverty rate', (data.poverty/data.pop*100).toFixed(1)+'%', '2022');
+  html += '<div style="font-size:11px;color:#8a8580;margin-top:10px;padding:8px;background:#f8f6f2;border-radius:6px">Zoom in and tap a county for local data.</div>';
+  html += '<div style="font-size:10px;color:#b8b4ae;margin-top:6px">US Census ACS 5-year estimates 2022.</div>';
+  showDataPanel(stateName+', USA', html);
+  setMapStatus(stateName+' loaded. Tap a county for more detail.');
+  // Add start project button
+  var stateBaseline = {
+    energy: 34, water: 95, food: 90, land: 17, wealth: 60, conflict: 5,
+    flourishing: data.medianIncome ? Math.min(100,Math.round(data.medianIncome/1200)) : 65,
+    ecological: 45, stability: 70
+  };
+  if (data.medianIncome) stateBaseline.wealth = Math.min(100,Math.round(data.medianIncome/1200));
+  addStartProjectBtn(stateName + ', USA', stateBaseline, 'US Census 2022');
+}
+
+function displayCountyData(data, countyName, latlng) {
+  if (data.medianIncome) setSlider('sl-wealth', Math.min(100,Math.round(data.medianIncome/1200)), 'sv-wealth');
+  recalc();
+  var html = '';
+  if (data.pop) html += dataRow('Population', data.pop.toLocaleString(), '2022');
+  if (data.medianIncome) html += dataRow('Median household income', '$'+data.medianIncome.toLocaleString(), '2022');
+  if (data.poverty && data.pop) html += dataRow('Poverty rate', (data.poverty/data.pop*100).toFixed(1)+'%', '2022');
+  html += '<div style="font-size:10px;color:#b8b4ae;margin-top:8px">US Census ACS 5-year estimates 2022.</div>';
+  showDataPanel(data.name||countyName+' County', html);
+  setMapStatus(countyName+' County data loaded.');
+  var countyBaseline = {
+    energy:34, water:95, food:85, land:10, wealth:data.medianIncome?Math.min(100,Math.round(data.medianIncome/1200)):55, conflict:5,
+    flourishing:data.medianIncome?Math.min(100,Math.round(data.medianIncome/1200)):55, ecological:40, stability:65
+  };
+  addStartProjectBtn((data.name||countyName+' County'), countyBaseline, 'US Census 2022');
+}
+
+function showNoData(name) {
+  showDataPanel(name, '<div style="color:#8a8580;font-size:13px;padding:6px 0">No data available for '+name+'. World Bank or Census data may not cover this area.</div>');
+  setMapStatus(name+' — no data available');
+}
+
+// ── HELPERS ──
+function showDataPanel(title, html) {
+  document.getElementById('dataPanel').style.display = 'block';
+  document.getElementById('dataPanelTitle').textContent = title;
+  // Always include project button slot at bottom
+  document.getElementById('dataPanelContent').innerHTML = html + 
+    '<div id="startProjectSlot"></div>';
+}
+
+function dataRow(label, value, year) {
+  var yr = year ? ' <span style="color:#b8b4ae;font-size:10px">('+year+')</span>' : '';
+  return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f4f0e8"><span style="font-size:13px;color:#8a8580">'+label+'</span><span style="font-size:13px;font-weight:600;color:#1a1814">'+value+yr+'</span></div>';
+}
+
+function setMapStatus(msg) {
+  var el = document.getElementById('mapStatus');
+  if (el) el.textContent = msg;
+}
+
+function setSlider(id, val, labelId) {
+  var s = document.getElementById(id);
+  var l = document.getElementById(labelId);
+  if (s && val !== null && !isNaN(val)) {
+    s.value = Math.round(val);
+    if (l) l.textContent = Math.round(val)+'%';
+  }
+}
+
+function resetMapView() {
+  if (leafletMap) { leafletMap.setView([20,0], 2); }
+  if (subLayer) { leafletMap.removeLayer(subLayer); subLayer = null; }
+  selectedPlace = { name:'Global', code:null, iso3:null, type:'world' };
+  document.getElementById('viewingLabel').textContent = 'Global Average';
+  document.getElementById('dataPanel').style.display = 'none';
+  resetSliders();
+}
+
+function resetSliders() {
+  setSlider('sl-ren',34,'sv-ren'); setSlider('sl-food',72,'sv-food');
+  setSlider('sl-kl',8,'sv-kl'); setSlider('sl-land',17,'sv-land');
+  setSlider('sl-water',74,'sv-water'); setSlider('sl-wealth',12,'sv-wealth');
+  recalc();
+  document.getElementById('viewingLabel').textContent = 'Global Average';
+}
+
+// ── GLOBE ──
+
+
+function initGlobe() {
+  var canvas = document.getElementById('globeCanvas');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var cx = 60, cy = 60, r = 52;
+  var angle = 0;
+
+  function draw() {
+    ctx.clearRect(0, 0, 120, 120);
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(184,146,42,0.25)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.strokeStyle = 'rgba(184,146,42,0.15)';
+    ctx.lineWidth = 0.75;
+    var lat;
+    for (lat = -60; lat <= 60; lat += 30) {
+      var latRad = lat * Math.PI / 180;
+      var ry = r * Math.cos(latRad);
+      var yPos = cy - r * Math.sin(latRad);
+      if (ry > 0) {
+        ctx.beginPath();
+        ctx.ellipse(cx, yPos, ry, ry * 0.28, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+
+    ctx.strokeStyle = 'rgba(184,146,42,0.12)';
+    var lon;
+    for (lon = 0; lon < 360; lon += 40) {
+      var lonRad = (lon + angle) * Math.PI / 180;
+      ctx.beginPath();
+      var started = false;
+      var lt;
+      for (lt = -90; lt <= 90; lt += 5) {
+        var ltRad = lt * Math.PI / 180;
+        var x = cx + r * Math.cos(ltRad) * Math.sin(lonRad);
+        var y = cy - r * Math.sin(ltRad);
+        var z = Math.cos(ltRad) * Math.cos(lonRad);
+        if (z > 0) {
+          if (!started) { ctx.moveTo(x, y); started = true; }
+          else ctx.lineTo(x, y);
+        } else { started = false; }
+      }
+      ctx.stroke();
+    }
+
+    // Highlighted meridian
+    ctx.strokeStyle = 'rgba(184,146,42,0.4)';
+    ctx.lineWidth = 1;
+    var lonRad2 = angle * Math.PI / 180;
+    ctx.beginPath();
+    var s2 = false;
+    for (var lt2 = -90; lt2 <= 90; lt2 += 3) {
+      var ltRad2 = lt2 * Math.PI / 180;
+      var x2 = cx + r * Math.cos(ltRad2) * Math.sin(lonRad2);
+      var y2 = cy - r * Math.sin(ltRad2);
+      var z2 = Math.cos(ltRad2) * Math.cos(lonRad2);
+      if (z2 > 0) {
+        if (!s2) { ctx.moveTo(x2, y2); s2 = true; }
+        else ctx.lineTo(x2, y2);
+      } else { s2 = false; }
+    }
+    ctx.stroke();
+
+    angle += 0.3;
+    requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+// ── FLOATING COUNCIL CHAT ──
+var chatOpen = false;
+var chatHistory = [];
+var chatLoading = false;
+
+function toggleCouncilChat() {
+  chatOpen = !chatOpen;
+  var panel = document.getElementById('councilChatPanel');
+  if (chatOpen) {
+    panel.classList.add('open');
+    updateChatContext();
+    updateChatCouncilNames();
+    setTimeout(function() {
+      var input = document.getElementById('chatInput');
+      if (input) input.focus();
+    }, 100);
+  } else {
+    panel.classList.remove('open');
+  }
+}
+
+function updateChatCouncilNames() {
+  var el = document.getElementById('chatCouncilNames');
+  if (!el) return;
+  var names = council.slice(0,4).map(function(m){return m.name;}).join(', ');
+  if (council.length > 4) names += ' +' + (council.length-4) + ' more';
+  el.textContent = names;
+}
+
+function updateChatContext() {
+  var bar = document.getElementById('chatContextBar');
+  if (!bar) return;
+  var ctx = '';
+  if (selectedPlace && selectedPlace.name && selectedPlace.name !== 'Global') {
+    ctx = 'Context: ' + selectedPlace.name;
+  }
+  if (activeProblem) {
+    ctx = ctx ? ctx + ' — ' + activeProblem.substring(0,50) : activeProblem.substring(0,60);
+  }
+  if (ctx) {
+    bar.style.display = 'block';
+    bar.textContent = ctx;
+  } else {
+    bar.style.display = 'none';
+  }
+}
+
+function addChatMsg(role, text, speaker) {
+  var msgs = document.getElementById('chatMessages');
+  if (!msgs) return;
+  var div = document.createElement('div');
+  if (role === 'user') {
+    div.className = 'chat-msg-user';
+    div.textContent = text;
+  } else {
+    div.className = 'chat-msg-council';
+    if (speaker) {
+      var spk = document.createElement('div');
+      spk.className = 'chat-msg-speaker';
+      spk.textContent = speaker.toUpperCase();
+      div.appendChild(spk);
+    }
+    div.innerHTML = (speaker ? '<div class="chat-msg-speaker">'+speaker.toUpperCase()+'</div>' : '') +
+                    '<div>' + text + '</div>';
+  }
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function addChatThinking(speakerName) {
+  var msgs = document.getElementById('chatMessages');
+  if (!msgs) return;
+  var div = document.createElement('div');
+  div.className = 'chat-msg-council';
+  div.id = 'chatThinking';
+  div.innerHTML = '<div class="chat-msg-speaker">' + (speakerName||'COUNCIL').toUpperCase() + '</div>' +
+    '<div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>';
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function removeChatThinking() {
+  var el = document.getElementById('chatThinking');
+  if (el) el.parentNode.removeChild(el);
+}
+
+function sendChat() {
+  var input = document.getElementById('chatInput');
+  if (!input || chatLoading) return;
+  var text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  chatLoading = true;
+  addChatMsg('user', text);
+  chatHistory.push({ role:'user', content: text });
+
+  // Pick a speaker
+  var speakers = council.filter(function(m){return !m.isClaude;});
+  var speaker = speakers[Math.floor(Math.random() * speakers.length)] || council[0];
+
+  addChatThinking(speaker.name);
+
+  // Build context
+  var ctx = '';
+  if (selectedPlace && selectedPlace.name !== 'Global') ctx += 'The user is currently viewing ' + selectedPlace.name + ' on the World Game map. ';
+  if (activeProblem) ctx += 'The forum is debating: "' + activeProblem + '". ';
+
+  // Recent history
+  var recentHist = chatHistory.slice(-6).map(function(m){
+    return (m.role==='user' ? 'User: ' : speaker.name+': ') + m.content;
+  }).join('\n');
+
+  var sys = 'You are ' + speaker.name + ' (' + speaker.era + '), known for: ' + speaker.domain + '. ' +
+    'You are part of a council advising this person. Be direct, specific, and true to your voice. ' +
+    '2-4 sentences. No preamble. ' +
+    (ctx ? ctx : '') +
+    (recentHist ? 'Conversation so far:\n' + recentHist : '');
+
+  fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json' },
+    body: JSON.stringify({ system:sys, user:text, maxTokens:300 })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d) {
+    chatLoading = false;
+    removeChatThinking();
+    if (d.error) {
+      addChatMsg('council', d.error, 'Error');
+    } else {
+      addChatMsg('council', d.text, speaker.name);
+      chatHistory.push({ role:'assistant', content: d.text });
+    }
+  })
+  .catch(function(e) {
+    chatLoading = false;
+    removeChatThinking();
+    addChatMsg('council', e.message, 'Error');
+  });
+}
+
+// ── PLACE PROJECTS ──
+var currentProject = null;
+var savedProjects = [];
+
+// Policy definitions - each has name, unit, baseline key, cost per point, impact weights
+var POLICIES = [
+  {
+    id:'energy', name:'Renewable Energy Transition', unit:'%',
+    desc:'Build solar, wind, and grid infrastructure',
+    costPerPoint: 0.8, // $B per percentage point
+    timeYears: 10,
+    impacts: { flourishing:0.3, ecological:0.5, stability:0.2 }
+  },
+  {
+    id:'water', name:'Clean Water Infrastructure', unit:'%',
+    desc:'Pipelines, treatment plants, access programs',
+    costPerPoint: 0.5,
+    timeYears: 7,
+    impacts: { flourishing:0.5, ecological:0.2, stability:0.3 }
+  },
+  {
+    id:'food', name:'Food Security Programs', unit:'%',
+    desc:'Agricultural investment, distribution networks, nutrition programs',
+    costPerPoint: 0.4,
+    timeYears: 5,
+    impacts: { flourishing:0.5, ecological:0.1, stability:0.4 }
+  },
+  {
+    id:'land', name:'Protected Land Expansion', unit:'%',
+    desc:'National parks, marine reserves, conservation corridors',
+    costPerPoint: 0.3,
+    timeYears: 8,
+    impacts: { flourishing:0.1, ecological:0.7, stability:0.2 }
+  },
+  {
+    id:'wealth', name:'Wealth Distribution Reform', unit:'pts',
+    desc:'Tax policy, social programs, public services investment',
+    costPerPoint: 1.2,
+    timeYears: 15,
+    impacts: { flourishing:0.4, ecological:0.1, stability:0.5 }
+  },
+  {
+    id:'conflict', name:'Conflict Reduction and Governance', unit:'pts',
+    desc:'Justice system, anti-corruption, civil society programs',
+    costPerPoint: 0.6,
+    timeYears: 12,
+    impacts: { flourishing:0.3, ecological:0.1, stability:0.6 }
+  }
+];
+
+var projectSliders = {}; // policy id -> current delta value
+
+function startProject(placeName, baselineData, dataSource) {
+  currentProject = {
+    place: placeName,
+    baseline: baselineData,
+    dataSource: dataSource || 'World Bank',
+    policies: {},
+    created: new Date().toLocaleDateString()
+  };
+
+  // Reset sliders
+  projectSliders = {};
+  POLICIES.forEach(function(p) { projectSliders[p.id] = 0; });
+
+  // Update header
+  document.getElementById('projectPlaceName').textContent = placeName;
+  document.getElementById('projectDataSource').textContent = dataSource || 'World Bank';
+
+  // Set baseline metrics
+  var fl = baselineData.flourishing || 50;
+  var ec = baselineData.ecological || 50;
+  var st = baselineData.stability || 50;
+  document.getElementById('projMetFl').textContent = fl;
+  document.getElementById('projMetEc').textContent = ec;
+  document.getElementById('projMetSt').textContent = st;
+
+  // Render policy sliders
+  renderProjectPolicies(baselineData);
+  updateProjectOutcomes();
+
+  // Clear previous debate
+  var debateMsgs = document.getElementById('projectDebateMessages');
+  debateMsgs.innerHTML = '';
+  debateMsgs.style.display = 'none';
+  document.getElementById('projectSaveMsg').style.display = 'none';
+
+  show('project');
+}
+
+function renderProjectPolicies(baseline) {
+  var container = document.getElementById('projectPolicies');
+  if (!container) return;
+  var html = '';
+  POLICIES.forEach(function(policy) {
+    var baseVal = baseline[policy.id] || 0;
+    var delta = projectSliders[policy.id] || 0;
+    var cost = Math.round(delta * policy.costPerPoint * 10) / 10;
+    html += '<div class="card" style="padding:14px 16px">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">';
+    html += '<div style="flex:1">';
+    html += '<div style="font-size:14px;font-weight:600;color:#1a1814;margin-bottom:2px">' + policy.name + '</div>';
+    html += '<div style="font-size:12px;color:#8a8580">' + policy.desc + '</div>';
+    html += '</div>';
+    html += '<div style="text-align:right;flex-shrink:0;margin-left:12px">';
+    html += '<div style="font-size:13px;font-weight:600;color:#b8922a" id="pv-' + policy.id + '">+' + delta + policy.unit + '</div>';
+    html += '<div style="font-size:11px;color:#b8b4ae" id="pc-' + policy.id + '">' + (cost > 0 ? '$' + cost + 'B' : 'no cost') + '</div>';
+    html += '</div></div>';
+    html += '<div style="display:flex;align-items:center;gap:10px">';
+    html += '<span style="font-size:11px;color:#b8b4ae;flex-shrink:0">Baseline: ' + baseVal + policy.unit + '</span>';
+    html += '<input type="range" min="0" max="' + Math.max(20, 100 - baseVal) + '" value="' + delta + '" ';
+    html += 'style="flex:1;accent-color:#d4aa44" ';
+    html += 'oninput="updatePolicySlider(\'' + policy.id + '\',this.value)">';
+    html += '<span style="font-size:11px;color:#1a1814;flex-shrink:0;min-width:40px;text-align:right">+' + delta + '</span>';
+    html += '</div>';
+    html += '</div>';
+  });
+  container.innerHTML = html;
+}
+
+function updatePolicySlider(policyId, val) {
+  projectSliders[policyId] = parseInt(val) || 0;
+  var policy = POLICIES.find(function(p) { return p.id === policyId; });
+  if (!policy) return;
+  var delta = projectSliders[policyId];
+  var cost = Math.round(delta * policy.costPerPoint * 10) / 10;
+  var pvEl = document.getElementById('pv-' + policyId);
+  var pcEl = document.getElementById('pc-' + policyId);
+  if (pvEl) pvEl.textContent = '+' + delta + policy.unit;
+  if (pcEl) pcEl.textContent = cost > 0 ? '$' + cost + 'B' : 'no cost';
+  updateProjectOutcomes();
+}
+
+function updateProjectOutcomes() {
+  if (!currentProject) return;
+  var baseline = currentProject.baseline;
+  var baseFl = baseline.flourishing || 50;
+  var baseEc = baseline.ecological || 50;
+  var baseSt = baseline.stability || 50;
+
+  var deltaFl = 0, deltaEc = 0, deltaSt = 0;
+  var totalCost = 0;
+  var maxYears = 0;
+
+  POLICIES.forEach(function(policy) {
+    var delta = projectSliders[policy.id] || 0;
+    if (delta === 0) return;
+    var weight = delta / 20; // normalize
+    deltaFl += policy.impacts.flourishing * weight * 8;
+    deltaEc += policy.impacts.ecological * weight * 8;
+    deltaSt += policy.impacts.stability * weight * 8;
+    totalCost += delta * policy.costPerPoint;
+    if (delta > 0) maxYears = Math.max(maxYears, policy.timeYears);
+  });
+
+  var newFl = Math.min(100, Math.round(baseFl + deltaFl));
+  var newEc = Math.min(100, Math.round(baseEc + deltaEc));
+  var newSt = Math.min(100, Math.round(baseSt + deltaSt));
+
+  document.getElementById('projOutFl').textContent = newFl;
+  document.getElementById('projOutEc').textContent = newEc;
+  document.getElementById('projOutSt').textContent = newSt;
+
+  function delta(orig, updated) {
+    var d = updated - orig;
+    return d > 0 ? '<span style="color:#2a9060">+' + d + '</span>' :
+           d < 0 ? '<span style="color:#c04020">' + d + '</span>' : '';
+  }
+  document.getElementById('projOutFlDelta').innerHTML = delta(baseFl, newFl);
+  document.getElementById('projOutEcDelta').innerHTML = delta(baseEc, newEc);
+  document.getElementById('projOutStDelta').innerHTML = delta(baseSt, newSt);
+
+  document.getElementById('projTotalCost').textContent = totalCost > 0 ? '$' + Math.round(totalCost * 10) / 10 + 'B' : '$0';
+  document.getElementById('projTimeline').textContent = maxYears > 0 ? maxYears + ' years' : 'No interventions yet';
+}
+
+async function debateProject() {
+  if (!currentProject) return;
+  var btn = document.getElementById('projectDebateBtn');
+  var msgs = document.getElementById('projectDebateMessages');
+  btn.disabled = true;
+  btn.textContent = 'Convening...';
+  msgs.style.display = 'block';
+  msgs.innerHTML = '';
+
+  // Build summary of active policies
+  var activePolicies = [];
+  POLICIES.forEach(function(p) {
+    var d = projectSliders[p.id] || 0;
+    if (d > 0) {
+      activePolicies.push(p.name + ' (+' + d + p.unit + ', $' + Math.round(d * p.costPerPoint * 10)/10 + 'B)');
+    }
+  });
+
+  var place = currentProject.place;
+  var baseline = currentProject.baseline;
+  var summary = activePolicies.length > 0
+    ? activePolicies.join(', ')
+    : 'No specific interventions selected yet';
+
+  var totalCost = 0;
+  POLICIES.forEach(function(p) { totalCost += (projectSliders[p.id]||0) * p.costPerPoint; });
+
+  var problemStatement = 'Place Project for ' + place + '. ' +
+    'Baseline: Flourishing ' + (baseline.flourishing||50) + '/100, ' +
+    'Ecological ' + (baseline.ecological||50) + '/100, ' +
+    'Stability ' + (baseline.stability||50) + '/100. ' +
+    'Proposed interventions: ' + summary + '. ' +
+    'Total investment: $' + Math.round(totalCost*10)/10 + 'B. ' +
+    'What are the philosophical implications, likely unintended consequences, historical precedents, and most important considerations for this plan?';
+
+  // Get 3 council voices
+  var voices = council.slice(0, 3);
+  var allPieces = [];
+
+  // Add header
+  var hdr = document.createElement('div');
+  hdr.style.cssText = 'padding:14px 16px;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#b8922a;border-bottom:1px solid #f4f0e8';
+  hdr.textContent = 'Council Analysis — ' + place;
+  msgs.appendChild(hdr);
+
+  for (var i = 0; i < voices.length; i++) {
+    var voice = voices[i];
+    var thinking = document.createElement('div');
+    thinking.style.cssText = 'padding:12px 16px;display:flex;align-items:center;gap:8px;color:#8a8580;font-size:13px';
+    thinking.id = 'proj-think-' + i;
+    thinking.innerHTML = '<span>' + voice.name + '</span><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>';
+    msgs.appendChild(thinking);
+    msgs.scrollIntoView({ behavior:'smooth', block:'end' });
+
+    var sys = 'You are ' + voice.name + ' (' + voice.era + '), known for: ' + voice.domain + '. ' +
+      'A person is designing a policy intervention for a real place. Respond in your authentic voice. ' +
+      'Be specific, provocative, and historically grounded. 3-4 sentences. No preamble.';
+
+    try {
+      var response = await new Promise(function(resolve, reject) {
+        fetch('/api/chat', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ system:sys, user:problemStatement, maxTokens:400 })
+        })
+        .then(function(r){ return r.json(); })
+        .then(function(d){ resolve(d.text || d.error); })
+        .catch(reject);
+      });
+
+      var t = document.getElementById('proj-think-' + i);
+      if (t) t.parentNode.removeChild(t);
+
+      var div = document.createElement('div');
+      div.style.cssText = 'padding:14px 16px;border-bottom:1px solid #f4f0e8';
+      div.innerHTML = '<div style="font-size:11px;font-weight:600;color:#b8922a;margin-bottom:5px;letter-spacing:.5px">' + voice.name.toUpperCase() + '</div>' +
+        '<div style="font-size:14px;line-height:1.7;color:#4a4640">' + response + '</div>';
+      msgs.appendChild(div);
+      allPieces.push(voice.name + ': ' + response);
+    } catch(e) {
+      var t2 = document.getElementById('proj-think-' + i);
+      if (t2) t2.parentNode.removeChild(t2);
+    }
+  }
+
+  // Synthesis
+  if (allPieces.length > 0) {
+    var synthThink = document.createElement('div');
+    synthThink.style.cssText = 'padding:12px 16px;display:flex;align-items:center;gap:8px;color:#8a8580;font-size:13px';
+    synthThink.id = 'proj-synth-think';
+    synthThink.innerHTML = '<span>Synthesizing...</span><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>';
+    msgs.appendChild(synthThink);
+
+    try {
+      var synthSys = 'You are Claude, synthesizing a council debate about a policy plan for ' + place + '. ' +
+        'Distill the key insight in 2-3 sentences. What is the single most important thing this person should know?';
+      var synthResponse = await new Promise(function(resolve, reject) {
+        fetch('/api/chat', {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ system:synthSys, user:allPieces.join('\n\n'), maxTokens:300 })
+        })
+        .then(function(r){ return r.json(); })
+        .then(function(d){ resolve(d.text || ''); })
+        .catch(reject);
+      });
+      var st2 = document.getElementById('proj-synth-think');
+      if (st2) st2.parentNode.removeChild(st2);
+      var synthDiv = document.createElement('div');
+      synthDiv.style.cssText = 'padding:14px 16px;background:#fdf8ee;border-top:2px solid #f0cc70';
+      synthDiv.innerHTML = '<div style="font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:#b8922a;margin-bottom:6px">Council Synthesis</div>' +
+        '<div style="font-size:14px;line-height:1.7;color:#1a1814;font-style:italic">' + synthResponse + '</div>';
+      msgs.appendChild(synthDiv);
+    } catch(e) {
+      var st3 = document.getElementById('proj-synth-think');
+      if (st3) st3.parentNode.removeChild(st3);
+    }
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'Convene the Council Again';
+}
+
+function saveProject() {
+  if (!currentProject) return;
+  var title = document.getElementById('projectTitle').value.trim();
+  if (!title) { title = currentProject.place + ' Project'; }
+
+  var activePolicies = [];
+  POLICIES.forEach(function(p) {
+    var d = projectSliders[p.id] || 0;
+    if (d > 0) activePolicies.push({ name:p.name, delta:d, unit:p.unit });
+  });
+
+  var saved = {
+    title: title,
+    place: currentProject.place,
+    baseline: currentProject.baseline,
+    policies: activePolicies,
+    date: new Date().toLocaleDateString(),
+    projectedFl: document.getElementById('projOutFl').textContent,
+    projectedEc: document.getElementById('projOutEc').textContent,
+    projectedSt: document.getElementById('projOutSt').textContent
+  };
+
+  try {
+    var existing = JSON.parse(localStorage.getItem('wg_projects') || '[]');
+    existing.unshift(saved);
+    localStorage.setItem('wg_projects', JSON.stringify(existing));
+  } catch(e) {}
+
+  // Also share summary to gallery
+  var summary = 'Place project for ' + currentProject.place + ': ' +
+    activePolicies.map(function(p){ return p.name + ' +' + p.delta + p.unit; }).join(', ') + '. ' +
+    'Projected flourishing: ' + document.getElementById('projOutFl').textContent + '/100.';
+  shareToGallery('scenario', title, summary);
+
+  var msg = document.getElementById('projectSaveMsg');
+  msg.textContent = 'Project saved and shared to Gallery.';
+  msg.style.display = 'block';
+  document.getElementById('projectTitle').value = '';
+}
+
+// ════════════ AVATAR SYSTEM ════════════
+
+var TYPES = {
+  analyst: {
+    name:'The Analyst', tagline:'You see the signal in everything. Others see noise.',
+    color:'#4a90d9', glow:'#1a3a6a', silhouette:'analyst',
+    animal:'owl', tech:'visor', paletteIdx:0,
+    council:['Carroll Quigley','Hannah Arendt','Claude']
+  },
+  probe: {
+    name:'The Probe', tagline:'You go first. You always have.',
+    color:'#d4aa44', glow:'#6a4a10', silhouette:'probe',
+    animal:'fox', tech:'antenna', paletteIdx:1,
+    council:['Buckminster Fuller','Nikola Tesla','Claude']
+  },
+  synthesizer: {
+    name:'The Synthesizer', tagline:'You combine what others keep separate.',
+    color:'#9060d0', glow:'#401080', silhouette:'synthesizer',
+    animal:'octopus', tech:'circuit', paletteIdx:2,
+    council:['Carl Jung','Alan Watts','Claude']
+  },
+  vector: {
+    name:'The Vector', tagline:'Force with direction. You make things move.',
+    color:'#d04030', glow:'#601010', silhouette:'probe',
+    animal:'wolf', tech:'exhaust', paletteIdx:3,
+    council:['Frantz Fanon','Rosa Luxemburg','Claude']
+  },
+  anomaly: {
+    name:'The Anomaly', tagline:'You are the data point that breaks the model.',
+    color:'#20c080', glow:'#0a4030', silhouette:'anomaly',
+    animal:'crow', tech:'glitch', paletteIdx:4,
+    council:['Jean Baudrillard','Emma Goldman','Claude']
+  },
+  module: {
+    name:'The Module', tagline:'Self-contained. The whole works because you do.',
+    color:'#c08030', glow:'#503010', silhouette:'analyst',
+    animal:'deer', tech:'receiver', paletteIdx:5,
+    council:['Bell Hooks','Vandana Shiva','Claude']
+  },
+  signal: {
+    name:'The Signal', tagline:'Broadcasting into the unknown. Someone will hear.',
+    color:'#40b0c0', glow:'#104050', silhouette:'synthesizer',
+    animal:'moth', tech:'lens', paletteIdx:6,
+    council:['Buddha','Rumi','Claude']
+  },
+  static: {
+    name:'The Static', tagline:'The noise that turns out to be the message.',
+    color:'#a0a0a0', glow:'#303030', silhouette:'anomaly',
+    animal:'mantis', tech:'wave', paletteIdx:7,
+    council:['Alan Watts','Jean Baudrillard','Claude']
+  }
+};
+
+var QUIZ = [
+  { q:'A system is failing. You:',
+    opts:[
+      {text:'Find out exactly why before touching anything',type:'analyst'},
+      {text:'Start pulling it apart to see what happens',type:'probe'},
+      {text:'Look for the one piece connecting everything',type:'synthesizer'},
+      {text:'Fix the most broken part and see what follows',type:'vector'},
+      {text:'Let it finish failing — something better will come',type:'anomaly'},
+      {text:'Make sure the people depending on it are okay',type:'module'},
+      {text:'Tell everyone what you see happening',type:'signal'},
+      {text:'Do the unexpected thing and watch what shifts',type:'static'}
+    ]
+  },
+  { q:'You have one hour that belongs to no one. It becomes:',
+    opts:[
+      {text:'A quiet review of everything on your mind',type:'analyst'},
+      {text:'The start of something you never planned',type:'probe'},
+      {text:'Three projects suddenly connected',type:'synthesizer'},
+      {text:'Something that needed doing finally done',type:'vector'},
+      {text:'Gone. You lost track completely.',type:'anomaly'},
+      {text:'Time with someone who needed it',type:'module'},
+      {text:'A message you finally had time to write',type:'signal'},
+      {text:'Weird. Productively weird.',type:'static'}
+    ]
+  },
+  { q:'Someone hands you something broken. You:',
+    opts:[
+      {text:'Immediately understand what happened to it',type:'analyst'},
+      {text:'Try to use it anyway',type:'probe'},
+      {text:'See it as something else entirely',type:'synthesizer'},
+      {text:'Fix it or replace it. Quickly.',type:'vector'},
+      {text:'Wonder if broken is the wrong word',type:'anomaly'},
+      {text:'Ask who it belongs to and what they need',type:'module'},
+      {text:'Tell the story of how it broke',type:'signal'},
+      {text:'Make it into something it was not',type:'static'}
+    ]
+  },
+  { q:'The map is wrong. You:',
+    opts:[
+      {text:'Correct it methodically',type:'analyst'},
+      {text:'Ignore it and navigate by feel',type:'probe'},
+      {text:'Cross-reference three other maps',type:'synthesizer'},
+      {text:'Go anyway. You can adapt.',type:'vector'},
+      {text:'Question whether the territory is right either',type:'anomaly'},
+      {text:'Make sure no one else gets lost',type:'module'},
+      {text:'Mark the error for everyone who comes after',type:'signal'},
+      {text:'Draw a better one from scratch',type:'static'}
+    ]
+  },
+  { q:'It is very quiet. You feel:',
+    opts:[
+      {text:'Finally able to think',type:'analyst'},
+      {text:'Slightly restless',type:'probe'},
+      {text:'Like something is about to connect',type:'synthesizer'},
+      {text:'Ready',type:'vector'},
+      {text:'Like the quiet is saying something',type:'anomaly'},
+      {text:'Aware of everyone who is not here',type:'module'},
+      {text:'Like a frequency waiting to be found',type:'signal'},
+      {text:'Uncertain in a way that feels important',type:'static'}
+    ]
+  }
+];
+
+var ANIMALS = ['owl','fox','octopus','wolf','crow','deer','moth','mantis','raven','lynx'];
+var TECH_PARTS = ['visor','antenna','circuit','exhaust','receiver','lens','wave','glitch','scope','node'];
+var PALETTES = [
+  {name:'Deep Space', p:'#4a90d9', s:'#0a0a2a', g:'#1a3a6a'},
+  {name:'Solar', p:'#d4aa44', s:'#1a0e00', g:'#6a4a10'},
+  {name:'Void', p:'#9060d0', s:'#0e0018', g:'#401080'},
+  {name:'Critical', p:'#d04030', s:'#1a0000', g:'#601010'},
+  {name:'Emergence', p:'#20c080', s:'#001a10', g:'#0a4030'},
+  {name:'Amber', p:'#c08030', s:'#1a0e00', g:'#503010'},
+  {name:'Broadcast', p:'#40b0c0', s:'#001018', g:'#104050'},
+  {name:'Static', p:'#a0a0a0', s:'#0a0a0a', g:'#303030'},
+  {name:'Aurora', p:'#60d0a0', s:'#001a14', g:'#20604a'},
+  {name:'Pulse', p:'#d060a0', s:'#18000e', g:'#602040'}
+];
+var SHAPES = ['geometric','angular','smooth','fragmented'];
+var SYMBOLS = ['hexagon','circle','triangle','cross','wave','spiral','grid','arc'];
+var BG_FIELDS = ['starfield','grid','pulse','nebula','void','circuit','signal','static'];
+
+var avatarState = {
+  type:null, username:'', animal:'owl', tech:'visor',
+  paletteIdx:0, shape:'geometric', symbol:'hexagon', bgField:'starfield'
+};
+var quizStep = 0;
+var quizScores = {};
+
+// ── QUIZ ──
+function skipQuiz() { show("home"); }
+
+function openProfile() {
+  if (avatarState.type) {
+    // Already has avatar - go straight to builder
+    show('quiz');
+    setTimeout(showAvatarBuilder, 50);
+  } else {
+    // No avatar yet - start quiz
+    startQuiz();
+  }
+}
+
+function startQuiz() {
+  quizStep = 0;
+  quizScores = {};
+  Object.keys(TYPES).forEach(function(t){ quizScores[t] = 0; });
+  show('quiz');
+  setTimeout(renderQuizStep, 50);
+}
+
+function renderQuizStep() {
+  var screen = document.getElementById('screen-quiz');
+  if (!screen) return;
+  var q = QUIZ[quizStep];
+  var pips = QUIZ.map(function(_,i){
+    return '<div class="quiz-pip' + (i<=quizStep?' done':'') + '"></div>';
+  }).join('');
+  // Shuffle options
+  var opts = q.opts.slice();
+  for(var i=opts.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var tmp=opts[i];opts[i]=opts[j];opts[j]=tmp;}
+  // Only show 4 options on mobile
+  opts = opts.slice(0,4);
+  screen.innerHTML = '<div class="quiz-screen">' +
+    '<div style="font-size:10px;font-weight:600;letter-spacing:2px;color:#3a3830;margin-bottom:20px;text-transform:uppercase">Character Creation ' + (quizStep+1) + ' of ' + QUIZ.length + '</div>' +
+    '<div class="quiz-progress">' + pips + '</div>' +
+    '<div class="quiz-q">' + q.q + '</div>' +
+    '<div class="quiz-opts">' +
+    opts.map(function(opt){
+      return '<button class="quiz-opt" data-t="' + opt.type + '" onclick="quizAnswer(this.dataset.t)">' + opt.text + '</button>';
+    }).join('') +
+    '</div>' +
+    '<button onclick="skipQuiz()" style="margin-top:24px;background:transparent;border:none;color:#3a3830;font-size:13px;cursor:pointer;touch-action:manipulation">Skip for now</button>' +
+    '</div>';
+}
+
+function quizAnswer(type) {
+  quizScores[type] = (quizScores[type]||0) + 1;
+  quizStep++;
+  if (quizStep >= QUIZ.length) { finishQuiz(); }
+  else { renderQuizStep(); }
+}
+
+function finishQuiz() {
+  var winner = Object.keys(quizScores).reduce(function(a,b){
+    return (quizScores[a]||0) >= (quizScores[b]||0) ? a : b;
+  });
+  avatarState.type = winner;
+  var td = TYPES[winner];
+  avatarState.animal = td.animal;
+  avatarState.tech = td.tech;
+  avatarState.paletteIdx = td.paletteIdx;
+  showTypeReveal();
+}
+
+function showTypeReveal() {
+  show('quiz');
+  setTimeout(function() {
+  var screen = document.getElementById('screen-quiz');
+  if (!screen) return;
+  var td = TYPES[avatarState.type] || TYPES.analyst;
+  screen.innerHTML =
+    '<div style="display:flex;flex-direction:column;align-items:center;padding:40px 20px;background:#0a0a0f;min-height:100vh">' +
+    '<div style="font-size:10px;font-weight:600;letter-spacing:2px;color:#3a3830;margin-bottom:28px;text-transform:uppercase">You are</div>' +
+    '<canvas id="revealCanvas" width="160" height="160" style="margin-bottom:24px;border-radius:50%"></canvas>' +
+    '<div style="font-size:32px;font-weight:800;color:' + td.color + ';margin-bottom:8px;font-family:inherit">' + td.name + '</div>' +
+    '<div style="font-size:15px;color:#5a5650;margin-bottom:36px;font-style:italic;max-width:260px;text-align:center;line-height:1.6">' + td.tagline + '</div>' +
+    '<button onclick="showAvatarBuilder()" style="padding:14px 32px;background:' + td.color + ';color:#fff;border:none;border-radius:24px;font-size:15px;font-weight:600;cursor:pointer;touch-action:manipulation;width:240px;margin-bottom:12px;font-family:inherit">Customize your avatar</button>' +
+    '<button onclick="saveAvatar()" style="padding:12px 32px;background:transparent;color:#5a5650;border:1px solid #2a2820;border-radius:24px;font-size:14px;cursor:pointer;touch-action:manipulation;width:240px;margin-bottom:12px;font-family:inherit">Use this and continue</button>' +
+    '<button onclick="startQuiz()" style="background:transparent;border:none;color:#3a3830;font-size:13px;cursor:pointer;touch-action:manipulation;font-family:inherit">Retake quiz</button>' +
+    '</div>';
+  setTimeout(function(){ drawAvatar('revealCanvas', avatarState); }, 80);
+  }, 30);
+}
+
+function showAvatarBuilder() {
+  show('quiz');
+  setTimeout(function() {
+  var screen = document.getElementById('screen-quiz');
+  if (!screen) return;
+  var td = TYPES[avatarState.type] || TYPES.analyst;
+
+  function opts(arr, key) {
+    return arr.map(function(v){
+      var sel = (key === 'paletteIdx') ? (avatarState.paletteIdx === v) : (avatarState[key] === v);
+      if (key === 'paletteIdx') {
+        var pal = PALETTES[v];
+        return '<div class="color-dot' + (sel?' sel':'') + '" style="background:'+pal.p+'" data-v="'+v+'" onclick="setAvPalette(this.dataset.v)" title="'+pal.name+'"></div>';
+      }
+      return '<button class="builder-opt' + (sel?' sel':'') + '" data-k="'+key+'" data-v="'+v+'" onclick="setAv(this.dataset.k,this.dataset.v)">'+v+'</button>';
+    }).join('');
+  }
+
+  var palIdxs = PALETTES.map(function(_,i){return i;});
+
+  screen.innerHTML =
+    '<div style="background:#0a0a0f;min-height:100vh;padding:16px;color:#f0ede8;font-family:inherit">' +
+    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">' +
+    '<button onclick="showTypeReveal()" style="background:transparent;border:1px solid #2a2820;color:#5a5650;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:12px;touch-action:manipulation;font-family:inherit">&#8592;</button>' +
+    '<div style="font-size:10px;font-weight:600;letter-spacing:2px;color:#3a3830;text-transform:uppercase">Avatar Builder</div>' +
+    '</div>' +
+
+    '<canvas id="builderCanvas" width="140" height="140" style="display:block;margin:0 auto 16px;border-radius:50%;border:2px solid #2a2820"></canvas>' +
+
+    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:20px">' +
+    '<div style="flex:1;padding:10px 14px;background:#141414;border:1.5px solid #2a2820;border-radius:8px;color:#f0ede8;font-size:15px;font-weight:600;font-family:inherit" id="usernameDisplay">' + (avatarState.username||generateUsername()) + '</div>' +
+    '<button onclick="avatarState.username=generateUsername();var el=document.getElementById(\'usernameDisplay\');if(el)el.textContent=avatarState.username;" style="padding:10px 14px;background:#1a1814;border:1.5px solid #2a2820;border-radius:8px;color:#5a5650;font-size:12px;cursor:pointer;touch-action:manipulation;white-space:nowrap;font-family:inherit">New name</button>' +
+    '</div>' +
+
+    '<div style="display:flex;flex-direction:column;gap:16px;background:#0e0e14;border-radius:12px;padding:16px;margin-bottom:20px">' +
+
+    '<div><div style="font-size:10px;font-weight:600;letter-spacing:1.5px;color:#3a3830;text-transform:uppercase;margin-bottom:8px">Animal</div>' +
+    '<div style="display:flex;flex-wrap:wrap;gap:6px">' + opts(ANIMALS,'animal') + '</div></div>' +
+
+    '<div><div style="font-size:10px;font-weight:600;letter-spacing:1.5px;color:#3a3830;text-transform:uppercase;margin-bottom:8px">Tech</div>' +
+    '<div style="display:flex;flex-wrap:wrap;gap:6px">' + opts(TECH_PARTS,'tech') + '</div></div>' +
+
+    '<div><div style="font-size:10px;font-weight:600;letter-spacing:1.5px;color:#3a3830;text-transform:uppercase;margin-bottom:8px">Color</div>' +
+    '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">' + opts(palIdxs,'paletteIdx') + '</div></div>' +
+
+    '<div><div style="font-size:10px;font-weight:600;letter-spacing:1.5px;color:#3a3830;text-transform:uppercase;margin-bottom:8px">Form</div>' +
+    '<div style="display:flex;flex-wrap:wrap;gap:6px">' + opts(SHAPES,'shape') + '</div></div>' +
+
+    '<div><div style="font-size:10px;font-weight:600;letter-spacing:1.5px;color:#3a3830;text-transform:uppercase;margin-bottom:8px">Symbol</div>' +
+    '<div style="display:flex;flex-wrap:wrap;gap:6px">' + opts(SYMBOLS,'symbol') + '</div></div>' +
+
+    '<div><div style="font-size:10px;font-weight:600;letter-spacing:1.5px;color:#3a3830;text-transform:uppercase;margin-bottom:8px">Field</div>' +
+    '<div style="display:flex;flex-wrap:wrap;gap:6px">' + opts(BG_FIELDS,'bgField') + '</div></div>' +
+
+    '<div><div style="font-size:10px;font-weight:600;letter-spacing:1.5px;color:#3a3830;text-transform:uppercase;margin-bottom:8px">Type</div>' +
+    '<div style="display:flex;flex-wrap:wrap;gap:6px">' +
+    Object.keys(TYPES).map(function(k){
+      var sel = avatarState.type===k;
+      return '<button class="builder-opt'+(sel?' sel':'') + '" data-k="type" data-v="'+k+'" onclick="setAv(this.dataset.k,this.dataset.v)" style="'+(sel?'border-color:'+TYPES[k].color+';color:'+TYPES[k].color:'')+'">' + TYPES[k].name.replace('The ','') + '</button>';
+    }).join('') +
+    '</div></div>' +
+
+    '</div>' +
+
+    '<button onclick="saveAvatar()" style="width:100%;padding:14px;background:'+td.color+';color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;touch-action:manipulation;font-family:inherit">Save</button>' +
+    '<button onclick="startQuiz()" style="width:100%;margin-top:10px;padding:12px;background:transparent;color:#3a3830;border:1px solid #1a1814;border-radius:12px;font-size:13px;cursor:pointer;touch-action:manipulation;font-family:inherit">Retake quiz</button>' +
+    '</div>';
+
+  setTimeout(function(){ drawAvatar('builderCanvas', avatarState); }, 80);
+  }, 30);
+}
+
+
+var NAME_PREFIXES = ['Alpha','Beta','Gamma','Delta','Echo','Nova','Sigma','Zeta','Axis','Core','Arc','Flux','Node','Orbit','Phase','Pulse','Quasar','Relay','Shift','Vega'];
+var NAME_SUFFIXES = ['Seven','Prime','Zero','One','Null','Void','Edge','Deep','Far','High','Low','Dark','Bright','True','Free','Bold','Fast','Clear','Wide','Long'];
+
+function generateUsername() {
+  var pre = NAME_PREFIXES[Math.floor(Math.random() * NAME_PREFIXES.length)];
+  var suf = NAME_SUFFIXES[Math.floor(Math.random() * NAME_SUFFIXES.length)];
+  return pre + suf;
+}
+
+function refreshBuilderUI() {
+  // Update all builder-opt sel states to match current avatarState
+  var btns = document.querySelectorAll('.builder-opt');
+  for (var i = 0; i < btns.length; i++) {
+    var b = btns[i];
+    var bk = b.getAttribute('data-k');
+    var bv = b.getAttribute('data-v');
+    if (!bk) continue;
+    var curVal = bk === 'paletteIdx' ? String(avatarState.paletteIdx) : String(avatarState[bk] || '');
+    var match = bv === curVal;
+    b.classList.toggle('sel', match);
+    if (bk === 'type' && match && TYPES[bv]) {
+      b.style.borderColor = TYPES[bv].color;
+      b.style.color = TYPES[bv].color;
+    } else if (bk === 'type') {
+      b.style.borderColor = '';
+      b.style.color = '';
+    }
+  }
+  // Update color dots
+  var dots = document.querySelectorAll('.color-dot');
+  for (var j = 0; j < dots.length; j++) {
+    dots[j].classList.toggle('sel', dots[j].getAttribute('data-v') === String(avatarState.paletteIdx));
+  }
+  drawAvatar('builderCanvas', avatarState);
+}
+
+function setAvPalette(idx) {
+  avatarState.paletteIdx = parseInt(idx);
+  var dots = document.querySelectorAll('.color-dot');
+  for (var j = 0; j < dots.length; j++) {
+    dots[j].classList.toggle('sel', dots[j].getAttribute('data-v') === String(idx));
+  }
+  drawAvatar('builderCanvas', avatarState);
+}
+
+function setAv(key, val, isPalette) {
+  // isPalette = true means key is actually the palette index value
+  if (isPalette) {
+    avatarState.paletteIdx = parseInt(key);
+  } else {
+    avatarState[key] = val;
+    // If type changed, apply its preset
+    if (key === 'type' && TYPES[val]) {
+      var td = TYPES[val];
+      avatarState.animal = td.animal;
+      avatarState.tech = td.tech;
+      avatarState.paletteIdx = td.paletteIdx;
+      var SHAPE_MAP = { analyst:'geometric', probe:'angular', synthesizer:'smooth', anomaly:'fragmented' };
+      avatarState.shape = SHAPE_MAP[td.silhouette] || 'geometric';
+      // Re-render all button states
+      refreshBuilderUI();
+    }
+  }
+
+  // Update builder-opt selected states
+  var btns = document.querySelectorAll('.builder-opt');
+  for (var i = 0; i < btns.length; i++) {
+    var b = btns[i];
+    var bk = b.getAttribute('data-k');
+    var bv = b.getAttribute('data-v');
+    if (!bk || isPalette) continue;
+    if (bk === key) {
+      var match = bv === String(val);
+      b.classList.toggle('sel', match);
+      if (bk === 'type' && match && TYPES[val]) {
+        b.style.borderColor = TYPES[val].color;
+        b.style.color = TYPES[val].color;
+      } else if (bk === 'type') {
+        b.style.borderColor = '';
+        b.style.color = '';
+      }
+    }
+  }
+
+  // Update color dots
+  if (isPalette) {
+    var dots = document.querySelectorAll('.color-dot');
+    for (var j = 0; j < dots.length; j++) {
+      dots[j].classList.toggle('sel', dots[j].getAttribute('data-v') === String(key));
+    }
+  }
+
+  drawAvatar('builderCanvas', avatarState);
+}
+
+function saveAvatar() {
+  if (!avatarState.username) avatarState.username = generateUsername();
+  try { localStorage.setItem('wg_avatar', JSON.stringify(avatarState)); } catch(e){}
+  show('home');
+  drawHeaderAvatar();
+}
+
+function loadAvatar() {
+  try {
+    var s = localStorage.getItem('wg_avatar');
+    if (s) avatarState = JSON.parse(s);
+  } catch(e){}
+}
+
+function drawHeaderAvatar() {
+  var c = document.getElementById('headerAvatarCanvas');
+  if (!c) return;
+  if (avatarState.type) {
+    drawAvatar('headerAvatarCanvas', avatarState);
+  } else {
+    var ctx = c.getContext('2d');
+    ctx.fillStyle='#141414'; ctx.fillRect(0,0,36,36);
+    ctx.beginPath(); ctx.arc(18,18,17,0,Math.PI*2);
+    ctx.strokeStyle='#2a2820'; ctx.lineWidth=1.5; ctx.stroke();
+    ctx.fillStyle='#3a3830'; ctx.font='bold 15px system-ui';
+    ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('?',18,19);
+  }
+}
+
+// ── AVATAR RENDERER ──
+function drawAvatar(canvasId, state) {
+  var canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width, H = canvas.height;
+  var cx = W/2, cy = H/2;
+  ctx.clearRect(0,0,W,H);
+
+  var pal = PALETTES[state.paletteIdx] || PALETTES[0];
+  var p = pal.p, s = pal.s, g = pal.g;
+
+  // Clip to circle
+  ctx.save();
+  ctx.beginPath(); ctx.arc(cx,cy,cx,0,Math.PI*2); ctx.clip();
+
+  // Background
+  ctx.fillStyle=s; ctx.fillRect(0,0,W,H);
+  drawBG(ctx,W,H,state.bgField,g);
+
+  // Silhouette
+  var SHAPE_TO_SIL = { geometric:'analyst', angular:'probe', smooth:'synthesizer', fragmented:'anomaly' };
+  var sil = (state.shape && SHAPE_TO_SIL[state.shape]) ? SHAPE_TO_SIL[state.shape] : (state.type ? (TYPES[state.type].silhouette||'analyst') : 'analyst');
+  drawSilhouette(ctx,cx,cy,W,sil,p,s,g);
+
+  // Animal
+  drawAnimal(ctx,cx,cy,W,state.animal,p);
+
+  // Tech
+  drawTech(ctx,cx,cy,W,state.tech,p,g);
+
+  // Symbol at bottom
+  drawSym(ctx,cx,cy+H*0.3,W*0.07,state.symbol,p);
+
+  ctx.restore();
+}
+
+function drawBG(ctx,W,H,field,g) {
+  if (field==='starfield') {
+    ctx.fillStyle='rgba(255,255,255,0.6)';
+    for(var i=0;i<50;i++){ctx.beginPath();ctx.arc(Math.random()*W,Math.random()*H,Math.random()*1.2+0.2,0,Math.PI*2);ctx.fill();}
+  } else if (field==='grid') {
+    ctx.strokeStyle=g+'33'; ctx.lineWidth=0.5;
+    for(var x=0;x<W;x+=14){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+    for(var y=0;y<H;y+=14){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+  } else if (field==='pulse') {
+    var rg=ctx.createRadialGradient(W/2,H/2,5,W/2,H/2,W/2);
+    rg.addColorStop(0,g+'66'); rg.addColorStop(1,'transparent');
+    ctx.fillStyle=rg; ctx.fillRect(0,0,W,H);
+  } else if (field==='nebula') {
+    var ng=ctx.createRadialGradient(W*0.6,H*0.4,2,W/2,H/2,W*0.7);
+    ng.addColorStop(0,g+'55'); ng.addColorStop(1,'transparent');
+    ctx.fillStyle=ng; ctx.fillRect(0,0,W,H);
+  } else if (field==='circuit') {
+    ctx.strokeStyle=g+'44'; ctx.lineWidth=0.5;
+    for(var ci=0;ci<5;ci++){
+      ctx.beginPath();
+      var sx=Math.random()*W,sy=Math.random()*H;
+      ctx.moveTo(sx,sy); ctx.lineTo(sx+20*(Math.random()-.5),sy+30*(Math.random()-.5));
+      ctx.stroke();
+    }
+  } else if (field==='signal') {
+    ctx.strokeStyle=g+'44'; ctx.lineWidth=0.5;
+    for(var si=1;si<4;si++){
+      ctx.beginPath(); ctx.arc(W*0.2,H*0.8,si*18,Math.PI*1.2,Math.PI*1.8); ctx.stroke();
+    }
+  } else if (field==='static') {
+    for(var ni=0;ni<30;ni++){
+      ctx.fillStyle='rgba(255,255,255,'+(Math.random()*0.08)+')';
+      ctx.fillRect(Math.random()*W,Math.random()*H,Math.random()*4+1,1);
+    }
+  }
+}
+
+function drawSilhouette(ctx,cx,cy,W,sil,p,s,g) {
+  var r=W*0.28;
+  // Glow
+  var gg=ctx.createRadialGradient(cx,cy,r*0.2,cx,cy,r*1.4);
+  gg.addColorStop(0,g+'55'); gg.addColorStop(1,'transparent');
+  ctx.fillStyle=gg; ctx.fillRect(0,0,W,W);
+
+  ctx.beginPath();
+  if (sil==='analyst') {
+    // Clean octagon - precise
+    for(var i=0;i<8;i++){var a=i/8*Math.PI*2-Math.PI/8;ctx.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);}
+  } else if (sil==='probe') {
+    // Pointed/directional - arrow-like hexagon
+    var pts=[[-0.5,-1],[0.5,-1],[1,0],[0.5,0.7],[-0.5,0.7],[-1,0]];
+    pts.forEach(function(pt){ctx.lineTo(cx+pt[0]*r,cy+pt[1]*r);});
+  } else if (sil==='synthesizer') {
+    // Irregular multi-lobe - expansive
+    for(var j=0;j<12;j++){
+      var aj=j/12*Math.PI*2;
+      var rj=r*(j%3===0?1.2:j%3===1?0.85:1.0);
+      ctx.lineTo(cx+Math.cos(aj)*rj,cy+Math.sin(aj)*rj);
+    }
+  } else if (sil==='anomaly') {
+    // Fragmented/glitchy
+    for(var k=0;k<10;k++){
+      var ak=k/10*Math.PI*2;
+      var rk=r*(0.65+Math.sin(k*2.3)*0.35);
+      ctx.lineTo(cx+Math.cos(ak)*rk,cy+Math.sin(ak)*rk);
+    }
+  } else {
+    ctx.arc(cx,cy,r,0,Math.PI*2);
+  }
+  ctx.closePath();
+  ctx.fillStyle=s+'ee'; ctx.fill();
+  ctx.strokeStyle=p; ctx.lineWidth=1.5; ctx.stroke();
+}
+
+function drawAnimal(ctx,cx,cy,W,animal,p) {
+  ctx.save(); ctx.strokeStyle=p; ctx.fillStyle=p+'bb'; ctx.lineWidth=1.2;
+  var r=W*0.1;
+  if (animal==='owl') {
+    [-1,1].forEach(function(sd){
+      ctx.beginPath(); ctx.arc(cx+sd*r*0.85,cy-W*0.05,r*0.52,0,Math.PI*2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx+sd*r*0.85,cy-W*0.05,r*0.22,0,Math.PI*2); ctx.fillStyle='#0a0a0f'; ctx.fill(); ctx.fillStyle=p+'bb';
+    });
+  } else if (animal==='fox'||animal==='lynx') {
+    [-1,1].forEach(function(sd){
+      ctx.beginPath(); ctx.moveTo(cx+sd*r*0.6,cy-W*0.24); ctx.lineTo(cx+sd*r*1.4,cy-W*0.38); ctx.lineTo(cx+sd*r*1.4,cy-W*0.18); ctx.closePath(); ctx.stroke(); ctx.fill();
+    });
+  } else if (animal==='wolf') {
+    [-1,1].forEach(function(sd){
+      ctx.beginPath(); ctx.moveTo(cx+sd*r*0.4,cy-W*0.26); ctx.lineTo(cx+sd*r*1.2,cy-W*0.42); ctx.lineTo(cx+sd*r*1.35,cy-W*0.18); ctx.closePath(); ctx.stroke(); ctx.fill();
+    });
+  } else if (animal==='crow'||animal==='raven') {
+    [-1,1].forEach(function(sd){
+      ctx.beginPath(); ctx.moveTo(cx+sd*r*0.2,cy-W*0.1); ctx.quadraticCurveTo(cx+sd*r*0.9,cy-W*0.24,cx+sd*r*1.5,cy-W*0.08); ctx.stroke();
+    });
+  } else if (animal==='octopus') {
+    for(var ti=0;ti<6;ti++){
+      var ta=(ti/5)*Math.PI+Math.PI*0.1;
+      ctx.beginPath(); ctx.moveTo(cx+Math.cos(ta)*r*0.7,cy+Math.sin(ta)*r*0.7);
+      ctx.quadraticCurveTo(cx+Math.cos(ta)*r*1.4,cy+Math.sin(ta)*r*1.5,cx+Math.cos(ta)*r*1.9,cy+Math.sin(ta)*r*1.9);
+      ctx.stroke();
+    }
+  } else if (animal==='moth') {
+    [-1,1].forEach(function(sd){
+      ctx.beginPath(); ctx.ellipse(cx+sd*r*1.3,cy,r*1.1,r*0.6,sd*0.35,0,Math.PI*2);
+      ctx.fillStyle=p+'22'; ctx.fill(); ctx.strokeStyle=p; ctx.stroke(); ctx.fillStyle=p+'bb';
+    });
+  } else if (animal==='deer') {
+    [-1,1].forEach(function(sd){
+      ctx.beginPath(); ctx.moveTo(cx+sd*r*0.5,cy-W*0.2); ctx.lineTo(cx+sd*r*1.0,cy-W*0.4);
+      ctx.moveTo(cx+sd*r*0.7,cy-W*0.3); ctx.lineTo(cx+sd*r*1.3,cy-W*0.34);
+      ctx.moveTo(cx+sd*r*1.0,cy-W*0.4); ctx.lineTo(cx+sd*r*0.7,cy-W*0.5); ctx.stroke();
+    });
+  } else if (animal==='mantis') {
+    [-1,1].forEach(function(sd){
+      ctx.beginPath(); ctx.moveTo(cx+sd*r*0.4,cy+W*0.05); ctx.lineTo(cx+sd*r*1.4,cy-W*0.1); ctx.lineTo(cx+sd*r*1.9,cy+W*0.04); ctx.stroke();
+    });
+  }
+  ctx.restore();
+}
+
+function drawTech(ctx,cx,cy,W,tech,p,g) {
+  ctx.save(); ctx.strokeStyle=p; ctx.fillStyle=g+'cc'; ctx.lineWidth=1.2;
+  if (tech==='antenna') {
+    ctx.beginPath(); ctx.moveTo(cx,cy-W*0.26); ctx.lineTo(cx,cy-W*0.48); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx,cy-W*0.48,W*0.028,0,Math.PI*2); ctx.fillStyle=p; ctx.fill();
+    ctx.beginPath(); ctx.moveTo(cx-W*0.05,cy-W*0.4); ctx.lineTo(cx+W*0.05,cy-W*0.4); ctx.strokeStyle=p; ctx.stroke();
+  } else if (tech==='visor') {
+    ctx.beginPath(); ctx.ellipse(cx,cy-W*0.04,W*0.2,W*0.055,0,0,Math.PI*2);
+    ctx.fillStyle=p+'22'; ctx.fill(); ctx.strokeStyle=p; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx-W*0.16,cy-W*0.04); ctx.lineTo(cx+W*0.16,cy-W*0.04);
+    ctx.strokeStyle=p+'55'; ctx.lineWidth=0.5; ctx.stroke();
+  } else if (tech==='circuit') {
+    ctx.strokeStyle=p; ctx.lineWidth=1;
+    [[0,-.14,.1,-.14,.1,-.07],[-.05,-.07,-.12,-.07,-.12,-.16]].forEach(function(pts){
+      ctx.beginPath(); ctx.moveTo(cx+W*pts[0],cy+W*pts[1]); ctx.lineTo(cx+W*pts[2],cy+W*pts[3]); ctx.lineTo(cx+W*pts[4],cy+W*pts[5]); ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx+W*pts[4],cy+W*pts[5],W*0.014,0,Math.PI*2); ctx.fillStyle=p; ctx.fill();
+    });
+  } else if (tech==='lens') {
+    ctx.beginPath(); ctx.arc(cx+W*0.17,cy-W*0.08,W*0.075,0,Math.PI*2);
+    ctx.fillStyle=p+'18'; ctx.fill(); ctx.strokeStyle=p; ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx+W*0.17,cy-W*0.08,W*0.04,0,Math.PI*2); ctx.strokeStyle=p+'55'; ctx.stroke();
+  } else if (tech==='wave') {
+    ctx.beginPath(); ctx.moveTo(cx-W*0.2,cy+W*0.19);
+    for(var wi=0;wi<=10;wi++){ ctx.lineTo(cx-W*0.2+wi*W*0.04,cy+W*0.19+Math.sin(wi*0.8)*W*0.04); }
+    ctx.strokeStyle=p; ctx.lineWidth=1.5; ctx.stroke();
+  } else if (tech==='exhaust') {
+    [-1,1].forEach(function(sd){
+      for(var vi=0;vi<3;vi++){
+        ctx.beginPath(); ctx.moveTo(cx+sd*W*0.26,cy+W*(vi*0.045-0.04)); ctx.lineTo(cx+sd*W*0.34,cy+W*(vi*0.045-0.04));
+        ctx.strokeStyle=p; ctx.lineWidth=1.5; ctx.stroke();
+      }
+    });
+  } else if (tech==='receiver') {
+    ctx.beginPath(); ctx.arc(cx,cy-W*0.32,W*0.09,0,Math.PI); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx,cy-W*0.32,W*0.06,0,Math.PI); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx,cy-W*0.32); ctx.lineTo(cx,cy-W*0.26); ctx.stroke();
+  } else if (tech==='glitch') {
+    ctx.strokeStyle=p; ctx.lineWidth=1;
+    for(var gi=0;gi<4;gi++){
+      var gy=cy-W*0.1+gi*W*0.04;
+      var offset=(gi%2===0?1:-1)*W*0.04;
+      ctx.beginPath(); ctx.moveTo(cx-W*0.12+offset,gy); ctx.lineTo(cx+W*0.12+offset,gy); ctx.stroke();
+    }
+  } else if (tech==='scope') {
+    ctx.beginPath(); ctx.arc(cx,cy-W*0.08,W*0.1,0,Math.PI*2); ctx.strokeStyle=p; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx-W*0.1,cy-W*0.08); ctx.lineTo(cx+W*0.1,cy-W*0.08); ctx.strokeStyle=p+'55'; ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx,cy-W*0.18); ctx.lineTo(cx,cy+W*0.02); ctx.strokeStyle=p+'55'; ctx.stroke();
+  } else if (tech==='node') {
+    var nps=[[.18,-.1],[-.18,-.08],[.14,.14],[-.12,.16]];
+    ctx.fillStyle=p;
+    nps.forEach(function(np){ctx.beginPath();ctx.arc(cx+W*np[0],cy+W*np[1],W*0.022,0,Math.PI*2);ctx.fill();});
+    ctx.strokeStyle=p+'55'; ctx.lineWidth=0.5;
+    for(var ni=0;ni<nps.length-1;ni++){ctx.beginPath();ctx.moveTo(cx+W*nps[ni][0],cy+W*nps[ni][1]);ctx.lineTo(cx+W*nps[ni+1][0],cy+W*nps[ni+1][1]);ctx.stroke();}
+  }
+  ctx.restore();
+}
+
+function drawSym(ctx,cx,cy,r,sym,p) {
+  ctx.save(); ctx.strokeStyle=p+'77'; ctx.lineWidth=1;
+  if (sym==='circle'){ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.stroke();}
+  else if (sym==='triangle'){ctx.beginPath();for(var i=0;i<3;i++){var a=i/3*Math.PI*2-Math.PI/2;if(i===0)ctx.moveTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);else ctx.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);}ctx.closePath();ctx.stroke();}
+  else if (sym==='hexagon'){ctx.beginPath();for(var j=0;j<6;j++){var aj=j/6*Math.PI*2;if(j===0)ctx.moveTo(cx+Math.cos(aj)*r,cy+Math.sin(aj)*r);else ctx.lineTo(cx+Math.cos(aj)*r,cy+Math.sin(aj)*r);}ctx.closePath();ctx.stroke();}
+  else if (sym==='cross'){ctx.beginPath();ctx.moveTo(cx-r,cy);ctx.lineTo(cx+r,cy);ctx.moveTo(cx,cy-r);ctx.lineTo(cx,cy+r);ctx.stroke();}
+  else if (sym==='wave'){ctx.beginPath();ctx.moveTo(cx-r*1.5,cy);for(var wi=0;wi<20;wi++){ctx.lineTo(cx-r*1.5+wi*r*0.15,cy+Math.sin(wi*0.6)*r*0.5);}ctx.stroke();}
+  else if (sym==='spiral'){ctx.beginPath();for(var si=0;si<50;si++){var sa=si*0.25;ctx.lineTo(cx+Math.cos(sa)*sa*r*0.12,cy+Math.sin(sa)*sa*r*0.12);}ctx.stroke();}
+  else if (sym==='grid'){for(var gi=-1;gi<=1;gi++){ctx.beginPath();ctx.moveTo(cx+gi*r,cy-r);ctx.lineTo(cx+gi*r,cy+r);ctx.stroke();ctx.beginPath();ctx.moveTo(cx-r,cy+gi*r);ctx.lineTo(cx+r,cy+gi*r);ctx.stroke();}}
+  else if (sym==='arc'){ctx.beginPath();ctx.arc(cx,cy,r,Math.PI*0.15,Math.PI*0.85);ctx.stroke();ctx.beginPath();ctx.arc(cx,cy,r*0.6,Math.PI*0.15,Math.PI*0.85);ctx.stroke();}
+  ctx.restore();
+}
+
 // ── INIT ──
 renderCouncil();
 renderGallery();
