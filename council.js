@@ -334,3 +334,73 @@ el.innerHTML = ‘<div style="font-size:13px;color:#b8b4ae">No council selected.
 }
 renderSavedCouncils();
 }
+
+// ── GALLERY ──
+var galleryItems = [
+{id:1,type:‘creative’,title:‘On the Weight of Water’,content:‘The river does not ask permission to find its way to sea. A collective poem on resource equity.’,date:‘Apr 2026’,appreciations:12},
+{id:2,type:‘insight’,title:“Fuller’s Ephemeralization in the Age of AI”,content:‘We built a working World Game in under an hour. The question is no longer whether we can do more with less. The question is whether we will.’,date:‘Apr 2026’,appreciations:8},
+{id:3,type:‘debate’,title:‘Should AI replace human decision-making in resource allocation?’,content:‘Jung noted the shadow of optimization: efficiency without wisdom produces systems that are perfectly wrong.’,date:‘Apr 2026’,appreciations:15}
+];
+var galleryFilter = ‘all’;
+
+function filterGallery(type, btn) {
+galleryFilter = type;
+var btns = document.getElementById(‘galleryFilters’).getElementsByTagName(‘button’);
+for (var i = 0; i < btns.length; i++) {
+btns[i].style.borderColor = ‘’;
+btns[i].style.color = ‘’;
+}
+if (btn) { btn.style.borderColor = ‘#b8922a’; btn.style.color = ‘#b8922a’; }
+renderGallery();
+}
+
+function renderGallery() {
+var grid = document.getElementById(‘galleryGrid’);
+var empty = document.getElementById(‘galleryEmpty’);
+if (!grid) return;
+var items = galleryFilter === ‘all’ ? galleryItems : galleryItems.filter(function(i) { return i.type === galleryFilter; });
+if (items.length === 0) { grid.innerHTML = ‘’; empty.style.display = ‘block’; return; }
+empty.style.display = ‘none’;
+var html = ‘’;
+for (var i = 0; i < items.length; i++) {
+var item = items[i];
+var typeColor = {creative:’#7060c0’,debate:’#b8922a’,insight:’#c04020’,scenario:’#1a6b4a’}[item.type] || ‘#8a8580’;
+html += ‘<div style="background:#fff;border:1px solid #e8e4dc;border-radius:12px;overflow:hidden">’;
+html += ‘<div style="padding:10px 14px;border-bottom:1px solid #e8e4dc;display:flex;justify-content:space-between;align-items:center">’;
+html += ‘<span style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:'+typeColor+'">’+item.type+’</span>’;
+html += ‘<span style="font-size:11px;color:#b8b4ae">’+item.date+’</span></div>’;
+html += ‘<div style="padding:14px"><div style="font-size:15px;font-weight:600;color:#1a1814;margin-bottom:6px">’+item.title+’</div>’;
+html += ‘<div style="font-size:13px;color:#8a8580;line-height:1.5">’+item.content+’</div></div>’;
+html += ‘<div style="padding:8px 14px;border-top:1px solid #e8e4dc;display:flex;justify-content:space-between;align-items:center">’;
+html += ‘<span style="font-size:11px;color:#b8b4ae">’+( item.appreciations || 0)+’ appreciations</span>’;
+html += ‘<button class="btn btn-outline" style="font-size:11px;padding:4px 12px" onclick="appreciateItem('+item.id+')">Appreciate</button>’;
+html += ‘</div></div>’;
+}
+grid.innerHTML = html;
+}
+
+function appreciateItem(id) {
+for (var i = 0; i < galleryItems.length; i++) {
+if (galleryItems[i].id === id) { galleryItems[i].appreciations = (galleryItems[i].appreciations || 0) + 1; break; }
+}
+renderGallery();
+}
+
+function shareToGallery(type, title, content) {
+var id = Date.now();
+galleryItems.unshift({id:id, type:type, title:title, content:content.substring(0,200), date:new Date().toLocaleDateString(), appreciations:0});
+show(‘gallery’);
+}
+
+// ── SHARE HELPERS ──
+var lastSynthText = ‘’;
+var lastCreateTheme = ‘’;
+var lastCreateText = ‘’;
+
+function shareForumToGallery() {
+shareToGallery(‘debate’, problem.substring(0, 60), lastSynthText.substring(0, 300));
+}
+
+function shareCreateToGallery() {
+shareToGallery(‘creative’, lastCreateTheme.substring(0, 60), lastCreateText.substring(0, 300));
+}
