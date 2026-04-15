@@ -2066,7 +2066,7 @@ function renderUSStates(data) {
 // ── CLICK HANDLERS ──
 
 function onCountryClick(iso2, iso3, name, latlng) {
-  selectedPlace = { name:name, code:iso2, iso3:iso3, type:'country' };
+  selectedPlace = { name:name, code:iso2, iso3:iso3, type:'country', latlng:latlng };
   document.getElementById('viewingLabel').textContent = name;
   showDataPanel(name, '<div style="color:#8a8580;font-size:13px">Fetching World Bank data...</div>');
   L.popup().setLatLng(latlng)
@@ -2096,7 +2096,7 @@ function onRegionClick(regionName, iso2, iso3, countryName, latlng) {
 
 function onStateClick(stateName, latlng) {
   var fips = US_STATE_FIPS[stateName] || '';
-  selectedPlace = { name:stateName+', USA', code:'US', iso3:'USA', type:'state', fips:fips };
+  selectedPlace = { name:stateName+', USA', code:'US', iso3:'USA', type:'state', fips:fips, latlng:latlng };
   document.getElementById('viewingLabel').textContent = stateName + ', USA';
   showDataPanel(stateName + ', USA', '<div style="color:#8a8580;font-size:13px">Fetching Census data...</div>');
   if (fips) loadCountyLayer(fips, stateName);
@@ -2105,7 +2105,7 @@ function onStateClick(stateName, latlng) {
 
 function onCountyClick(countyName, fips, stateName, stateFips, latlng) {
   var fullName = countyName + ' County, ' + stateName;
-  selectedPlace = { name:fullName, code:'US', type:'county' };
+  selectedPlace = { name:fullName, code:'US', type:'county', latlng:latlng };
   document.getElementById('viewingLabel').textContent = fullName;
   showDataPanel(fullName, '<div style="color:#8a8580;font-size:13px">Fetching Census data...</div>');
   fetchCountyData(countyName, fips, stateFips, latlng);
@@ -2672,75 +2672,223 @@ function sendChat() {
 }
 
 // ── PLACE PROJECTS ──
+
 var currentProject = null;
 var savedProjects = [];
+var activeInfraTab = 'economic';
+var infraData = {}; // real API data keyed by domain
+var projectSliders = {};
 
-// Policy definitions - each has name, unit, baseline key, cost per point, impact weights
-var POLICIES = [
-  {
-    id:'energy', name:'Renewable Energy Transition', unit:'%',
-    desc:'Build solar, wind, and grid infrastructure',
-    costPerPoint: 0.8, // $B per percentage point
-    timeYears: 10,
-    impacts: { flourishing:0.3, ecological:0.5, stability:0.2 }
+// ── DOMAIN DEFINITIONS ──
+var DOMAINS = {
+  economic: {
+    label: 'Economic', icon: '⊕', color: '#2a9060',
+    desc: 'Jobs, wages, industry mix, and economic resilience',
+    policies: [
+      { id:'manufacturing', name:'Manufacturing Investment', unit:'%', desc:'Advanced manufacturing, reshoring incentives, brownfield redevelopment',
+        costPerPoint:1.2, timeYears:10, impacts:{flourishing:0.5, ecological:0.05, stability:0.45} },
+      { id:'broadband', name:'Broadband Infrastructure', unit:'%', desc:'Gigabit fiber deployment, digital equity programs',
+        costPerPoint:0.3, timeYears:4, impacts:{flourishing:0.4, ecological:0.02, stability:0.35} },
+      { id:'workforce', name:'Workforce Development', unit:'%', desc:'Trade training, community college investment, apprenticeships',
+        costPerPoint:0.2, timeYears:5, impacts:{flourishing:0.5, ecological:0.0, stability:0.4} },
+      { id:'smallbiz', name:'Small Business Support', unit:'%', desc:'Local lending, incubators, cooperative development',
+        costPerPoint:0.15, timeYears:3, impacts:{flourishing:0.45, ecological:0.05, stability:0.35} }
+    ]
   },
-  {
-    id:'water', name:'Clean Water Infrastructure', unit:'%',
-    desc:'Pipelines, treatment plants, access programs',
-    costPerPoint: 0.5,
-    timeYears: 7,
-    impacts: { flourishing:0.5, ecological:0.2, stability:0.3 }
+  transport: {
+    label: 'Transport', icon: '⟳', color: '#b8922a',
+    desc: 'Roads, rail, waterways, and connectivity infrastructure',
+    policies: [
+      { id:'rail', name:'Rail Rehabilitation', unit:'%', desc:'Short-line rail upgrades, intermodal connectors, freight rail access',
+        costPerPoint:0.9, timeYears:8, impacts:{flourishing:0.3, ecological:0.3, stability:0.3} },
+      { id:'waterway', name:'Waterway & Port Development', unit:'%', desc:'Lock upgrades, port facilities, low-carbon river freight',
+        costPerPoint:1.1, timeYears:12, impacts:{flourishing:0.3, ecological:0.2, stability:0.35} },
+      { id:'roads', name:'Road & Bridge Renewal', unit:'%', desc:'Interstate connectivity, bridge repair, rural road access',
+        costPerPoint:0.7, timeYears:6, impacts:{flourishing:0.25, ecological:0.05, stability:0.4} },
+      { id:'transit', name:'Public Transit Expansion', unit:'%', desc:'Bus rapid transit, regional connectors, mobility access',
+        costPerPoint:0.4, timeYears:5, impacts:{flourishing:0.4, ecological:0.25, stability:0.3} }
+    ]
   },
-  {
-    id:'food', name:'Food Security Programs', unit:'%',
-    desc:'Agricultural investment, distribution networks, nutrition programs',
-    costPerPoint: 0.4,
-    timeYears: 5,
-    impacts: { flourishing:0.5, ecological:0.1, stability:0.4 }
+  energy: {
+    label: 'Energy', icon: '◎', color: '#5040a0',
+    desc: 'Grid capacity, renewables, and energy resilience',
+    policies: [
+      { id:'renewable', name:'Renewable Energy Build-out', unit:'%', desc:'Solar, wind, grid-scale battery storage installations',
+        costPerPoint:0.8, timeYears:10, impacts:{flourishing:0.3, ecological:0.55, stability:0.2} },
+      { id:'grid', name:'Grid Modernization', unit:'%', desc:'Transmission upgrades, smart grid, microgrid resilience',
+        costPerPoint:0.6, timeYears:8, impacts:{flourishing:0.25, ecological:0.3, stability:0.4} },
+      { id:'efficiency', name:'Building Efficiency', unit:'%', desc:'Weatherization, heat pumps, industrial efficiency programs',
+        costPerPoint:0.25, timeYears:5, impacts:{flourishing:0.35, ecological:0.4, stability:0.2} },
+      { id:'localenergy', name:'Community Energy Ownership', unit:'%', desc:'Co-ops, municipal utilities, distributed generation',
+        costPerPoint:0.35, timeYears:7, impacts:{flourishing:0.4, ecological:0.3, stability:0.35} }
+    ]
   },
-  {
-    id:'land', name:'Protected Land Expansion', unit:'%',
-    desc:'National parks, marine reserves, conservation corridors',
-    costPerPoint: 0.3,
-    timeYears: 8,
-    impacts: { flourishing:0.1, ecological:0.7, stability:0.2 }
-  },
-  {
-    id:'wealth', name:'Wealth Distribution Reform', unit:'pts',
-    desc:'Tax policy, social programs, public services investment',
-    costPerPoint: 1.2,
-    timeYears: 15,
-    impacts: { flourishing:0.4, ecological:0.1, stability:0.5 }
-  },
-  {
-    id:'conflict', name:'Conflict Reduction and Governance', unit:'pts',
-    desc:'Justice system, anti-corruption, civil society programs',
-    costPerPoint: 0.6,
-    timeYears: 12,
-    impacts: { flourishing:0.3, ecological:0.1, stability:0.6 }
+  environment: {
+    label: 'Environment', icon: '⬡', color: '#1a6b4a',
+    desc: 'Land, water, air quality, and ecological restoration',
+    policies: [
+      { id:'brownfield', name:'Brownfield Remediation', unit:'%', desc:'Superfund cleanup, contaminated land restoration, industrial reuse',
+        costPerPoint:0.9, timeYears:10, impacts:{flourishing:0.35, ecological:0.55, stability:0.25} },
+      { id:'waterquality', name:'Water Quality Programs', unit:'%', desc:'Watershed protection, agricultural runoff reduction, river restoration',
+        costPerPoint:0.4, timeYears:7, impacts:{flourishing:0.3, ecological:0.6, stability:0.2} },
+      { id:'greenspace', name:'Green Infrastructure', unit:'%', desc:'Urban tree canopy, parks, trail networks, flood management',
+        costPerPoint:0.2, timeYears:5, impacts:{flourishing:0.4, ecological:0.45, stability:0.2} },
+      { id:'airquality', name:'Air Quality & Health', unit:'%', desc:'Emissions reduction, industrial monitoring, clean air zones',
+        costPerPoint:0.3, timeYears:6, impacts:{flourishing:0.45, ecological:0.4, stability:0.2} }
+    ]
   }
-];
+};
 
-var projectSliders = {}; // policy id -> current delta value
+// ── REAL DATA FETCH BY DOMAIN ──
+
+function fetchInfraData(place, fips, iso2, type) {
+  // type: 'county', 'state', 'country'
+  infraData = {};
+  
+  if (type === 'county' || type === 'state') {
+    fetchCensusInfra(fips, type);
+    fetchBLSData(fips, type);
+  }
+  if (type === 'country') {
+    fetchEIAProxy(iso2);
+  }
+  // OSM data for transport — works for any place
+  if (place && place.lat && place.lng) {
+    fetchOSMTransport(place.lat, place.lng);
+  }
+}
+
+function fetchCensusInfra(fips, type) {
+  if (!fips) return;
+  // ACS 5-year: commute time, vehicle access, employment by industry
+  var geoParam = type === 'state' 
+    ? 'for=state:' + fips
+    : 'for=county:*&in=state:' + fips.substring(0,2);
+  
+  var vars = 'B08303_001E,B08014_002E,B23025_004E,B23025_005E,C24050_002E,C24050_006E';
+  fetch('https://api.census.gov/data/2022/acs/acs5?get=NAME,' + vars + '&' + geoParam)
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (!d || d.length < 2) return;
+      var row = d[1];
+      infraData.census = {
+        commute:     parseInt(row[1]) || null,
+        noVehicle:   parseInt(row[2]) || null,
+        employed:    parseInt(row[3]) || null,
+        unemployed:  parseInt(row[4]) || null,
+        manufacturing: parseInt(row[5]) || null,
+        retail:      parseInt(row[6]) || null
+      };
+      updateInfraDisplay();
+    }).catch(function(){});
+}
+
+function fetchBLSData(fips, type) {
+  // BLS QCEW - quarterly employment by industry
+  // Free, no key needed for county-level
+  if (!fips) return;
+  var areaCode = type === 'state' ? 'ST' + fips + '00000' : 'CN' + fips + '00000';
+  fetch('https://api.bls.gov/publicAPI/v2/timeseries/data/', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({
+      seriesid: ['ENU' + fips + '05101'], // total employment
+      startyear: '2022', endyear: '2023'
+    })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d){
+    if (d && d.Results && d.Results.series && d.Results.series[0]) {
+      var series = d.Results.series[0].data;
+      if (series && series[0]) {
+        infraData.bls = { totalEmployment: parseInt(series[0].value) || null };
+        updateInfraDisplay();
+      }
+    }
+  }).catch(function(){});
+}
+
+function fetchOSMTransport(lat, lng) {
+  // Overpass API — free, no key — query transport features within 50km
+  var r = 0.45; // ~50km in degrees
+  var bbox = (lat-r) + ',' + (lng-r) + ',' + (lat+r) + ',' + (lng+r);
+  var query = '[out:json][timeout:10];(' +
+    'way["railway"="rail"](' + bbox + ');' +
+    'way["waterway"="river"](' + bbox + ');' +
+    'node["amenity"="ferry_terminal"](' + bbox + ');' +
+    'node["railway"="station"](' + bbox + ');' +
+    ');out count;';
+  
+  fetch('https://overpass-api.de/api/interpreter?data=' + encodeURIComponent(query))
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (d && d.elements) {
+        infraData.osm = {
+          railSegments: d.elements.filter(function(e){ return e.tags && e.tags.railway==='rail'; }).length,
+          rivers: d.elements.filter(function(e){ return e.tags && e.tags.waterway==='river'; }).length,
+          stations: d.elements.filter(function(e){ return e.tags && e.tags.railway==='station'; }).length,
+          ferries: d.elements.filter(function(e){ return e.tags && e.tags.amenity==='ferry_terminal'; }).length
+        };
+        updateInfraDisplay();
+      }
+    }).catch(function(){});
+}
+
+function updateInfraDisplay() {
+  // Update the real data badges in the infra panel
+  var el = document.getElementById('infraRealData');
+  if (!el) return;
+  var chips = [];
+  
+  if (infraData.census) {
+    var d = infraData.census;
+    if (d.unemployed && d.employed) {
+      var rate = Math.round(d.unemployed / (d.employed + d.unemployed) * 100);
+      chips.push({label:'Unemployment', value: rate + '%', color:'#c04020'});
+    }
+    if (d.manufacturing && d.employed) {
+      var mfg = Math.round(d.manufacturing / d.employed * 100);
+      chips.push({label:'Manufacturing', value: mfg + '% of jobs', color:'#2a9060'});
+    }
+  }
+  if (infraData.osm) {
+    var o = infraData.osm;
+    if (o.railSegments > 0) chips.push({label:'Rail', value: o.railSegments + ' segments', color:'#b8922a'});
+    if (o.rivers > 0) chips.push({label:'Waterways', value: o.rivers + ' rivers', color:'#5040a0'});
+    if (o.stations > 0) chips.push({label:'Rail stations', value: o.stations, color:'#b8922a'});
+  }
+  
+  if (chips.length === 0) {
+    el.innerHTML = '<div style="font-size:12px;color:#b8b4ae;font-style:italic">Loading real data...</div>';
+    return;
+  }
+  
+  el.innerHTML = chips.map(function(c){
+    return '<div style="display:inline-flex;flex-direction:column;background:#f8f7f4;border:1px solid #e8e4dc;border-radius:8px;padding:6px 10px;margin:3px">' +
+      '<div style="font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580">' + c.label + '</div>' +
+      '<div style="font-size:14px;font-weight:700;color:' + c.color + '">' + c.value + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+// ── PROJECT PAGE ──
 
 function startProject(placeName, baselineData, dataSource) {
   currentProject = {
     place: placeName,
     baseline: baselineData,
     dataSource: dataSource || 'World Bank',
-    policies: {},
     created: new Date().toLocaleDateString()
   };
 
-  // Reset sliders
   projectSliders = {};
-  POLICIES.forEach(function(p) { projectSliders[p.id] = 0; });
+  Object.keys(DOMAINS).forEach(function(domain) {
+    DOMAINS[domain].policies.forEach(function(p) { projectSliders[p.id] = 0; });
+  });
 
-  // Update header
   document.getElementById('projectPlaceName').textContent = placeName;
   document.getElementById('projectDataSource').textContent = dataSource || 'World Bank';
 
-  // Set baseline metrics
   var fl = baselineData.flourishing || 50;
   var ec = baselineData.ecological || 50;
   var st = baselineData.stability || 50;
@@ -2748,59 +2896,124 @@ function startProject(placeName, baselineData, dataSource) {
   document.getElementById('projMetEc').textContent = ec;
   document.getElementById('projMetSt').textContent = st;
 
-  // Render policy sliders
-  renderProjectPolicies(baselineData);
+  // Fetch real infrastructure data
+  infraData = {};
+  var fips = selectedPlace ? selectedPlace.fips : null;
+  var iso2 = selectedPlace ? selectedPlace.code : null;
+  var type = selectedPlace ? selectedPlace.type : 'country';
+  
+  // Get lat/lng for OSM query
+  if (selectedPlace && selectedPlace.latlng) {
+    fetchOSMTransport(selectedPlace.latlng.lat, selectedPlace.latlng.lng);
+  }
+  if (fips) fetchCensusInfra(fips, type);
+
+  renderInfraDomainTabs();
+  switchInfraTab('economic');
   updateProjectOutcomes();
 
-  // Clear previous debate
   var debateMsgs = document.getElementById('projectDebateMessages');
-  debateMsgs.innerHTML = '';
-  debateMsgs.style.display = 'none';
-  document.getElementById('projectSaveMsg').style.display = 'none';
+  if (debateMsgs) { debateMsgs.innerHTML = ''; debateMsgs.style.display = 'none'; }
+  var saveMsg = document.getElementById('projectSaveMsg');
+  if (saveMsg) saveMsg.style.display = 'none';
 
   show('project');
 }
 
-function renderProjectPolicies(baseline) {
+function renderInfraDomainTabs() {
+  var tabBar = document.getElementById('infraTabBar');
+  if (!tabBar) return;
+  
+  tabBar.innerHTML = Object.keys(DOMAINS).map(function(key) {
+    var d = DOMAINS[key];
+    var active = key === activeInfraTab;
+    return '<button onclick="switchInfraTab(\'' + key + '\')" style="' +
+      'flex:1;padding:10px 4px;font-size:11px;font-weight:' + (active?'700':'500') + ';' +
+      'border:none;background:transparent;cursor:pointer;font-family:inherit;' +
+      'color:' + (active ? d.color : '#8a8580') + ';' +
+      'border-bottom:2px solid ' + (active ? d.color : 'transparent') + ';' +
+      'touch-action:manipulation;transition:all .15s">' +
+      d.icon + '<br>' + d.label +
+    '</button>';
+  }).join('');
+}
+
+function switchInfraTab(domain) {
+  activeInfraTab = domain;
+  renderInfraDomainTabs();
+  renderDomainPolicies(domain);
+}
+
+function renderDomainPolicies(domain) {
   var container = document.getElementById('projectPolicies');
   if (!container) return;
-  var html = '';
-  POLICIES.forEach(function(policy) {
-    var baseVal = baseline[policy.id] || 0;
+  var d = DOMAINS[domain];
+  
+  var html = '<div style="font-size:12px;color:#8a8580;margin-bottom:12px;line-height:1.5;padding:0 2px">' + d.desc + '</div>';
+  
+  d.policies.forEach(function(policy) {
     var delta = projectSliders[policy.id] || 0;
     var cost = Math.round(delta * policy.costPerPoint * 10) / 10;
-    html += '<div class="card" style="padding:14px 16px">';
-    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">';
+    var baseline = currentProject && currentProject.baseline ? (currentProject.baseline[policy.id] || 0) : 0;
+    
+    html += '<div style="background:#fff;border:1px solid #e8e4dc;border-radius:10px;padding:14px 16px;margin-bottom:10px">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">';
     html += '<div style="flex:1">';
     html += '<div style="font-size:14px;font-weight:600;color:#1a1814;margin-bottom:2px">' + policy.name + '</div>';
-    html += '<div style="font-size:12px;color:#8a8580">' + policy.desc + '</div>';
+    html += '<div style="font-size:11px;color:#8a8580;line-height:1.4">' + policy.desc + '</div>';
     html += '</div>';
     html += '<div style="text-align:right;flex-shrink:0;margin-left:12px">';
-    html += '<div style="font-size:13px;font-weight:600;color:#b8922a" id="pv-' + policy.id + '">+' + delta + policy.unit + '</div>';
-    html += '<div style="font-size:11px;color:#b8b4ae" id="pc-' + policy.id + '">' + (cost > 0 ? '$' + cost + 'B' : 'no cost') + '</div>';
+    html += '<div style="font-size:14px;font-weight:700;color:' + d.color + '" id="pv-' + policy.id + '">+' + delta + policy.unit + '</div>';
+    html += '<div style="font-size:10px;color:#b8b4ae" id="pc-' + policy.id + '">' + (cost > 0 ? '$' + cost + 'B' : 'no cost yet') + '</div>';
     html += '</div></div>';
+    
+    // Impact mini-bars
+    html += '<div style="display:flex;gap:6px;margin-bottom:8px">';
+    ['flourishing','ecological','stability'].forEach(function(metric) {
+      var impact = policy.impacts[metric];
+      var colors = {flourishing:'#2a9060', ecological:'#d4aa44', stability:'#7060c0'};
+      var labels = {flourishing:'FL', ecological:'EC', stability:'ST'};
+      html += '<div style="display:flex;align-items:center;gap:3px">';
+      html += '<div style="width:24px;height:4px;background:#e8e4dc;border-radius:2px">';
+      html += '<div style="width:' + Math.round(impact*100) + '%;height:100%;background:' + colors[metric] + ';border-radius:2px"></div>';
+      html += '</div>';
+      html += '<div style="font-size:9px;color:#b8b4ae">' + labels[metric] + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+    
     html += '<div style="display:flex;align-items:center;gap:10px">';
-    html += '<span style="font-size:11px;color:#b8b4ae;flex-shrink:0">Baseline: ' + baseVal + policy.unit + '</span>';
-    html += '<input type="range" min="0" max="' + Math.max(20, 100 - baseVal) + '" value="' + delta + '" ';
-    html += 'style="flex:1;accent-color:#d4aa44" ';
+    html += '<input type="range" min="0" max="' + Math.max(20, 100 - baseline) + '" value="' + delta + '" ';
+    html += 'style="flex:1;accent-color:' + d.color + '" ';
     html += 'oninput="updatePolicySlider(\'' + policy.id + '\',this.value)">';
-    html += '<span style="font-size:11px;color:#1a1814;flex-shrink:0;min-width:40px;text-align:right">+' + delta + '</span>';
+    html += '<span style="font-size:12px;color:#1a1814;min-width:36px;text-align:right;font-weight:600">+' + delta + '</span>';
     html += '</div>';
     html += '</div>';
   });
+  
   container.innerHTML = html;
 }
 
 function updatePolicySlider(policyId, val) {
   projectSliders[policyId] = parseInt(val) || 0;
-  var policy = POLICIES.find(function(p) { return p.id === policyId; });
+  
+  // Find the policy
+  var policy = null;
+  var domainColor = '#b8922a';
+  Object.keys(DOMAINS).forEach(function(dk) {
+    DOMAINS[dk].policies.forEach(function(p) {
+      if (p.id === policyId) { policy = p; domainColor = DOMAINS[dk].color; }
+    });
+  });
   if (!policy) return;
+  
   var delta = projectSliders[policyId];
   var cost = Math.round(delta * policy.costPerPoint * 10) / 10;
   var pvEl = document.getElementById('pv-' + policyId);
   var pcEl = document.getElementById('pc-' + policyId);
-  if (pvEl) pvEl.textContent = '+' + delta + policy.unit;
-  if (pcEl) pcEl.textContent = cost > 0 ? '$' + cost + 'B' : 'no cost';
+  if (pvEl) { pvEl.textContent = '+' + delta + policy.unit; pvEl.style.color = domainColor; }
+  if (pcEl) pcEl.textContent = cost > 0 ? '$' + cost + 'B' : 'no cost yet';
+  
   updateProjectOutcomes();
 }
 
@@ -2814,37 +3027,46 @@ function updateProjectOutcomes() {
   var deltaFl = 0, deltaEc = 0, deltaSt = 0;
   var totalCost = 0;
   var maxYears = 0;
+  var activeCount = 0;
 
-  POLICIES.forEach(function(policy) {
-    var delta = projectSliders[policy.id] || 0;
-    if (delta === 0) return;
-    var weight = delta / 20; // normalize
-    deltaFl += policy.impacts.flourishing * weight * 8;
-    deltaEc += policy.impacts.ecological * weight * 8;
-    deltaSt += policy.impacts.stability * weight * 8;
-    totalCost += delta * policy.costPerPoint;
-    if (delta > 0) maxYears = Math.max(maxYears, policy.timeYears);
+  Object.keys(DOMAINS).forEach(function(dk) {
+    DOMAINS[dk].policies.forEach(function(policy) {
+      var delta = projectSliders[policy.id] || 0;
+      if (delta === 0) return;
+      activeCount++;
+      var weight = delta / 20;
+      deltaFl += policy.impacts.flourishing * weight * 8;
+      deltaEc += policy.impacts.ecological * weight * 8;
+      deltaSt += policy.impacts.stability * weight * 8;
+      totalCost += delta * policy.costPerPoint;
+      maxYears = Math.max(maxYears, policy.timeYears);
+    });
   });
 
-  var newFl = Math.min(100, Math.round(baseFl + deltaFl));
-  var newEc = Math.min(100, Math.round(baseEc + deltaEc));
-  var newSt = Math.min(100, Math.round(baseSt + deltaSt));
+  var newFl = Math.min(99, Math.round(baseFl + deltaFl));
+  var newEc = Math.min(99, Math.round(baseEc + deltaEc));
+  var newSt = Math.min(99, Math.round(baseSt + deltaSt));
 
   document.getElementById('projOutFl').textContent = newFl;
   document.getElementById('projOutEc').textContent = newEc;
   document.getElementById('projOutSt').textContent = newSt;
 
-  function delta(orig, updated) {
+  function deltaHtml(orig, updated) {
     var d = updated - orig;
-    return d > 0 ? '<span style="color:#2a9060">+' + d + '</span>' :
-           d < 0 ? '<span style="color:#c04020">' + d + '</span>' : '';
+    return d > 0 ? '<span style="color:#2a9060;font-weight:600">+' + d + '</span>' :
+           d < 0 ? '<span style="color:#c04020;font-weight:600">' + d + '</span>' : 
+           '<span style="color:#b8b4ae">—</span>';
   }
-  document.getElementById('projOutFlDelta').innerHTML = delta(baseFl, newFl);
-  document.getElementById('projOutEcDelta').innerHTML = delta(baseEc, newEc);
-  document.getElementById('projOutStDelta').innerHTML = delta(baseSt, newSt);
+  document.getElementById('projOutFlDelta').innerHTML = deltaHtml(baseFl, newFl);
+  document.getElementById('projOutEcDelta').innerHTML = deltaHtml(baseEc, newEc);
+  document.getElementById('projOutStDelta').innerHTML = deltaHtml(baseSt, newSt);
 
   document.getElementById('projTotalCost').textContent = totalCost > 0 ? '$' + Math.round(totalCost * 10) / 10 + 'B' : '$0';
-  document.getElementById('projTimeline').textContent = maxYears > 0 ? maxYears + ' years' : 'No interventions yet';
+  document.getElementById('projTimeline').textContent = maxYears > 0 ? maxYears + ' years' : '—';
+  
+  // Active policy count
+  var countEl = document.getElementById('projActivePolicies');
+  if (countEl) countEl.textContent = activeCount > 0 ? activeCount + ' interventions active' : 'No interventions yet';
 }
 
 async function debateProject() {
@@ -2856,37 +3078,57 @@ async function debateProject() {
   msgs.style.display = 'block';
   msgs.innerHTML = '';
 
-  // Build summary of active policies
+  // Build a rich summary including all active policies across all domains
   var activePolicies = [];
-  POLICIES.forEach(function(p) {
-    var d = projectSliders[p.id] || 0;
-    if (d > 0) {
-      activePolicies.push(p.name + ' (+' + d + p.unit + ', $' + Math.round(d * p.costPerPoint * 10)/10 + 'B)');
+  Object.keys(DOMAINS).forEach(function(dk) {
+    var domainPolicies = [];
+    DOMAINS[dk].policies.forEach(function(p) {
+      var d = projectSliders[p.id] || 0;
+      if (d > 0) domainPolicies.push(p.name + ' (+' + d + p.unit + ', $' + Math.round(d * p.costPerPoint * 10)/10 + 'B)');
+    });
+    if (domainPolicies.length > 0) {
+      activePolicies.push(DOMAINS[dk].label + ': ' + domainPolicies.join(', '));
     }
   });
 
   var place = currentProject.place;
   var baseline = currentProject.baseline;
-  var summary = activePolicies.length > 0
-    ? activePolicies.join(', ')
-    : 'No specific interventions selected yet';
-
   var totalCost = 0;
-  POLICIES.forEach(function(p) { totalCost += (projectSliders[p.id]||0) * p.costPerPoint; });
+  Object.keys(DOMAINS).forEach(function(dk) {
+    DOMAINS[dk].policies.forEach(function(p) { totalCost += (projectSliders[p.id]||0) * p.costPerPoint; });
+  });
+
+  // Include real data context if available
+  var realDataContext = '';
+  if (infraData.census) {
+    var c = infraData.census;
+    if (c.unemployed && c.employed) {
+      realDataContext += 'Unemployment rate: ' + Math.round(c.unemployed/(c.employed+c.unemployed)*100) + '%. ';
+    }
+    if (c.manufacturing && c.employed) {
+      realDataContext += 'Manufacturing: ' + Math.round(c.manufacturing/c.employed*100) + '% of jobs. ';
+    }
+  }
+  if (infraData.osm) {
+    var o = infraData.osm;
+    if (o.railSegments > 0) realDataContext += 'Rail network: ' + o.railSegments + ' segments present. ';
+    if (o.rivers > 0) realDataContext += 'River/waterway access: yes. ';
+  }
+
+  var summary = activePolicies.length > 0 ? activePolicies.join(' | ') : 'No specific interventions selected yet';
 
   var problemStatement = 'Place Project for ' + place + '. ' +
-    'Baseline: Flourishing ' + (baseline.flourishing||50) + '/100, ' +
-    'Ecological ' + (baseline.ecological||50) + '/100, ' +
-    'Stability ' + (baseline.stability||50) + '/100. ' +
+    (realDataContext ? 'Real local data: ' + realDataContext : '') +
+    'Baseline scores — Flourishing: ' + (baseline.flourishing||50) + '/100, ' +
+    'Ecological: ' + (baseline.ecological||50) + '/100, ' +
+    'Stability: ' + (baseline.stability||50) + '/100. ' +
     'Proposed interventions: ' + summary + '. ' +
     'Total investment: $' + Math.round(totalCost*10)/10 + 'B. ' +
-    'What are the philosophical implications, likely unintended consequences, historical precedents, and most important considerations for this plan?';
+    'Analyze this plan: philosophical implications, unintended consequences, historical precedents, what matters most.';
 
-  // Get 3 council voices
   var voices = council.slice(0, 3);
   var allPieces = [];
 
-  // Add header
   var hdr = document.createElement('div');
   hdr.style.cssText = 'padding:14px 16px;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#b8922a;border-bottom:1px solid #f4f0e8';
   hdr.textContent = 'Council Analysis — ' + place;
@@ -2899,22 +3141,19 @@ async function debateProject() {
     thinking.id = 'proj-think-' + i;
     thinking.innerHTML = '<span>' + voice.name + '</span><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>';
     msgs.appendChild(thinking);
-    msgs.scrollIntoView({ behavior:'smooth', block:'end' });
 
     var sys = 'You are ' + voice.name + ' (' + voice.era + '), known for: ' + voice.domain + '. ' +
-      'A person is designing a policy intervention for a real place. Respond in your authentic voice. ' +
-      'Be specific, provocative, and historically grounded. 3-4 sentences. No preamble.';
+      'A person is designing a real policy intervention for a place. Speak in your authentic voice. ' +
+      'Be specific, provocative, historically grounded. Reference the actual interventions proposed. 3-4 sentences. No preamble.';
 
     try {
       var response = await new Promise(function(resolve, reject) {
         fetch('/api/chat', {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
+          method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ system:sys, user:problemStatement, maxTokens:400 })
-        })
-        .then(function(r){ return r.json(); })
-        .then(function(d){ resolve(d.text || d.error); })
-        .catch(reject);
+        }).then(function(r){ return r.json(); })
+          .then(function(d){ resolve(d.text || d.error); })
+          .catch(reject);
       });
 
       var t = document.getElementById('proj-think-' + i);
@@ -2932,7 +3171,6 @@ async function debateProject() {
     }
   }
 
-  // Synthesis
   if (allPieces.length > 0) {
     var synthThink = document.createElement('div');
     synthThink.style.cssText = 'padding:12px 16px;display:flex;align-items:center;gap:8px;color:#8a8580;font-size:13px';
@@ -2945,13 +3183,11 @@ async function debateProject() {
         'Distill the key insight in 2-3 sentences. What is the single most important thing this person should know?';
       var synthResponse = await new Promise(function(resolve, reject) {
         fetch('/api/chat', {
-          method:'POST',
-          headers:{'Content-Type':'application/json'},
+          method:'POST', headers:{'Content-Type':'application/json'},
           body: JSON.stringify({ system:synthSys, user:allPieces.join('\n\n'), maxTokens:300 })
-        })
-        .then(function(r){ return r.json(); })
-        .then(function(d){ resolve(d.text || ''); })
-        .catch(reject);
+        }).then(function(r){ return r.json(); })
+          .then(function(d){ resolve(d.text || ''); })
+          .catch(reject);
       });
       var st2 = document.getElementById('proj-synth-think');
       if (st2) st2.parentNode.removeChild(st2);
@@ -2972,20 +3208,19 @@ async function debateProject() {
 
 function saveProject() {
   if (!currentProject) return;
-  var title = document.getElementById('projectTitle').value.trim();
-  if (!title) { title = currentProject.place + ' Project'; }
+  var title = document.getElementById('projectTitle').value.trim() || currentProject.place + ' Project';
 
   var activePolicies = [];
-  POLICIES.forEach(function(p) {
-    var d = projectSliders[p.id] || 0;
-    if (d > 0) activePolicies.push({ name:p.name, delta:d, unit:p.unit });
+  Object.keys(DOMAINS).forEach(function(dk) {
+    DOMAINS[dk].policies.forEach(function(p) {
+      var d = projectSliders[p.id] || 0;
+      if (d > 0) activePolicies.push({ domain: dk, name:p.name, delta:d, unit:p.unit });
+    });
   });
 
   var saved = {
-    title: title,
-    place: currentProject.place,
-    baseline: currentProject.baseline,
-    policies: activePolicies,
+    title: title, place: currentProject.place,
+    baseline: currentProject.baseline, policies: activePolicies,
     date: new Date().toLocaleDateString(),
     projectedFl: document.getElementById('projOutFl').textContent,
     projectedEc: document.getElementById('projOutEc').textContent,
@@ -2998,7 +3233,6 @@ function saveProject() {
     localStorage.setItem('wg_projects', JSON.stringify(existing));
   } catch(e) {}
 
-  // Also share summary to gallery
   var summary = 'Place project for ' + currentProject.place + ': ' +
     activePolicies.map(function(p){ return p.name + ' +' + p.delta + p.unit; }).join(', ') + '. ' +
     'Projected flourishing: ' + document.getElementById('projOutFl').textContent + '/100.';
@@ -3009,6 +3243,7 @@ function saveProject() {
   msg.style.display = 'block';
   document.getElementById('projectTitle').value = '';
 }
+
 
 // ════════════ AVATAR SYSTEM ════════════
 
@@ -3709,68 +3944,83 @@ drawHeaderAvatar();
       <div style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580">Place Project</div>
       <div style="font-size:17px;font-weight:700;color:#1a1814" id="projectPlaceName">Unknown Place</div>
     </div>
+    <div style="margin-left:auto;font-size:11px;color:#b8b4ae" id="projectDataSource">World Bank</div>
   </div>
 
-  <!-- Baseline metrics -->
+  <!-- Baseline + Projected side by side -->
 
-  <div class="card" style="margin-bottom:12px">
-    <div class="card-hdr" style="justify-content:space-between">
-      <span class="card-title">Baseline — Real Data</span>
-      <span style="font-size:11px;color:#b8b4ae" id="projectDataSource">World Bank</span>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+    <div class="card" style="padding:12px">
+      <div style="font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580;margin-bottom:8px">Baseline</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;text-align:center">
+        <div>
+          <div style="font-size:8px;color:#8a8580;text-transform:uppercase;letter-spacing:.5px">FL</div>
+          <div style="font-size:20px;font-weight:700;color:#1a6b4a" id="projMetFl">--</div>
+        </div>
+        <div>
+          <div style="font-size:8px;color:#8a8580;text-transform:uppercase;letter-spacing:.5px">EC</div>
+          <div style="font-size:20px;font-weight:700;color:#b8922a" id="projMetEc">--</div>
+        </div>
+        <div>
+          <div style="font-size:8px;color:#8a8580;text-transform:uppercase;letter-spacing:.5px">ST</div>
+          <div style="font-size:20px;font-weight:700;color:#5040a0" id="projMetSt">--</div>
+        </div>
+      </div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;padding:12px">
-      <div style="text-align:center">
-        <div style="font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580;margin-bottom:4px">Flourishing</div>
-        <div style="font-size:24px;font-weight:700;color:#1a6b4a" id="projMetFl">--</div>
-      </div>
-      <div style="text-align:center">
-        <div style="font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580;margin-bottom:4px">Ecological</div>
-        <div style="font-size:24px;font-weight:700;color:#b8922a" id="projMetEc">--</div>
-      </div>
-      <div style="text-align:center">
-        <div style="font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580;margin-bottom:4px">Stability</div>
-        <div style="font-size:24px;font-weight:700;color:#5040a0" id="projMetSt">--</div>
+    <div class="card" style="padding:12px">
+      <div style="font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580;margin-bottom:8px">Projected</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;text-align:center">
+        <div>
+          <div style="font-size:8px;color:#8a8580;text-transform:uppercase;letter-spacing:.5px">FL</div>
+          <div style="font-size:20px;font-weight:700;color:#1a6b4a" id="projOutFl">--</div>
+          <div style="font-size:10px" id="projOutFlDelta"></div>
+        </div>
+        <div>
+          <div style="font-size:8px;color:#8a8580;text-transform:uppercase;letter-spacing:.5px">EC</div>
+          <div style="font-size:20px;font-weight:700;color:#b8922a" id="projOutEc">--</div>
+          <div style="font-size:10px" id="projOutEcDelta"></div>
+        </div>
+        <div>
+          <div style="font-size:8px;color:#8a8580;text-transform:uppercase;letter-spacing:.5px">ST</div>
+          <div style="font-size:20px;font-weight:700;color:#5040a0" id="projOutSt">--</div>
+          <div style="font-size:10px" id="projOutStDelta"></div>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Policy interventions -->
+  <!-- Cost + Timeline strip -->
 
-  <div style="font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:#8a8580;margin-bottom:10px">Policy Interventions</div>
-  <div style="font-size:13px;color:#8a8580;margin-bottom:14px;line-height:1.6">Move sliders to model policy changes. Costs and projected impacts update in real time.</div>
+  <div style="display:flex;gap:8px;margin-bottom:14px">
+    <div style="flex:1;background:#fff;border:1px solid #e8e4dc;border-radius:8px;padding:10px 12px">
+      <div style="font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580">Investment</div>
+      <div style="font-size:18px;font-weight:700;color:#1a1814" id="projTotalCost">$0</div>
+    </div>
+    <div style="flex:1;background:#fff;border:1px solid #e8e4dc;border-radius:8px;padding:10px 12px">
+      <div style="font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580">Timeline</div>
+      <div style="font-size:18px;font-weight:700;color:#1a1814" id="projTimeline">—</div>
+    </div>
+    <div style="flex:2;background:#fff;border:1px solid #e8e4dc;border-radius:8px;padding:10px 12px">
+      <div style="font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580">Status</div>
+      <div style="font-size:12px;color:#8a8580;margin-top:2px" id="projActivePolicies">No interventions yet</div>
+    </div>
+  </div>
 
-  <div id="projectPolicies" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px"></div>
-
-  <!-- Projected outcomes -->
+  <!-- Real data from APIs -->
 
   <div class="card" style="margin-bottom:12px">
-    <div class="card-hdr"><span class="card-title">Projected Outcomes</span></div>
+    <div class="card-hdr"><span class="card-title">Real Local Data</span></div>
+    <div style="padding:12px 14px;display:flex;flex-wrap:wrap;gap:6px;min-height:48px" id="infraRealData">
+      <div style="font-size:12px;color:#b8b4ae;font-style:italic">Loading data from Census, BLS, OpenStreetMap...</div>
+    </div>
+  </div>
+
+  <!-- Domain tabs -->
+
+  <div class="card" style="margin-bottom:12px">
+    <div style="display:flex;border-bottom:1px solid #e8e4dc" id="infraTabBar"></div>
     <div style="padding:14px 16px">
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">
-        <div style="text-align:center">
-          <div style="font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580;margin-bottom:4px">Flourishing</div>
-          <div style="font-size:24px;font-weight:700;color:#1a6b4a" id="projOutFl">--</div>
-          <div style="font-size:11px;color:#2a9060" id="projOutFlDelta"></div>
-        </div>
-        <div style="text-align:center">
-          <div style="font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580;margin-bottom:4px">Ecological</div>
-          <div style="font-size:24px;font-weight:700;color:#b8922a" id="projOutEc">--</div>
-          <div style="font-size:11px;color:#2a9060" id="projOutEcDelta"></div>
-        </div>
-        <div style="text-align:center">
-          <div style="font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580;margin-bottom:4px">Stability</div>
-          <div style="font-size:24px;font-weight:700;color:#5040a0" id="projOutSt">--</div>
-          <div style="font-size:11px;color:#2a9060" id="projOutStDelta"></div>
-        </div>
-      </div>
-      <div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #f0ece4">
-        <span style="font-size:13px;color:#8a8580">Total investment</span>
-        <span style="font-size:13px;font-weight:600;color:#1a1814" id="projTotalCost">$0B</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid #f0ece4">
-        <span style="font-size:13px;color:#8a8580">Timeline</span>
-        <span style="font-size:13px;font-weight:600;color:#1a1814" id="projTimeline">--</span>
-      </div>
+      <div id="projectPolicies"></div>
     </div>
   </div>
 
@@ -3779,7 +4029,7 @@ drawHeaderAvatar();
   <div class="card" style="margin-bottom:12px">
     <div class="card-hdr"><span class="card-title">Council Analysis</span></div>
     <div class="card-body">
-      <p style="font-size:13px;color:#8a8580;margin-bottom:12px;line-height:1.6">Ask the council to analyze your interventions — philosophical implications, trade-offs, historical precedents.</p>
+      <p style="font-size:13px;color:#8a8580;margin-bottom:12px;line-height:1.6">Ask the council to analyze your plan — philosophical implications, trade-offs, historical precedents. They'll draw on real local data.</p>
       <button class="btn btn-dark btn-full" onclick="debateProject()" id="projectDebateBtn">Convene the Council on This Plan</button>
     </div>
     <div id="projectDebateMessages" style="display:none;border-top:1px solid #e8e4dc"></div>
@@ -3790,7 +4040,7 @@ drawHeaderAvatar();
   <div class="card" style="margin-bottom:20px">
     <div class="card-body">
       <input id="projectTitle" placeholder="Name this project..." style="margin-bottom:10px">
-      <button class="btn btn-dark btn-full" onclick="saveProject()">Save Project</button>
+      <button class="btn btn-dark btn-full" onclick="saveProject()">Save & Share to Gallery</button>
       <div id="projectSaveMsg" style="font-size:12px;color:#2a9060;margin-top:8px;display:none"></div>
     </div>
   </div>
