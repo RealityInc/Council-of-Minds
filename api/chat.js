@@ -4,7 +4,7 @@ module.exports = async function(req, res) {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) return res.status(500).json({ error: 'No API key' });
   const b = req.body || {};
-  const payload = JSON.stringify({ model: 'claude-sonnet-4-5', max_tokens: b.maxTokens || 1000, system: b.system || '', messages: [{ role: 'user', content: b.user || '' }] });
+  const payload = JSON.stringify({ model: 'claude-sonnet-4-5-20251001', max_tokens: b.maxTokens || 1000, system: b.system || '', messages: [{ role: 'user', content: b.user || '' }] });
   return new Promise((resolve) => {
     const r = https.request({ hostname: 'api.anthropic.com', path: '/v1/messages', method: 'POST', headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload), 'x-api-key': key, 'anthropic-version': '2023-06-01' } }, (resp) => {
       let d = '';
