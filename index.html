@@ -117,14 +117,6 @@ textarea{resize:none;min-height:80px;}
 .popup-source{font-size:10px;color:#b8b4ae;margin-top:6px;}
 </style>
 </head>
-  <script>
-window.onerror = function(msg, src, line) {
-  document.body.insertAdjacentHTML('afterbegin',
-    '<div style="position:fixed;top:0;left:0;right:0;background:red;color:white;padding:10px;font-size:12px;z-index:9999">'
-    + msg + ' (line ' + line + ')</div>');
-};
-</script>
-
 <body>
 <div class="header">
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -593,7 +585,7 @@ window.onerror = function(msg, src, line) {
 <div class="screen" id="screen-quiz" style="padding:0;background:#0a0a0f;min-height:100vh"></div>
 
 <script>
-// ── COUNCIL DATA ──
+// -- COUNCIL DATA --
 var BASE = [
   {name:"Buddha",era:"5th c. BCE",domain:"liberation, impermanence"},
   {name:"Alan Watts",era:"1915-1973",domain:"Zen, non-dualism"},
@@ -644,7 +636,7 @@ var problem = '';
 var activeProblem = '';
 var loading = false;
 
-// ── SCREENS ──
+// -- SCREENS --
 function show(name) {
   var screens = ['home','oracle','forum','create','world','gallery','council','about','project','quiz'];
   for (var i = 0; i < screens.length; i++) {
@@ -672,7 +664,7 @@ function skipWhy() {
   if (hd) hd.style.display = 'block';
 }
 
-// ── API ──
+// -- API --
 function api(system, user, maxTok, cb) {
   fetch('/api/chat', {
     method:'POST',
@@ -687,7 +679,7 @@ function api(system, user, maxTok, cb) {
   .catch(function(e){ cb(null, e.message); });
 }
 
-// ── COUNCIL ──
+// -- COUNCIL --
 function getCouncilNames() {
   return council.map(function(m){ return m.name; }).join(', ');
 }
@@ -725,7 +717,7 @@ function renderBrowseList() {
     // FIX: use single-quoted onclick attribute to avoid broken HTML
     html += '<div onclick=\'toggleBrowseThinker("' + t.name.replace(/'/g,"\\'").replace(/"/g,'\\"') + '")\' style="padding:10px 16px;cursor:pointer;border-bottom:1px solid #f4f0e8;' + bg + 'display:flex;justify-content:space-between;align-items:center">';
     html += '<div><div style="font-size:14px;font-weight:' + (inCouncil?'600':'400') + ';color:#1a1814">' + check + t.name + '</div>';
-    html += '<div style="font-size:11px;color:#b8b4ae">' + t.era + ' — ' + t.domain + '</div></div>';
+    html += '<div style="font-size:11px;color:#b8b4ae">' + t.era + ' -- ' + t.domain + '</div></div>';
     html += '<div style="font-size:11px;color:' + (inCouncil?'#2a9060':'#e8e4dc') + '">' + (inCouncil?'✓':'') + '</div>';
     html += '</div>';
   }
@@ -863,7 +855,7 @@ function renderCouncil() {
     var chip = document.createElement('div');
     chip.style.cssText = 'padding:4px 12px;border:1.5px solid '+color+'33;border-radius:20px;font-size:12px;font-weight:500;color:'+color+';background:'+color+'11;cursor:pointer;transition:all .15s';
     chip.textContent = m.name;
-    chip.title = m.era + (m.domain?' — '+m.domain:'');
+    chip.title = m.era + (m.domain?' -- '+m.domain:'');
     (function(name){
       chip.onclick = function() {
         var idx=-1;
@@ -877,11 +869,11 @@ function renderCouncil() {
   renderSavedCouncils();
 }
 
-// ── GALLERY ──
+// -- GALLERY --
 var galleryItems = [
   {id:1,type:'creative',title:'On the Weight of Water',content:'The river does not ask permission to find its way to sea. A collective poem on resource equity.',fullContent:'The river does not ask permission\nto find its way to sea.\n\nWe have mapped the distance\nbetween abundance and thirst.\nIt is not measured in kilometers\nbut in political will.\n\nFuller said: we already have enough.\nThe question was never the river.\nThe question was always the valve.',place:'Bolivia',date:'Apr 2026',appreciations:12,author:'Anonymous'},
   {id:2,type:'insight',title:"Fuller's Ephemeralization in the Age of AI",content:'We built a working World Game in under an hour. The question is no longer whether we can do more with less.',fullContent:"Fuller called it ephemeralization: doing more and more with less and less until you can do everything with nothing. The World Game took me under an hour to build with AI assistance. The question has shifted: not whether we can model planetary resource flows, but whether we will choose to act on what the model shows us.",place:'Global',date:'Apr 2026',appreciations:8,author:'Mike R.'},
-  {id:3,type:'debate',title:'Should AI replace human decision-making in resource allocation?',content:'Jung noted the shadow of optimization: efficiency without wisdom produces systems that are perfectly wrong.',fullContent:"JUNG: The danger is not that the machine will think like a human — it is that humans will think like machines.\n\nFULLER: Every tool is a prosthetic. The question is whether it extends human wisdom or substitutes for it.\n\nCONSENSUS: AI should model and surface — never decide. The World Game's purpose was always to reveal that enough exists. Acting on that revelation remains irreducibly human.",place:'Global',date:'Apr 2026',appreciations:15,author:'Forum Session'}
+  {id:3,type:'debate',title:'Should AI replace human decision-making in resource allocation?',content:'Jung noted the shadow of optimization: efficiency without wisdom produces systems that are perfectly wrong.',fullContent:"JUNG: The danger is not that the machine will think like a human -- it is that humans will think like machines.\n\nFULLER: Every tool is a prosthetic. The question is whether it extends human wisdom or substitutes for it.\n\nCONSENSUS: AI should model and surface -- never decide. The World Game's purpose was always to reveal that enough exists. Acting on that revelation remains irreducibly human.",place:'Global',date:'Apr 2026',appreciations:15,author:'Forum Session'}
 ];
 var galleryFilter = 'all';
 var appreciatedItems = {};
@@ -923,7 +915,7 @@ function renderGallery() {
       if (item._expanded) html += '<div style="margin-top:10px;padding:12px;background:#f8f7f4;border-radius:8px;font-size:13px;color:#4a4640;line-height:1.7;white-space:pre-wrap">'+item.fullContent+'</div>';
       html += '<button onclick="toggleGalleryExpand('+item.id+')" style="background:none;border:none;font-size:12px;color:#b8922a;cursor:pointer;padding:6px 0;font-family:inherit">'+(item._expanded?'↑ Show less':'↓ Read full')+'</button>';
     }
-    if (item.author) html += '<div style="font-size:11px;color:#b8b4ae;margin-top:4px">— '+item.author+'</div>';
+    if (item.author) html += '<div style="font-size:11px;color:#b8b4ae;margin-top:4px">-- '+item.author+'</div>';
     html += '</div>';
     html += '<div style="padding:8px 14px;border-top:1px solid #f4f0e8;display:flex;justify-content:space-between;align-items:center">';
     html += '<span style="font-size:12px;color:#8a8580">♥ '+(item.appreciations||0)+' appreciate this</span>';
@@ -955,11 +947,11 @@ function shareForumToGallery(){ shareToGallery('debate',problem.substring(0,60),
 function shareCreateToGallery(){ shareToGallery('creative',lastCreateTheme.substring(0,60),lastCreateText.substring(0,300)); }
 function shareOracleToGallery(){ shareToGallery('insight','Oracle: '+lastOracleQ.substring(0,50),lastOracleText.substring(0,300)); }
 
-// ── ORACLE ──
+// -- ORACLE --
 var oracleMode='personal';
 var oracleDoc=null;
 var oracleConvHistory=[];
-var ORACLE_MODE_DESC={personal:'Bring your real questions — personal, professional, existential. Completely private.',global:'Ask about world events, civilizational questions, historical patterns.',synthesis:'Upload a document or describe an idea. The council will analyze and synthesize.'};
+var ORACLE_MODE_DESC={personal:'Bring your real questions -- personal, professional, existential. Completely private.',global:'Ask about world events, civilizational questions, historical patterns.',synthesis:'Upload a document or describe an idea. The council will analyze and synthesize.'};
 
 function setOracleMode(mode) {
   oracleMode=mode;
@@ -1080,7 +1072,7 @@ function tryParseOracle(text) {
   return frag;
 }
 
-// ── FORUM ──
+// -- FORUM --
 function startDebate() {
   var val=document.getElementById('forumInput').value.trim();
   if(!val) return;
@@ -1131,7 +1123,7 @@ function synthesize(){
   });
 }
 
-// ── CREATE ──
+// -- CREATE --
 function triggerCreate(){
   var theme=document.getElementById('createTheme').value.trim();
   if(!theme||loading) return;
@@ -1175,7 +1167,7 @@ function triggerCreate(){
   nextVoice();
 }
 
-// ── WORLD GAME SIMULATION ──
+// -- WORLD GAME SIMULATION --
 function getSlider(id,def){var el=document.getElementById(id);return el?parseInt(el.value)||def:def;}
 var BASE_METRICS=null;
 var INTERDEP_RULES=[
@@ -1216,7 +1208,7 @@ function setSlider(id,val,labelId){var s=document.getElementById(id);var l=docum
 function resetMapView(){if(leafletMap)leafletMap.setView([20,0],2);if(subLayer){leafletMap.removeLayer(subLayer);subLayer=null;}selectedPlace={name:'Global',code:null,iso3:null,type:'world'};document.getElementById('viewingLabel').textContent='Global Average';document.getElementById('dataPanel').style.display='none';resetSliders();}
 function resetSliders(){setSlider('sl-ren',34,'sv-ren');setSlider('sl-food',72,'sv-food');setSlider('sl-kl',8,'sv-kl');setSlider('sl-land',17,'sv-land');setSlider('sl-water',74,'sv-water');setSlider('sl-wealth',12,'sv-wealth');recalc();document.getElementById('viewingLabel').textContent='Global Average';}
 
-// ── MAP ──
+// -- MAP --
 var leafletMap=null,countryLayer=null,subLayer=null;
 var selectedPlace={name:'Global',code:null,iso3:null,type:'world'};
 var wbCache={},subCache={},geoCache={};
@@ -1276,8 +1268,8 @@ function loadSubLayer(iso2,iso3,countryName){
   .then(function(data){if(!data||!data.features||data.features.length===0)throw new Error('Empty');geoCache[cacheKey]=data;renderSubLayer(data,iso2,iso3,countryName);})
   .catch(function(){
     var neUrl='https://cdn.jsdelivr.net/gh/nvkelso/natural-earth-vector@master/geojson/ne_50m_admin_1_states_provinces.geojson';
-    if(geoCache['_ne_adm1']){var filtered=filterByISO(geoCache['_ne_adm1'],iso2,iso3);if(filtered.features.length>0){geoCache[cacheKey]=filtered;renderSubLayer(filtered,iso2,iso3,countryName);}else{setMapStatus(countryName+' — tap any region for local data.');}return;}
-    fetch(neUrl).then(function(r){return r.json();}).then(function(data){geoCache['_ne_adm1']=data;var filtered=filterByISO(data,iso2,iso3);if(filtered.features.length>0){geoCache[cacheKey]=filtered;renderSubLayer(filtered,iso2,iso3,countryName);}else{setMapStatus(countryName+' — zoom in to see regions.');}}).catch(function(){setMapStatus(countryName+' — zoom in to see regions.');});
+    if(geoCache['_ne_adm1']){var filtered=filterByISO(geoCache['_ne_adm1'],iso2,iso3);if(filtered.features.length>0){geoCache[cacheKey]=filtered;renderSubLayer(filtered,iso2,iso3,countryName);}else{setMapStatus(countryName+' -- tap any region for local data.');}return;}
+    fetch(neUrl).then(function(r){return r.json();}).then(function(data){geoCache['_ne_adm1']=data;var filtered=filterByISO(data,iso2,iso3);if(filtered.features.length>0){geoCache[cacheKey]=filtered;renderSubLayer(filtered,iso2,iso3,countryName);}else{setMapStatus(countryName+' -- zoom in to see regions.');}}).catch(function(){setMapStatus(countryName+' -- zoom in to see regions.');});
   });
 }
 
@@ -1335,7 +1327,7 @@ function onCountryClick(iso2,iso3,name,latlng){
   document.getElementById('viewingLabel').textContent=name;
   showDataPanel(name,'<div style="color:#8a8580;font-size:13px">Fetching World Bank data...</div>');
   L.popup().setLatLng(latlng).setContent('<div class="popup-title">'+name+'</div><div style="color:#8a8580;font-size:12px">Loading...</div>').openOn(leafletMap);
-  if(iso2==='US'){setMapStatus(name+' — zoom in to see states');loadUSStateLayer();}
+  if(iso2==='US'){setMapStatus(name+' -- zoom in to see states');loadUSStateLayer();}
   else if(iso3){setMapStatus('Loading regions for '+name+'...');loadSubLayer(iso2,iso3,name);}
   fetchWorldBankData(iso2,name,latlng);
 }
@@ -1394,7 +1386,7 @@ function reverseGeocode(lat,lng){
   }).catch(function(){});
 }
 
-// ── WORLD BANK + CENSUS DATA ──
+// -- WORLD BANK + CENSUS DATA --
 function fetchWorldBankData(code,name,latlng){
   if(!code){showNoData(name);return;}
   var cacheKey='wb_'+code;
@@ -1417,7 +1409,7 @@ function fetchRegionData(regionName,iso2,countryName,latlng){
   var cacheKey='wb_'+iso2;
   if(wbCache[cacheKey]){displayRegionData(regionName,countryName,wbCache[cacheKey],latlng);}
   else{fetchWorldBankData(iso2,countryName,null);showDataPanel(regionName+', '+countryName,'<div style="font-size:13px;color:#8a8580">Loading national data for context...</div>');setTimeout(function(){if(wbCache[cacheKey])displayRegionData(regionName,countryName,wbCache[cacheKey],latlng);},4000);}
-  setMapStatus(regionName+' — showing available data');
+  setMapStatus(regionName+' -- showing available data');
 }
 function fetchStateData(stateName,fips,latlng){
   if(!fips){showNoData(stateName);return;}
@@ -1478,7 +1470,7 @@ function displayRegionData(regionName,countryName,countryData,latlng){
   if(hunger)html+=dataRow('Food secure',Math.round(100-hunger.value)+'%',hunger.year);
   if(water)html+=dataRow('Safe water',water.value+'%',water.year);
   if(gdp)html+=dataRow('GDP per capita','$'+Math.round(gdp.value).toLocaleString(),gdp.year);
-  showDataPanel(regionName+', '+countryName,html);setMapStatus(regionName+' — national data shown as context.');
+  showDataPanel(regionName+', '+countryName,html);setMapStatus(regionName+' -- national data shown as context.');
 }
 function displayStateData(data,stateName,latlng){
   if(data.medianIncome)setSlider('sl-wealth',Math.min(100,Math.round(data.medianIncome/1200)),'sv-wealth');
@@ -1506,7 +1498,7 @@ function displayCountyData(data,countyName,latlng){
   var countyBaseline={energy:34,water:95,food:85,land:10,wealth:data.medianIncome?Math.min(100,Math.round(data.medianIncome/1200)):55,conflict:5,flourishing:data.medianIncome?Math.min(100,Math.round(data.medianIncome/1200)):55,ecological:40,stability:65};
   addStartProjectBtn((data.name||countyName+' County'),countyBaseline,'US Census 2022');
 }
-function showNoData(name){showDataPanel(name,'<div style="color:#8a8580;font-size:13px;padding:6px 0">No data available for '+name+'.</div>');setMapStatus(name+' — no data available');}
+function showNoData(name){showDataPanel(name,'<div style="color:#8a8580;font-size:13px;padding:6px 0">No data available for '+name+'.</div>');setMapStatus(name+' -- no data available');}
 function dataRow(label,value,year){var yr=year?' <span style="color:#b8b4ae;font-size:10px">('+year+')</span>':'';return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f4f0e8"><span style="font-size:13px;color:#8a8580">'+label+'</span><span style="font-size:13px;font-weight:600;color:#1a1814">'+value+yr+'</span></div>';}
 function setMapStatus(msg){var el=document.getElementById('mapStatus');if(el)el.textContent=msg;}
 
@@ -1547,7 +1539,7 @@ function startAddCommunityProjectFromPanel(){
   startAddCommunityProject(title,lat,lng);
 }
 
-// ── GLOBE ──
+// -- GLOBE --
 function initGlobe(){
   var canvas=document.getElementById('globeCanvas');if(!canvas) return;
   var ctx=canvas.getContext('2d');var cx=60,cy=60,r=52,angle=0;
@@ -1571,7 +1563,7 @@ function initGlobe(){
   draw();
 }
 
-// ── FLOATING COUNCIL CHAT ──
+// -- FLOATING COUNCIL CHAT --
 var chatOpen=false,chatHistory=[],chatLoading=false;
 function toggleCouncilChat(){
   chatOpen=!chatOpen;
@@ -1580,7 +1572,7 @@ function toggleCouncilChat(){
   else panel.classList.remove('open');
 }
 function updateChatCouncilNames(){var el=document.getElementById('chatCouncilNames');if(!el)return;var names=council.slice(0,4).map(function(m){return m.name;}).join(', ');if(council.length>4)names+=' +'+(council.length-4)+' more';el.textContent=names;}
-function updateChatContext(){var bar=document.getElementById('chatContextBar');if(!bar)return;var ctx='';if(selectedPlace&&selectedPlace.name&&selectedPlace.name!=='Global')ctx='Context: '+selectedPlace.name;if(activeProblem)ctx=ctx?ctx+' — '+activeProblem.substring(0,50):activeProblem.substring(0,60);if(ctx){bar.style.display='block';bar.textContent=ctx;}else bar.style.display='none';}
+function updateChatContext(){var bar=document.getElementById('chatContextBar');if(!bar)return;var ctx='';if(selectedPlace&&selectedPlace.name&&selectedPlace.name!=='Global')ctx='Context: '+selectedPlace.name;if(activeProblem)ctx=ctx?ctx+' -- '+activeProblem.substring(0,50):activeProblem.substring(0,60);if(ctx){bar.style.display='block';bar.textContent=ctx;}else bar.style.display='none';}
 function addChatMsg(role,text,speaker){
   var msgs=document.getElementById('chatMessages');if(!msgs) return;
   var div=document.createElement('div');
@@ -1606,7 +1598,7 @@ function sendChat(){
   .catch(function(e){chatLoading=false;removeChatThinking();addChatMsg('council',e.message,'Error');});
 }
 
-// ── INFRASTRUCTURE / REAL DATA ──
+// -- INFRASTRUCTURE / REAL DATA --
 var infraData={};
 var DOMAINS={
   economic:{label:'Economic',icon:'⊕',color:'#2a9060',desc:'Jobs, wages, industry mix, and economic resilience',policies:[
@@ -1661,7 +1653,7 @@ function updateInfraDisplay(){
   el.innerHTML=chips.map(function(c){return '<div style="display:inline-flex;flex-direction:column;background:#f8f7f4;border:1px solid #e8e4dc;border-radius:8px;padding:6px 10px;margin:3px"><div style="font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580">'+c.label+'</div><div style="font-size:14px;font-weight:700;color:'+c.color+'">'+c.value+'</div></div>';}).join('');
 }
 
-// ── PROJECT PAGE ──
+// -- PROJECT PAGE --
 var currentProject=null,savedProjects=[],activeInfraTab='economic',projectSliders={};
 
 function startProject(placeName,baselineData,dataSource){
@@ -1735,10 +1727,10 @@ function updateProjectOutcomes(){
   Object.keys(DOMAINS).forEach(function(dk){DOMAINS[dk].policies.forEach(function(policy){var delta=projectSliders[policy.id]||0;if(delta===0)return;activeCount++;var weight=delta/20;deltaFl+=policy.impacts.flourishing*weight*8;deltaEc+=policy.impacts.ecological*weight*8;deltaSt+=policy.impacts.stability*weight*8;totalCost+=delta*policy.costPerPoint;maxYears=Math.max(maxYears,policy.timeYears);});});
   var newFl=Math.min(99,Math.round(baseFl+deltaFl));var newEc=Math.min(99,Math.round(baseEc+deltaEc));var newSt=Math.min(99,Math.round(baseSt+deltaSt));
   document.getElementById('projOutFl').textContent=newFl;document.getElementById('projOutEc').textContent=newEc;document.getElementById('projOutSt').textContent=newSt;
-  function deltaHtml(orig,updated){var d=updated-orig;return d>0?'<span style="color:#2a9060;font-weight:600">+'+d+'</span>':d<0?'<span style="color:#c04020;font-weight:600">'+d+'</span>':'<span style="color:#b8b4ae">—</span>';}
+  function deltaHtml(orig,updated){var d=updated-orig;return d>0?'<span style="color:#2a9060;font-weight:600">+'+d+'</span>':d<0?'<span style="color:#c04020;font-weight:600">'+d+'</span>':'<span style="color:#b8b4ae">--</span>';}
   document.getElementById('projOutFlDelta').innerHTML=deltaHtml(baseFl,newFl);document.getElementById('projOutEcDelta').innerHTML=deltaHtml(baseEc,newEc);document.getElementById('projOutStDelta').innerHTML=deltaHtml(baseSt,newSt);
   document.getElementById('projTotalCost').textContent=totalCost>0?'$'+Math.round(totalCost*10)/10+'B':'$0';
-  document.getElementById('projTimeline').textContent=maxYears>0?maxYears+' years':'—';
+  document.getElementById('projTimeline').textContent=maxYears>0?maxYears+' years':'--';
   var countEl=document.getElementById('projActivePolicies');if(countEl)countEl.textContent=activeCount>0?activeCount+' interventions active':'No interventions yet';
 }
 
@@ -1753,9 +1745,9 @@ async function debateProject(){
   if(infraData.census){var c=infraData.census;if(c.unemployed&&c.employed)realDataContext+='Unemployment: '+Math.round(c.unemployed/(c.employed+c.unemployed)*100)+'%. ';if(c.manufacturing&&c.employed)realDataContext+='Manufacturing: '+Math.round(c.manufacturing/c.employed*100)+'% of jobs. ';}
   if(infraData.osm){var o=infraData.osm;if(o.railSegments>0)realDataContext+='Rail: '+o.railSegments+' segments. ';if(o.rivers>0)realDataContext+='Waterway access: yes. ';}
   var summary=activePolicies.length>0?activePolicies.join(' | '):'No specific interventions selected yet';
-  var problemStatement='Place Project for '+currentProject.place+'. '+(realDataContext?'Local data: '+realDataContext:'')+'Baseline — FL:'+( currentProject.baseline.flourishing||50)+', EC:'+(currentProject.baseline.ecological||50)+', ST:'+(currentProject.baseline.stability||50)+'. Interventions: '+summary+'. Total: $'+Math.round(totalCost*10)/10+'B. Analyze: philosophical implications, trade-offs, historical precedents.';
+  var problemStatement='Place Project for '+currentProject.place+'. '+(realDataContext?'Local data: '+realDataContext:'')+'Baseline -- FL:'+( currentProject.baseline.flourishing||50)+', EC:'+(currentProject.baseline.ecological||50)+', ST:'+(currentProject.baseline.stability||50)+'. Interventions: '+summary+'. Total: $'+Math.round(totalCost*10)/10+'B. Analyze: philosophical implications, trade-offs, historical precedents.';
   var voices=council.slice(0,3);var allPieces=[];
-  var hdr=document.createElement('div');hdr.style.cssText='padding:14px 16px;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#b8922a;border-bottom:1px solid #f4f0e8';hdr.textContent='Council Analysis — '+currentProject.place;msgs.appendChild(hdr);
+  var hdr=document.createElement('div');hdr.style.cssText='padding:14px 16px;font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#b8922a;border-bottom:1px solid #f4f0e8';hdr.textContent='Council Analysis -- '+currentProject.place;msgs.appendChild(hdr);
   for(var i=0;i<voices.length;i++){
     var voice=voices[i];
     var thinking=document.createElement('div');thinking.style.cssText='padding:12px 16px;display:flex;align-items:center;gap:8px;color:#8a8580;font-size:13px';thinking.id='proj-think-'+i;
@@ -1795,7 +1787,7 @@ function saveProject(){
   var msg=document.getElementById('projectSaveMsg');msg.textContent='Project saved and shared to Gallery.';msg.style.display='block';document.getElementById('projectTitle').value='';
 }
 
-// ── USER DATA UPLOAD ──
+// -- USER DATA UPLOAD --
 var userUploadedData={};
 function showUserDataUpload(){
   var placeName=document.getElementById('dataPanelTitle').textContent;
@@ -1804,7 +1796,7 @@ function showUserDataUpload(){
   panel.style.display=panel.style.display==='none'?'block':'none';
   if(panel.style.display==='none') return;
   var fields=[{label:'Renewable energy %',key:'ren'},{label:'Food security %',key:'food'},{label:'Safe water access %',key:'water'},{label:'Wealth equity (0-100)',key:'wealth'},{label:'Healthcare access %',key:'health'},{label:'Education index (0-100)',key:'education'}];
-  var rows=fields.map(function(f){return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span style="font-size:12px;color:#4a4640;flex:1">'+f.label+'</span><input id="ud-'+f.key+'" type="number" min="0" max="100" value="'+(existing[f.key]||'')+'" placeholder="—" style="width:64px;padding:4px 8px;border:1.5px solid #e8e4dc;border-radius:6px;font-size:13px;font-family:inherit;text-align:center;background:#f8f7f4"></div>';}).join('');
+  var rows=fields.map(function(f){return '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span style="font-size:12px;color:#4a4640;flex:1">'+f.label+'</span><input id="ud-'+f.key+'" type="number" min="0" max="100" value="'+(existing[f.key]||'')+'" placeholder="--" style="width:64px;padding:4px 8px;border:1.5px solid #e8e4dc;border-radius:6px;font-size:13px;font-family:inherit;text-align:center;background:#f8f7f4"></div>';}).join('');
   panel.innerHTML='<div style="padding:12px 14px;border-bottom:1px solid #e8e4dc;display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580">Upload Your Data</span><button onclick="hideUserDataPanel()" style="background:none;border:none;cursor:pointer;font-size:16px;color:#8a8580">×</button></div><div style="padding:12px 14px;display:flex;flex-direction:column;gap:8px"><div style="font-size:12px;color:#8a8580;line-height:1.5">Add your own data. Overrides World Bank sliders.</div>'+rows+'<div style="display:flex;gap:8px;margin-top:4px"><button class="btn btn-dark" style="flex:1;font-size:12px" onclick="applyUserDataFromPanel()">Apply</button><label style="flex:1;display:flex;align-items:center;justify-content:center;padding:8px 14px;border:1.5px solid #d8d4cc;border-radius:20px;font-size:12px;color:#4a4640;cursor:pointer;text-align:center">📎 CSV<input type="file" accept=".csv,.txt" style="display:none" onchange="parseUserCSVFromPanel(this)"></label></div><div style="font-size:10px;color:#b8b4ae;text-align:center">CSV: indicator,value (one per line)</div></div>';
 }
 function applyUserDataFromPanel(){var placeName=document.getElementById('dataPanelTitle').textContent;applyUserData(placeName);}
@@ -1831,12 +1823,12 @@ function applyUserData(placeName){
   if(data.wealth!==undefined)setSlider('sl-wealth',data.wealth,'sv-wealth');
   BASE_METRICS=computeMetrics(getSliders());recalc();
   document.getElementById('userDataPanel').style.display='none';
-  setMapStatus(placeName+' — using your data. Sliders updated.');
+  setMapStatus(placeName+' -- using your data. Sliders updated.');
 }
 function hideUserDataPanel(){var el=document.getElementById('userDataPanel');if(el)el.style.display='none';}
 function hideAddProjectPanel(){var el=document.getElementById('addProjectPanel');if(el)el.style.display='none';}
 
-// ── COMMUNITY PROJECTS ──
+// -- COMMUNITY PROJECTS --
 var communityProjects=[],communityMarkers=[];
 function loadCommunityProjects(){try{communityProjects=JSON.parse(localStorage.getItem('wg_community_projects')||'[]');renderCommunityMarkers();}catch(e){communityProjects=[];}}
 function saveCommunityProjects(){try{localStorage.setItem('wg_community_projects',JSON.stringify(communityProjects));}catch(e){}}
@@ -1897,7 +1889,7 @@ shareToGallery(‘scenario’,proj.name+’ (’+proj.place+’)’,proj.descrip
 setMapStatus(‘Project added to map!’);
 }
 
-// ── RESOURCE TRACKER ──
+// – RESOURCE TRACKER –
 var resourceUsage={apiCalls:0,dataSources:{},tokensEst:0};
 function trackResource(source,tokens){resourceUsage.apiCalls++;resourceUsage.dataSources[source]=(resourceUsage.dataSources[source]||0)+1;resourceUsage.tokensEst+=tokens||0;updateResourceBar();}
 function updateResourceBar(){
@@ -1909,9 +1901,9 @@ sources.forEach(function(s){var colors={‘World Bank’:’#2a9060’,‘Census
 el.innerHTML=chips.join(’’);
 }
 
-// ── AVATAR SYSTEM ──
+// – AVATAR SYSTEM –
 var TYPES={analyst:{name:‘The Analyst’,tagline:‘You see the signal in everything. Others see noise.’,color:’#4a90d9’,glow:’#1a3a6a’,silhouette:‘analyst’,animal:‘owl’,tech:‘visor’,paletteIdx:0,council:[‘Carroll Quigley’,‘Hannah Arendt’,‘Claude’]},probe:{name:‘The Probe’,tagline:‘You go first. You always have.’,color:’#d4aa44’,glow:’#6a4a10’,silhouette:‘probe’,animal:‘fox’,tech:‘antenna’,paletteIdx:1,council:[‘Buckminster Fuller’,‘Nikola Tesla’,‘Claude’]},synthesizer:{name:‘The Synthesizer’,tagline:‘You combine what others keep separate.’,color:’#9060d0’,glow:’#401080’,silhouette:‘synthesizer’,animal:‘octopus’,tech:‘circuit’,paletteIdx:2,council:[‘Carl Jung’,‘Alan Watts’,‘Claude’]},vector:{name:‘The Vector’,tagline:‘Force with direction. You make things move.’,color:’#d04030’,glow:’#601010’,silhouette:‘probe’,animal:‘wolf’,tech:‘exhaust’,paletteIdx:3,council:[‘Frantz Fanon’,‘Rosa Luxemburg’,‘Claude’]},anomaly:{name:‘The Anomaly’,tagline:‘You are the data point that breaks the model.’,color:’#20c080’,glow:’#0a4030’,silhouette:‘anomaly’,animal:‘crow’,tech:‘glitch’,paletteIdx:4,council:[‘Jean Baudrillard’,‘Emma Goldman’,‘Claude’]},module:{name:‘The Module’,tagline:‘Self-contained. The whole works because you do.’,color:’#c08030’,glow:’#503010’,silhouette:‘analyst’,animal:‘deer’,tech:‘receiver’,paletteIdx:5,council:[‘Bell Hooks’,‘Vandana Shiva’,‘Claude’]},signal:{name:‘The Signal’,tagline:‘Broadcasting into the unknown. Someone will hear.’,color:’#40b0c0’,glow:’#104050’,silhouette:‘synthesizer’,animal:‘moth’,tech:‘lens’,paletteIdx:6,council:[‘Buddha’,‘Rumi’,‘Claude’]},static:{name:‘The Static’,tagline:‘The noise that turns out to be the message.’,color:’#a0a0a0’,glow:’#303030’,silhouette:‘anomaly’,animal:‘mantis’,tech:‘wave’,paletteIdx:7,council:[‘Alan Watts’,‘Jean Baudrillard’,‘Claude’]}};
-var QUIZ=[{q:‘A system is failing. You:’,opts:[{text:‘Find out exactly why before touching anything’,type:‘analyst’},{text:‘Start pulling it apart to see what happens’,type:‘probe’},{text:‘Look for the one piece connecting everything’,type:‘synthesizer’},{text:‘Fix the most broken part and see what follows’,type:‘vector’},{text:‘Let it finish failing — something better will come’,type:‘anomaly’},{text:‘Make sure the people depending on it are okay’,type:‘module’},{text:‘Tell everyone what you see happening’,type:‘signal’},{text:‘Do the unexpected thing and watch what shifts’,type:‘static’}]},{q:‘You have one hour that belongs to no one. It becomes:’,opts:[{text:‘A quiet review of everything on your mind’,type:‘analyst’},{text:‘The start of something you never planned’,type:‘probe’},{text:‘Three projects suddenly connected’,type:‘synthesizer’},{text:‘Something that needed doing finally done’,type:‘vector’},{text:‘Gone. You lost track completely.’,type:‘anomaly’},{text:‘Time with someone who needed it’,type:‘module’},{text:‘A message you finally had time to write’,type:‘signal’},{text:‘Weird. Productively weird.’,type:‘static’}]},{q:‘Someone hands you something broken. You:’,opts:[{text:‘Immediately understand what happened to it’,type:‘analyst’},{text:‘Try to use it anyway’,type:‘probe’},{text:‘See it as something else entirely’,type:‘synthesizer’},{text:‘Fix it or replace it. Quickly.’,type:‘vector’},{text:‘Wonder if broken is the wrong word’,type:‘anomaly’},{text:‘Ask who it belongs to and what they need’,type:‘module’},{text:‘Tell the story of how it broke’,type:‘signal’},{text:‘Make it into something it was not’,type:‘static’}]},{q:‘The map is wrong. You:’,opts:[{text:‘Correct it methodically’,type:‘analyst’},{text:‘Ignore it and navigate by feel’,type:‘probe’},{text:‘Cross-reference three other maps’,type:‘synthesizer’},{text:‘Go anyway. You can adapt.’,type:‘vector’},{text:‘Question whether the territory is right either’,type:‘anomaly’},{text:‘Make sure no one else gets lost’,type:‘module’},{text:‘Mark the error for everyone who comes after’,type:‘signal’},{text:‘Draw a better one from scratch’,type:‘static’}]},{q:‘It is very quiet. You feel:’,opts:[{text:‘Finally able to think’,type:‘analyst’},{text:‘Slightly restless’,type:‘probe’},{text:‘Like something is about to connect’,type:‘synthesizer’},{text:‘Ready’,type:‘vector’},{text:‘Like the quiet is saying something’,type:‘anomaly’},{text:‘Aware of everyone who is not here’,type:‘module’},{text:‘Like a frequency waiting to be found’,type:‘signal’},{text:‘Uncertain in a way that feels important’,type:‘static’}]}];
+var QUIZ=[{q:‘A system is failing. You:’,opts:[{text:‘Find out exactly why before touching anything’,type:‘analyst’},{text:‘Start pulling it apart to see what happens’,type:‘probe’},{text:‘Look for the one piece connecting everything’,type:‘synthesizer’},{text:‘Fix the most broken part and see what follows’,type:‘vector’},{text:‘Let it finish failing – something better will come’,type:‘anomaly’},{text:‘Make sure the people depending on it are okay’,type:‘module’},{text:‘Tell everyone what you see happening’,type:‘signal’},{text:‘Do the unexpected thing and watch what shifts’,type:‘static’}]},{q:‘You have one hour that belongs to no one. It becomes:’,opts:[{text:‘A quiet review of everything on your mind’,type:‘analyst’},{text:‘The start of something you never planned’,type:‘probe’},{text:‘Three projects suddenly connected’,type:‘synthesizer’},{text:‘Something that needed doing finally done’,type:‘vector’},{text:‘Gone. You lost track completely.’,type:‘anomaly’},{text:‘Time with someone who needed it’,type:‘module’},{text:‘A message you finally had time to write’,type:‘signal’},{text:‘Weird. Productively weird.’,type:‘static’}]},{q:‘Someone hands you something broken. You:’,opts:[{text:‘Immediately understand what happened to it’,type:‘analyst’},{text:‘Try to use it anyway’,type:‘probe’},{text:‘See it as something else entirely’,type:‘synthesizer’},{text:‘Fix it or replace it. Quickly.’,type:‘vector’},{text:‘Wonder if broken is the wrong word’,type:‘anomaly’},{text:‘Ask who it belongs to and what they need’,type:‘module’},{text:‘Tell the story of how it broke’,type:‘signal’},{text:‘Make it into something it was not’,type:‘static’}]},{q:‘The map is wrong. You:’,opts:[{text:‘Correct it methodically’,type:‘analyst’},{text:‘Ignore it and navigate by feel’,type:‘probe’},{text:‘Cross-reference three other maps’,type:‘synthesizer’},{text:‘Go anyway. You can adapt.’,type:‘vector’},{text:‘Question whether the territory is right either’,type:‘anomaly’},{text:‘Make sure no one else gets lost’,type:‘module’},{text:‘Mark the error for everyone who comes after’,type:‘signal’},{text:‘Draw a better one from scratch’,type:‘static’}]},{q:‘It is very quiet. You feel:’,opts:[{text:‘Finally able to think’,type:‘analyst’},{text:‘Slightly restless’,type:‘probe’},{text:‘Like something is about to connect’,type:‘synthesizer’},{text:‘Ready’,type:‘vector’},{text:‘Like the quiet is saying something’,type:‘anomaly’},{text:‘Aware of everyone who is not here’,type:‘module’},{text:‘Like a frequency waiting to be found’,type:‘signal’},{text:‘Uncertain in a way that feels important’,type:‘static’}]}];
 var ANIMALS=[‘owl’,‘fox’,‘octopus’,‘wolf’,‘crow’,‘deer’,‘moth’,‘mantis’,‘raven’,‘lynx’];
 var TECH_PARTS=[‘visor’,‘antenna’,‘circuit’,‘exhaust’,‘receiver’,‘lens’,‘wave’,‘glitch’,‘scope’,‘node’];
 var PALETTES=[{name:‘Deep Space’,p:’#4a90d9’,s:’#0a0a2a’,g:’#1a3a6a’},{name:‘Solar’,p:’#d4aa44’,s:’#1a0e00’,g:’#6a4a10’},{name:‘Void’,p:’#9060d0’,s:’#0e0018’,g:’#401080’},{name:‘Critical’,p:’#d04030’,s:’#1a0000’,g:’#601010’},{name:‘Emergence’,p:’#20c080’,s:’#001a10’,g:’#0a4030’},{name:‘Amber’,p:’#c08030’,s:’#1a0e00’,g:’#503010’},{name:‘Broadcast’,p:’#40b0c0’,s:’#001018’,g:’#104050’},{name:‘Static’,p:’#a0a0a0’,s:’#0a0a0a’,g:’#303030’},{name:‘Aurora’,p:’#60d0a0’,s:’#001a14’,g:’#20604a’},{name:‘Pulse’,p:’#d060a0’,s:’#18000e’,g:’#602040’}];
@@ -1942,7 +1934,7 @@ setTimeout(function(){drawAvatar(‘revealCanvas’,avatarState);},80);
 },30);
 }
 
-// ── AVATAR BUILDER ──
+// – AVATAR BUILDER –
 function showAvatarBuilder(){
 show(‘quiz’);setTimeout(function(){
 var screen=document.getElementById(‘screen-quiz’);if(!screen)return;
@@ -2001,7 +1993,7 @@ var noun=[‘signal’,‘probe’,‘vector’,‘node’,‘field’,‘apertu
 return adj[Math.floor(Math.random()*adj.length)]+’.’+noun[Math.floor(Math.random()*noun.length)];
 }
 
-// ── DRAW AVATAR ──
+// – DRAW AVATAR –
 function drawAvatar(canvasId,state){
 var canvas=document.getElementById(canvasId);if(!canvas) return;
 var ctx=canvas.getContext(‘2d’);var w=canvas.width,h=canvas.height;
@@ -2095,7 +2087,7 @@ var canvas=document.getElementById(‘headerAvatarCanvas’);if(!canvas) return;
 drawAvatar(‘headerAvatarCanvas’,avatarState);
 }
 
-// ── INIT ──
+// – INIT –
 (function init(){
 recalc();
 BASE_METRICS=computeMetrics(getSliders());
