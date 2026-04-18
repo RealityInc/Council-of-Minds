@@ -7,13 +7,62 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:system-ui,sans-serif;background:#f8f7f4;color:#1a1814;min-height:100vh;}
-.header{padding:16px 20px;border-bottom:1px solid #e8e4dc;background:#fff;display:flex;align-items:center;gap:10px;}
-.header-title{font-size:17px;font-weight:700;}
-.nav{display:flex;overflow-x:auto;border-bottom:1px solid #e8e4dc;background:#fff;}
-.nav button{padding:12px 16px;font-size:12px;font-weight:500;color:#8a8580;background:none;border:none;cursor:pointer;white-space:nowrap;font-family:inherit;touch-action:manipulation;}
-.nav button.active{color:#b8922a;border-bottom:2px solid #b8922a;}
-.screen{display:none;padding:20px;max-width:860px;margin:0 auto;}
-.screen.active{display:block;}
+/* MAP-FIRST LAYOUT */
+html,body{height:100%;overflow:hidden;}
+#mapRoot{position:fixed;inset:0;z-index:0;}
+#leafletMap{width:100%;height:100%;}
+
+/* Top bar */
+.header{position:fixed;top:0;left:0;right:0;height:52px;z-index:100;background:rgba(10,10,15,0.82);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:flex;align-items:center;gap:10px;padding:0 14px;border-bottom:1px solid rgba(255,255,255,0.07);}
+.header-title{font-size:15px;font-weight:700;color:#e8e0d0;letter-spacing:.3px;}
+
+/* Metric chips on top bar */
+#metricChips{display:flex;gap:6px;margin-left:6px;}
+.metric-chip{display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:10px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);}
+.metric-chip-val{font-size:13px;font-weight:700;}
+.metric-chip-lbl{font-size:9px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;opacity:.7;}
+
+/* Bottom dock */
+#bottomDock{position:fixed;bottom:0;left:0;right:0;z-index:100;background:rgba(10,10,15,0.88);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid rgba(255,255,255,0.08);padding:6px 0 max(6px,env(safe-area-inset-bottom));display:flex;justify-content:space-around;align-items:center;}
+.dock-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 12px;background:none;border:none;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;min-width:52px;}
+.dock-btn:active .dock-icon{transform:scale(.88);}
+.dock-icon{font-size:20px;line-height:1;transition:transform .15s;}
+.dock-label{font-size:9px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:#6a6860;}
+.dock-btn.active .dock-icon{filter:drop-shadow(0 0 6px #d4aa44);}
+.dock-btn.active .dock-label{color:#d4aa44;}
+
+/* Bottom sheets */
+.sheet-overlay{position:fixed;inset:0;z-index:200;pointer-events:none;}
+.sheet-overlay.open{pointer-events:all;}
+.sheet-scrim{position:absolute;inset:0;background:rgba(0,0,0,0);transition:background .3s;}
+.sheet-overlay.open .sheet-scrim{background:rgba(0,0,0,0.45);}
+.sheet{position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;transform:translateY(100%);transition:transform .35s cubic-bezier(.32,.72,0,1);max-height:82vh;display:flex;flex-direction:column;padding-bottom:max(0px,env(safe-area-inset-bottom));}
+.sheet-overlay.open .sheet{transform:translateY(0);}
+.sheet-handle{width:36px;height:4px;background:#e0dcd4;border-radius:2px;margin:10px auto 0;}
+.sheet-hdr{padding:12px 20px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #f0ece4;flex-shrink:0;}
+.sheet-title{font-size:16px;font-weight:700;color:#1a1814;}
+.sheet-close{width:28px;height:28px;border-radius:50%;background:#f4f0e8;border:none;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;touch-action:manipulation;}
+.sheet-body{flex:1;overflow-y:auto;padding:16px 20px;-webkit-overflow-scrolling:touch;}
+
+/* Map status bar (above dock) */
+#mapStatusBar{position:fixed;bottom:calc(68px + max(0px,env(safe-area-inset-bottom)));left:10px;right:10px;z-index:99;background:rgba(10,10,15,0.72);color:#b8b4ae;font-size:11px;padding:5px 12px;border-radius:20px;text-align:center;backdrop-filter:blur(8px);pointer-events:none;transition:opacity .4s;}
+
+/* Screens become sheet bodies - no full page switching */
+.screen{display:none;}
+
+/* Data panel as bottom sheet */
+#dataPanelSheet{position:fixed;bottom:0;left:0;right:0;z-index:150;background:#fff;border-radius:20px 20px 0 0;transform:translateY(100%);transition:transform .35s cubic-bezier(.32,.72,0,1);max-height:70vh;display:flex;flex-direction:column;padding-bottom:max(68px,calc(68px + env(safe-area-inset-bottom)));}
+#dataPanelSheet.open{transform:translateY(0);}
+.dps-handle{width:36px;height:4px;background:#e0dcd4;border-radius:2px;margin:10px auto 4px;}
+.dps-hdr{padding:8px 16px 10px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #f0ece4;flex-shrink:0;}
+.dps-body{flex:1;overflow-y:auto;padding:12px 16px;-webkit-overflow-scrolling:touch;}
+
+/* Welcome overlay */
+#welcomeOverlay{position:fixed;inset:0;z-index:300;background:#1a1410;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;overflow-y:auto;}
+#welcomeOverlay.hidden{display:none;}
+
+/* Floating council chat - lift above dock */
+#councilFloat{bottom:calc(74px + max(0px,env(safe-area-inset-bottom)));}
 .card{background:#fff;border:1px solid #e8e4dc;border-radius:12px;overflow:hidden;margin-bottom:16px;}
 .card-title{font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:#8a8580;}
 .card-hdr{padding:14px 20px;border-bottom:1px solid #e8e4dc;display:flex;align-items:center;justify-content:space-between;}
@@ -103,6 +152,23 @@ textarea{resize:none;min-height:80px;}
 .color-dot{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .15s;touch-action:manipulation;}
 .color-dot.sel{border-color:#fff;transform:scale(1.2);}
 .state-tooltip{background:rgba(255,255,255,0.95);border:1px solid #e8e4dc;border-radius:4px;font-size:11px;color:#4a4640;padding:2px 6px;box-shadow:none;}
+
+/* AI Writing Assist */
+.ai-assist-wrap{position:relative;display:block;}
+.ai-assist-btn{position:absolute;bottom:8px;right:8px;background:#1a1814;color:#d4aa44;border:none;border-radius:12px;font-size:11px;font-weight:600;padding:4px 10px;cursor:pointer;z-index:10;touch-action:manipulation;font-family:inherit;opacity:0.85;}
+.ai-assist-btn:active{opacity:1;}
+.ai-assist-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:500;display:flex;align-items:flex-end;}
+.ai-assist-sheet{background:#fff;border-radius:16px 16px 0 0;padding:20px;width:100%;max-height:80vh;overflow-y:auto;}
+.ai-assist-sheet-title{font-size:14px;font-weight:700;color:#1a1814;margin-bottom:4px;}
+.ai-assist-sheet-sub{font-size:12px;color:#8a8580;margin-bottom:14px;line-height:1.5;}
+.ai-assist-modes{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+.ai-assist-mode{padding:6px 14px;border:1.5px solid #e8e4dc;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;background:#f8f7f4;color:#4a4640;font-family:inherit;touch-action:manipulation;}
+.ai-assist-mode.active{border-color:#d4aa44;background:#fdf8ee;color:#b8922a;}
+.ai-assist-source-wrap{margin-bottom:12px;}
+.ai-assist-result{background:#f8f7f4;border:1px solid #e8e4dc;border-radius:8px;padding:12px;font-size:14px;line-height:1.7;color:#1a1814;white-space:pre-wrap;min-height:60px;margin-bottom:10px;}
+.source-row{display:flex;flex-direction:column;gap:4px;margin-bottom:8px;}
+.source-label{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580;}
+.source-required{color:#c04020;}
 </style>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -117,33 +183,67 @@ textarea{resize:none;min-height:80px;}
 </style>
 </head>
 <body>
+<!-- TOP BAR -->
 <div class="header">
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style="flex-shrink:0">
     <circle cx="12" cy="12" r="11" stroke="#b8922a" stroke-width="1.5"/>
     <path d="M12 1 Q16 6 16 12 Q16 18 12 23 Q8 18 8 12 Q8 6 12 1Z" stroke="#b8922a" stroke-width="1" fill="none"/>
     <ellipse cx="12" cy="12" rx="11" ry="3.5" stroke="#b8922a" stroke-width="1" fill="none"/>
   </svg>
   <span class="header-title">The World Game</span>
-  <div id="resourceBar" style="margin-left:8px;display:flex;align-items:center;gap:4px;flex:1;overflow:hidden">
-    <div id="resourceChips" style="display:flex;gap:4px;flex-wrap:nowrap;overflow:hidden"></div>
+  <div id="metricChips" style="margin-left:6px;display:flex;gap:5px;flex:1;overflow:hidden">
+    <div class="metric-chip"><span class="metric-chip-val" style="color:#2a9060" id="hFl">--</span><span class="metric-chip-lbl" style="color:#2a9060">FL</span></div>
+    <div class="metric-chip"><span class="metric-chip-val" style="color:#d4aa44" id="hEc">--</span><span class="metric-chip-lbl" style="color:#d4aa44">EC</span></div>
+    <div class="metric-chip"><span class="metric-chip-val" style="color:#7060c0" id="hSt">--</span><span class="metric-chip-lbl" style="color:#7060c0">ST</span></div>
   </div>
-  <button onclick="openProfile()" style="margin-left:auto;background:transparent;border:none;cursor:pointer;touch-action:manipulation;padding:2px">
-    <canvas id="headerAvatarCanvas" width="36" height="36" style="border-radius:50%;border:1.5px solid #2a2820;display:block"></canvas>
+  <div id="resourceBar" style="display:flex;align-items:center;gap:3px;overflow:hidden;max-width:100px">
+    <div id="resourceChips" style="display:flex;gap:3px;flex-wrap:nowrap;overflow:hidden"></div>
+  </div>
+  <button onclick="openProfile()" style="margin-left:8px;background:transparent;border:none;cursor:pointer;touch-action:manipulation;padding:2px;flex-shrink:0">
+    <canvas id="headerAvatarCanvas" width="34" height="34" style="border-radius:50%;border:1.5px solid rgba(212,170,68,0.4);display:block"></canvas>
   </button>
 </div>
-<div class="nav">
-  <button class="active" id="nav-home" onclick="show('home')">Home</button>
-  <button id="nav-oracle" onclick="show('oracle')">Oracle</button>
-  <button id="nav-forum" onclick="show('forum')">Forum</button>
-  <button id="nav-create" onclick="show('create')">Create</button>
-  <button id="nav-world" onclick="show('world')">World Game</button>
-  <button id="nav-gallery" onclick="show('gallery')">Gallery</button>
-  <button id="nav-council" onclick="show('council')">Council</button>
-  <button id="nav-about" onclick="show('about')">About</button>
+
+<!-- MAP ROOT -->
+<div id="mapRoot"><div id="leafletMap"></div></div>
+
+<!-- MAP STATUS BAR -->
+<div id="mapStatusBar">Tap any country for real data</div>
+
+<!-- BOTTOM DOCK -->
+<div id="bottomDock">
+  <button class="dock-btn" id="dock-oracle" onclick="openSheet('oracle')">
+    <span class="dock-icon">&#x1FA9E;</span><span class="dock-label">Oracle</span>
+  </button>
+  <button class="dock-btn" id="dock-forum" onclick="openSheet('forum')">
+    <span class="dock-icon">&#x2B21;</span><span class="dock-label">Forum</span>
+  </button>
+  <button class="dock-btn" id="dock-create" onclick="openSheet('create')">
+    <span class="dock-icon">&#x2726;</span><span class="dock-label">Create</span>
+  </button>
+  <button class="dock-btn" id="dock-simulate" onclick="openSheet('simulate')">
+    <span class="dock-icon">&#x1F4CA;</span><span class="dock-label">Simulate</span>
+  </button>
+  <button class="dock-btn" id="dock-gallery" onclick="openSheet('gallery')">
+    <span class="dock-icon">&#x25CE;</span><span class="dock-label">Gallery</span>
+  </button>
+  <button class="dock-btn" id="dock-council" onclick="openSheet('council')">
+    <span class="dock-icon">&#x22C6;</span><span class="dock-label">Council</span>
+  </button>
 </div>
 
-<!-- HOME -->
-<div class="screen active" id="screen-home">
+<!-- DATA PANEL SHEET (shown when country/region tapped) -->
+<div id="dataPanelSheet">
+  <div class="dps-handle"></div>
+  <div class="dps-hdr">
+    <span style="font-size:15px;font-weight:700;color:#1a1814" id="dataPanelTitle">Country Data</span>
+    <button onclick="closeDPS()" style="background:#f4f0e8;border:none;border-radius:50%;width:28px;height:28px;cursor:pointer;font-size:14px">&#x2715;</button>
+  </div>
+  <div class="dps-body" id="dataPanelContent"></div>
+</div>
+
+<!-- WELCOME OVERLAY -->
+<div id="welcomeOverlay">
   <div class="home-hero">
     <div class="nasa-hero">
       <div class="nasa-eyebrow">The Livingry Foundation — World Game</div>
@@ -156,19 +256,19 @@ textarea{resize:none;min-height:80px;}
         <div class="why-title">Why are you here?</div>
         <div class="why-sub">Select your entry point</div>
         <div class="why-opts">
-          <button class="why-opt" onclick="show('world')">
+          <button class="why-opt" onclick="dismissWelcomeAndOpen('world')">
             <span class="why-opt-icon">🌍</span>
             <div><div class="why-opt-title">Understand the world</div><div class="why-opt-desc">Model resources · simulate futures · planetary scale</div></div>
           </button>
-          <button class="why-opt" onclick="show('oracle')">
+          <button class="why-opt" onclick="dismissWelcomeAndOpen('oracle')">
             <span class="why-opt-icon">🪞</span>
             <div><div class="why-opt-title">Work through something personal</div><div class="why-opt-desc">Private consultation · assembled wisdom</div></div>
           </button>
-          <button class="why-opt" onclick="show('create')">
+          <button class="why-opt" onclick="dismissWelcomeAndOpen('create')">
             <span class="why-opt-icon">✦</span>
             <div><div class="why-opt-title">Make something</div><div class="why-opt-desc">Poetry · lyrics · art that holds the weight of ideas</div></div>
           </button>
-          <button class="why-opt" onclick="show('forum')">
+          <button class="why-opt" onclick="dismissWelcomeAndOpen('forum')">
             <span class="why-opt-icon">⬡</span>
             <div><div class="why-opt-title">Think through a big idea</div><div class="why-opt-desc">Convene the council · debate · synthesize</div></div>
           </button>
@@ -178,10 +278,10 @@ textarea{resize:none;min-height:80px;}
         </div>
       </div>
     </div>
-    <div class="home-doors-section" id="homeDoors" style="display:none">
+    <div class="home-doors-section" id="homeDoors" style="display:none;display:none">
       <div class="home-doors-label">Entry Points</div>
       <div class="home-metrics-strip">
-        <div class="home-metric" onclick="show('world')">
+        <div class="home-metric" onclick="closeSheet('project')">
           <div style="font-size:9px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#2a9060;margin-bottom:3px">Flourishing</div>
           <div style="font-size:22px;font-weight:700;color:#2a9060" id="homeFl">--</div>
         </div>
@@ -206,7 +306,11 @@ textarea{resize:none;min-height:80px;}
 </div>
 
 <!-- ORACLE -->
-<div class="screen" id="screen-oracle">
+<div class="sheet-overlay" id="sheet-oracle" onclick="handleSheetOverlayClick(event,'oracle')">
+  <div class="sheet-scrim"></div>
+  <div class="sheet" id="sheetinner-oracle"><div class="sheet-handle"></div>
+  <div class="sheet-hdr"><span class="sheet-title">Oracle</span><button class="sheet-close" onclick="closeSheet('oracle')">&#x2715;</button></div>
+  <div class="sheet-body" id="sheetbody-oracle"><div id="screen-oracle" style="display:block">
   <div class="card" style="margin-top:4px">
     <div class="card-hdr" style="justify-content:space-between">
       <span class="card-title">Oracle</span>
@@ -228,7 +332,7 @@ textarea{resize:none;min-height:80px;}
         </div>
         <div id="oracleDocName" style="font-size:11px;color:#2a9060;margin-top:4px;display:none"></div>
       </div>
-      <textarea id="oracleInput" placeholder="What is on your mind?" rows="3" style="margin-bottom:10px"></textarea>
+      <div class="ai-assist-wrap"><textarea id="oracleInput" placeholder="What is on your mind?" rows="3" style="margin-bottom:10px;padding-bottom:28px"></textarea><button class="ai-assist-btn" onclick="openAiAssist('oracleInput')">✦ Polish</button></div>
       <button class="btn btn-dark btn-full" onclick="oracleQuery()" id="oracleBtn">Ask the Council</button>
       <div style="font-size:11px;color:#b8b4ae;margin-top:8px;text-align:center">Oracle sessions are completely private — never stored, never shared.</div>
     </div>
@@ -248,14 +352,20 @@ textarea{resize:none;min-height:80px;}
   </div>
 </div>
 
+</div><!-- end welcomeOverlay -->
+
 <!-- FORUM -->
-<div class="screen" id="screen-forum">
+<div class="sheet-overlay" id="sheet-forum" onclick="handleSheetOverlayClick(event,'forum')">
+  <div class="sheet-scrim"></div>
+  <div class="sheet" id="sheetinner-forum"><div class="sheet-handle"></div>
+  <div class="sheet-hdr"><span class="sheet-title">Forum</span><button class="sheet-close" onclick="closeSheet('forum')">&#x2715;</button></div>
+  <div class="sheet-body" id="sheetbody-forum"><div id="screen-forum" style="display:block">
   <div class="card">
     <div class="card-hdr"><span class="card-title">Forum</span></div>
     <div id="forumSetup" style="padding:28px 20px;text-align:center">
       <div style="font-size:22px;font-weight:700;margin-bottom:8px">Convene the Council</div>
       <div style="font-size:14px;color:#8a8580;margin-bottom:16px">What should the council debate?</div>
-      <textarea id="forumInput" placeholder="Describe the problem or question..." rows="3" style="max-width:480px;margin:0 auto 12px;display:block"></textarea>
+      <div class="ai-assist-wrap" style="max-width:480px;margin:0 auto 12px"><textarea id="forumInput" placeholder="Describe the problem or question..." rows="3" style="width:100%;padding-bottom:28px"></textarea><button class="ai-assist-btn" onclick="openAiAssist('forumInput')">✦ Polish</button></div>
       <button class="btn btn-dark" onclick="startDebate()" style="margin:0 auto;display:block">Convene</button>
     </div>
     <div id="forumActive" style="display:none">
@@ -273,15 +383,20 @@ textarea{resize:none;min-height:80px;}
     </div>
   </div>
 </div>
+</div></div></div></div>
 
 <!-- CREATE -->
-<div class="screen" id="screen-create">
+<div class="sheet-overlay" id="sheet-create" onclick="handleSheetOverlayClick(event,'create')">
+  <div class="sheet-scrim"></div>
+  <div class="sheet" id="sheetinner-create"><div class="sheet-handle"></div>
+  <div class="sheet-hdr"><span class="sheet-title">Create</span><button class="sheet-close" onclick="closeSheet('create')">&#x2715;</button></div>
+  <div class="sheet-body" id="sheetbody-create"><div id="screen-create" style="display:block">
   <div class="card">
     <div class="card-hdr"><span class="card-title">Make Something</span></div>
     <div class="card-body">
       <div style="margin-bottom:12px">
         <div style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580;margin-bottom:6px">What to make</div>
-        <textarea id="createTheme" placeholder="A poem about grief. A manifesto. Song lyrics. Anything." rows="3"></textarea>
+        <div class="ai-assist-wrap"><textarea id="createTheme" placeholder="A poem about grief. A manifesto. Song lyrics. Anything." rows="3" style="padding-bottom:28px"></textarea><button class="ai-assist-btn" onclick="openAiAssist('createTheme')">✦ Polish</button></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
         <div>
@@ -299,9 +414,14 @@ textarea{resize:none;min-height:80px;}
     <div id="createErr"></div>
   </div>
 </div>
+</div></div></div></div>
 
-<!-- WORLD GAME -->
-<div class="screen" id="screen-world">
+<!-- SIMULATE SHEET -->
+<div class="sheet-overlay" id="sheet-simulate" onclick="handleSheetOverlayClick(event,'simulate')">
+  <div class="sheet-scrim"></div>
+  <div class="sheet" id="sheetinner-simulate"><div class="sheet-handle"></div>
+  <div class="sheet-hdr"><span class="sheet-title">Simulate</span><button class="sheet-close" onclick="closeSheet('simulate')">&#x2715;</button></div>
+  <div class="sheet-body"><div id="screen-world" style="display:block">
   <div style="margin-bottom:14px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
       <div style="font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:#8a8580">World Game</div>
@@ -327,17 +447,9 @@ textarea{resize:none;min-height:80px;}
         <div id="deltaSt" style="font-size:11px;font-weight:600;margin-top:2px;min-height:14px"></div>
       </div>
     </div>
-    <div class="card" style="margin-bottom:12px;overflow:hidden">
-      <div style="padding:8px 14px;border-bottom:1px solid #e8e4dc;display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#8a8580">Planetary View</span>
-        <button class="btn btn-outline" style="font-size:10px;padding:3px 10px" onclick="resetMapView()">Reset</button>
-      </div>
-      <div id="leafletMap"></div>
-      <div style="padding:6px 14px;border-top:1px solid #e8e4dc;font-size:11px;color:#b8b4ae" id="mapStatus">Tap any country for real data. Zoom in for states and counties.</div>
-    </div>
-    <div id="dataPanel" style="display:none" class="card">
-      <div class="card-hdr"><span class="card-title" id="dataPanelTitle">Country Data</span></div>
-      <div id="dataPanelContent" style="padding:14px"></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+      <div style="font-size:12px;color:#8a8580" id="viewingLabel">Global Average</div>
+      <button class="btn btn-outline" style="font-size:10px;padding:3px 10px;margin-left:auto" onclick="resetMapView()">Reset map</button>
     </div>
     <div class="card">
       <div style="padding:10px 14px;border-bottom:1px solid #e8e4dc;display:flex;justify-content:space-between;align-items:center">
@@ -387,9 +499,14 @@ textarea{resize:none;min-height:80px;}
     </div>
   </div>
 </div>
+</div></div></div></div>
 
 <!-- GALLERY -->
-<div class="screen" id="screen-gallery">
+<div class="sheet-overlay" id="sheet-gallery" onclick="handleSheetOverlayClick(event,'gallery')">
+  <div class="sheet-scrim"></div>
+  <div class="sheet" id="sheetinner-gallery"><div class="sheet-handle"></div>
+  <div class="sheet-hdr"><span class="sheet-title">Gallery</span><button class="sheet-close" onclick="closeSheet('gallery')">&#x2715;</button></div>
+  <div class="sheet-body"><div id="screen-gallery" style="display:block">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
     <div>
       <div style="font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:#8a8580">Community Gallery</div>
@@ -406,9 +523,14 @@ textarea{resize:none;min-height:80px;}
   <div id="galleryGrid" style="display:flex;flex-direction:column;gap:10px"></div>
   <div id="galleryEmpty" style="text-align:center;padding:40px 20px;color:#b8b4ae;font-size:14px;display:none">Nothing shared yet. Be the first.</div>
 </div>
+</div></div></div></div>
 
 <!-- COUNCIL -->
-<div class="screen" id="screen-council">
+<div class="sheet-overlay" id="sheet-council" onclick="handleSheetOverlayClick(event,'council')">
+  <div class="sheet-scrim"></div>
+  <div class="sheet" id="sheetinner-council"><div class="sheet-handle"></div>
+  <div class="sheet-hdr"><span class="sheet-title">Council</span><button class="sheet-close" onclick="closeSheet('council')">&#x2715;</button></div>
+  <div class="sheet-body"><div id="screen-council" style="display:block">
   <div class="card" style="margin-top:4px;margin-bottom:14px">
     <div class="card-body" style="padding:14px 16px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
@@ -429,7 +551,7 @@ textarea{resize:none;min-height:80px;}
     <div class="card-hdr"><span class="card-title">AI Council Curation</span></div>
     <div class="card-body">
       <p style="font-size:13px;color:#8a8580;margin-bottom:12px;line-height:1.6">Describe what you are working on or what you need.</p>
-      <textarea id="aiCurateInput" rows="3" placeholder="e.g. I am rethinking my career and feel stuck between safety and purpose..." style="margin-bottom:10px"></textarea>
+      <div class="ai-assist-wrap"><textarea id="aiCurateInput" rows="3" placeholder="e.g. I am rethinking my career and feel stuck between safety and purpose..." style="margin-bottom:10px;padding-bottom:28px"></textarea><button class="ai-assist-btn" onclick="openAiAssist('aiCurateInput')">✦ Polish</button></div>
       <button class="btn btn-dark btn-full" onclick="aiCurateCouncil()" id="aiCurateBtn">✦ Assemble My Council</button>
       <div id="aiCurateResult" style="margin-top:10px"></div>
     </div>
@@ -463,9 +585,14 @@ textarea{resize:none;min-height:80px;}
     </div>
   </div>
 </div>
+</div></div></div></div>
 
-<!-- ABOUT -->
-<div class="screen" id="screen-about">
+<!-- ABOUT SHEET -->
+<div class="sheet-overlay" id="sheet-about" onclick="handleSheetOverlayClick(event,'about')">
+  <div class="sheet-scrim"></div>
+  <div class="sheet" id="sheetinner-about"><div class="sheet-handle"></div>
+  <div class="sheet-hdr"><span class="sheet-title">About</span><button class="sheet-close" onclick="closeSheet('about')">&#x2715;</button></div>
+  <div class="sheet-body"><div id="screen-about" style="display:block">
   <div style="max-width:640px;margin:0 auto;padding:8px 0">
     <div style="padding:28px 20px;text-align:center;border-bottom:1px solid #e8e4dc;margin-bottom:20px">
       <div style="font-size:32px;margin-bottom:16px">⬡</div>
@@ -478,6 +605,7 @@ textarea{resize:none;min-height:80px;}
     </div>
   </div>
 </div>
+</div></div></div></div>
 
 <!-- FLOATING COUNCIL CHAT -->
 <div id="councilFloat">
@@ -509,8 +637,12 @@ textarea{resize:none;min-height:80px;}
   </div>
 </div>
 
-<!-- PROJECT -->
-<div class="screen" id="screen-project">
+<!-- PROJECT SHEET -->
+<div class="sheet-overlay" id="sheet-project" onclick="handleSheetOverlayClick(event,'project')">
+  <div class="sheet-scrim"></div>
+  <div class="sheet" id="sheetinner-project"><div class="sheet-handle"></div>
+  <div class="sheet-hdr"><span class="sheet-title" id="projectSheetTitle">Place Project</span><button class="sheet-close" onclick="closeSheet('project')">&#x2715;</button></div>
+  <div class="sheet-body"><div id="screen-project" style="display:block">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-top:4px">
     <button class="btn btn-outline" style="font-size:12px;padding:5px 12px" onclick="show('world')">&#8592; Map</button>
     <div>
@@ -569,6 +701,8 @@ textarea{resize:none;min-height:80px;}
   </div>
 </div>
 
+</div></div></div></div>
+
 <!-- QUIZ/AVATAR -->
 <div class="screen" id="screen-quiz" style="padding:0;background:#0a0a0f;min-height:100vh"></div>
 
@@ -625,32 +759,75 @@ var activeProblem = '';
 var loading = false;
 
 // -- SCREENS --
-function show(name) {
-  var screens = ['home','oracle','forum','create','world','gallery','council','about','project','quiz'];
-  for (var i = 0; i < screens.length; i++) {
-    var s = screens[i];
-    var el = document.getElementById('screen-'+s);
-    if (el) el.style.display = s === name ? 'block' : 'none';
-    var n = document.getElementById('nav-'+s);
-    if (n) n.className = s === name ? 'active' : '';
-  }
-  window.scrollTo(0,0);
-  if (name === 'council') renderCouncil();
-  if (name === 'gallery') renderGallery();
-  if (name === 'world') {
-    setTimeout(function() {
-      if (!leafletMap) initWorldMap();
-      else leafletMap.invalidateSize();
-    }, 150);
+// Map from old show() names to new sheet names
+var SHEET_MAP={'oracle':'oracle','forum':'forum','create':'create','world':'simulate','gallery':'gallery','council':'council','about':'about','project':'project','quiz':'quiz','home':'welcome'};
+var _activeSheet=null;
+
+function show(name){
+  var sheetName=SHEET_MAP[name]||name;
+  if(sheetName==='welcome'){dismissWelcome();return;}
+  openSheet(sheetName);
+}
+
+function openSheet(name){
+  // Close any open sheet first
+  if(_activeSheet&&_activeSheet!==name) closeSheet(_activeSheet);
+  var overlay=document.getElementById('sheet-'+name);
+  if(!overlay) return;
+  overlay.classList.add('open');
+  _activeSheet=name;
+  // Update dock
+  document.querySelectorAll('.dock-btn').forEach(function(b){b.classList.remove('active');});
+  var db=document.getElementById('dock-'+name);if(db)db.classList.add('active');
+  // Lazy init
+  if(name==='council') setTimeout(renderCouncil,50);
+  if(name==='gallery') setTimeout(renderGallery,50);
+  if(name==='simulate') {
+    setTimeout(function(){if(leafletMap)leafletMap.invalidateSize();},350);
   }
 }
 
-function skipWhy() {
-  var wb = document.getElementById('whyBox');
-  var hd = document.getElementById('homeDoors');
-  if (wb) wb.style.display = 'none';
-  if (hd) hd.style.display = 'block';
+function closeSheet(name){
+  var overlay=document.getElementById('sheet-'+name);
+  if(overlay)overlay.classList.remove('open');
+  if(_activeSheet===name)_activeSheet=null;
+  document.querySelectorAll('.dock-btn').forEach(function(b){b.classList.remove('active');});
 }
+
+function handleSheetOverlayClick(e,name){
+  if(e.target===e.currentTarget||e.target.classList.contains('sheet-scrim'))closeSheet(name);
+}
+
+// Data panel sheet
+function showDataPanel(title,content){
+  document.getElementById('dataPanelTitle').textContent=title;
+  var slot='<div id="startProjectSlot"></div>';
+  var btns='<div style="margin-top:8px;display:flex;flex-direction:column;gap:6px">';
+  btns+='<button class="btn btn-outline btn-full" style="font-size:11px;padding:6px 14px" onclick="showUserDataUpload(this)">Add your own data</button>';
+  btns+='<button class="btn btn-outline btn-full" style="font-size:11px;padding:6px 14px;border-color:#2a9060;color:#2a9060" onclick="startAddCommunityProjectFromPanel()">Add a real project here</button>';
+  btns+='</div>';
+  btns+='<div id="userDataPanel" style="display:none;border:1px solid #e8e4dc;border-radius:10px;margin-top:8px;overflow:hidden;background:#fff"></div>';
+  btns+='<div id="addProjectPanel" style="display:none;border:1px solid #2a906044;border-radius:10px;margin-top:8px;overflow:hidden;background:#fff"></div>';
+  document.getElementById('dataPanelContent').innerHTML=content+slot+btns;
+  document.getElementById('dataPanelSheet').classList.add('open');
+}
+
+function closeDPS(){
+  document.getElementById('dataPanelSheet').classList.remove('open');
+}
+
+// Welcome overlay
+function dismissWelcome(){
+  var el=document.getElementById('welcomeOverlay');
+  if(el)el.classList.add('hidden');
+  try{localStorage.setItem('wg_welcomed','1');}catch(e){}
+}
+function dismissWelcomeAndOpen(dest){
+  dismissWelcome();
+  setTimeout(function(){openSheet(SHEET_MAP[dest]||dest);},200);
+}
+
+function skipWhy() { dismissWelcome(); }
 
 // -- API --
 function api(system, user, maxTok, cb) {
@@ -1189,6 +1366,7 @@ function recalc(){
   if(hFl)hFl.textContent=m.fl;if(hEc)hEc.textContent=m.ec;if(hSt)hSt.textContent=m.st;
   if(BASE_METRICS){showDelta('deltaFl',m.fl-BASE_METRICS.fl);showDelta('deltaEc',m.ec-BASE_METRICS.ec);showDelta('deltaSt',m.st-BASE_METRICS.st);}
   checkInterdeps();
+  if(typeof updateHeaderMetrics==='function')updateHeaderMetrics();
 }
 function askCouncil(){var ren=getSlider('sl-ren',34);var food=getSlider('sl-food',72);var fl=document.getElementById('metFl').textContent;var ec=document.getElementById('metEc').textContent;problem='World Game scenario: renewable energy '+ren+'%, food distribution '+food+'%, flourishing '+fl+'/100, ecological '+ec+'/100. What are the philosophical and ethical implications?';document.getElementById('forumInput').value=problem;show('forum');setTimeout(startDebate,100);}
 function makeArt(){var ren=getSlider('sl-ren',34);var food=getSlider('sl-food',72);document.getElementById('createTheme').value='the current state of the world: renewable energy at '+ren+'%, food distribution at '+food+'%';show('create');}
@@ -1488,7 +1666,7 @@ function displayCountyData(data,countyName,latlng){
 }
 function showNoData(name){showDataPanel(name,'<div style="color:#8a8580;font-size:13px;padding:6px 0">No data available for '+name+'.</div>');setMapStatus(name+' -- no data available');}
 function dataRow(label,value,year){var yr=year?' <span style="color:#b8b4ae;font-size:10px">('+year+')</span>':'';return '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f4f0e8"><span style="font-size:13px;color:#8a8580">'+label+'</span><span style="font-size:13px;font-weight:600;color:#1a1814">'+value+yr+'</span></div>';}
-function setMapStatus(msg){var el=document.getElementById('mapStatus');if(el)el.textContent=msg;}
+function setMapStatus(msg){var el=document.getElementById('mapStatusBar');if(el){el.textContent=msg;el.style.opacity='1';setTimeout(function(){el.style.opacity='0.5';},3000);}}
 
 function showDataPanel(title,content){
   document.getElementById('dataPanel').style.display='block';
@@ -1660,7 +1838,7 @@ function startProject(placeName,baselineData,dataSource){
   renderInfraDomainTabs();switchInfraTab('economic');updateProjectOutcomes();
   var debateMsgs=document.getElementById('projectDebateMessages');if(debateMsgs){debateMsgs.innerHTML='';debateMsgs.style.display='none';}
   var saveMsg=document.getElementById('projectSaveMsg');if(saveMsg)saveMsg.style.display='none';
-  show('project');
+  openSheet('project');
 }
 
 function renderInfraDomainTabs(){
@@ -1804,6 +1982,10 @@ function applyUserData(placeName){
   var fields=['ren','food','water','wealth','health','education'];var data={};
   fields.forEach(function(k){var el=document.getElementById('ud-'+k);if(el&&el.value!=='')data[k]=parseFloat(el.value);});
   if(Object.keys(data).length===0) return;
+  var sourceEl=document.getElementById('ud-source');
+  var source=sourceEl?sourceEl.value.trim():'';
+  if(!source){alert('Please add a source URL or citation so others can verify this data.');return;}
+  data._source=source;
   userUploadedData[placeName]=data;trackResource('User Data');
   if(data.ren!==undefined)setSlider('sl-ren',data.ren,'sv-ren');
   if(data.food!==undefined)setSlider('sl-food',data.food,'sv-food');
@@ -1834,8 +2016,30 @@ function renderCommunityMarkers(){
 }
 function showCommunityProject(proj){
   var color={health:'#c04020',education:'#2a9060',energy:'#b8922a',environment:'#1a6b4a',economic:'#5040a0',other:'#8a8580'}[proj.category]||'#8a8580';
-  var popup='<div style="min-width:200px"><div style="font-weight:700;font-size:14px;color:#1a1814;margin-bottom:4px">'+proj.name+'</div><div style="font-size:11px;font-weight:600;color:'+color+';text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">'+(proj.category||'project')+'</div><div style="font-size:12px;color:#4a4640;line-height:1.5;margin-bottom:8px">'+proj.description+'</div>'+(proj.peopleServed?'<div style="font-size:11px;color:#8a8580">👥 '+proj.peopleServed.toLocaleString()+' people served</div>':'')+(proj.impactFl?'<div style="font-size:11px;color:#2a9060;margin-top:4px">Impact: +'+proj.impactFl+' FL · +'+proj.impactEc+' EC · +'+proj.impactSt+' ST</div>':'')+'<div style="font-size:10px;color:#b8b4ae;margin-top:6px">Added '+proj.date+'</div></div>';
-  L.popup().setLatLng([proj.lat,proj.lng]).setContent(popup).openOn(leafletMap);
+  var mediaHtml='';
+  if(proj.image)mediaHtml+='<img src="'+proj.image+'" style="width:100%;border-radius:6px;margin-bottom:8px;max-height:140px;object-fit:cover">';
+  if(proj.video){var vid=getVideoEmbed(proj.video);if(vid)mediaHtml+='<div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:6px;margin-bottom:8px"><iframe src="'+vid+'" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none" allowfullscreen></iframe></div>';}
+  var popup='<div style="min-width:220px;max-width:280px">'
+    +mediaHtml
+    +'<div style="font-weight:700;font-size:14px;color:#1a1814;margin-bottom:4px">'+proj.name+'</div>'
+    +'<div style="font-size:11px;font-weight:600;color:'+color+';text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">'+(proj.category||'project')+'</div>'
+    +'<div style="font-size:12px;color:#4a4640;line-height:1.5;margin-bottom:8px">'+proj.description+'</div>'
+    +(proj.peopleServed?'<div style="font-size:11px;color:#8a8580;margin-bottom:4px">👥 '+proj.peopleServed.toLocaleString()+' people served</div>':'')
+    +(proj.impactFl?'<div style="font-size:11px;color:#2a9060;margin-bottom:4px">Impact: +'+proj.impactFl+' FL · +'+proj.impactEc+' EC · +'+proj.impactSt+' ST</div>':'')
+    +(proj.url?'<a href="'+proj.url+'" target="_blank" style="font-size:11px;color:#b8922a;display:block;margin-bottom:4px">🔗 Visit project</a>':'')
+    +(proj.source?'<div style="font-size:10px;color:#b8b4ae;margin-bottom:4px">Source: '+proj.source+'</div>':'')
+    +'<div style="font-size:10px;color:#b8b4ae">Added '+proj.date+'</div>'
+    +'</div>';
+  L.popup({maxWidth:300}).setLatLng([proj.lat,proj.lng]).setContent(popup).openOn(leafletMap);
+}
+
+function getVideoEmbed(url){
+  if(!url) return null;
+  var ytMatch=url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+  if(ytMatch)return 'https://www.youtube.com/embed/'+ytMatch[1];
+  var vimeoMatch=url.match(/vimeo\.com\/(\d+)/);
+  if(vimeoMatch)return 'https://player.vimeo.com/video/'+vimeoMatch[1];
+  return null;
 }
 function startAddCommunityProject(placeName,lat,lng){
   var panel=document.getElementById('addProjectPanel');if(!panel) return;
@@ -1850,7 +2054,12 @@ async function submitCommunityProject(){
   var desc=document.getElementById('np-desc').value.trim();
   var cat=document.getElementById('np-cat').value;
   var people=parseInt(document.getElementById('np-people').value)||0;
+  var source=(document.getElementById('np-source')||{}).value||'';
+  var url=(document.getElementById('np-url')||{}).value||'';
+  var video=(document.getElementById('np-video')||{}).value||'';
+  var imageData=window._newProjImageData||null;
   if(!name||!desc){alert('Please fill in the project name and description.');return;}
+  if(!source.trim()){alert('Please add a source URL or citation so others can verify this project.');return;}
   var btn=document.getElementById('np-submit');var result=document.getElementById('np-result');
   btn.disabled=true;btn.textContent='Estimating impact...';result.style.display='block';
   result.innerHTML='<div class="thinking"><span>Council estimating...</span><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div></div>';
@@ -1862,7 +2071,7 @@ async function submitCommunityProject(){
     var text=data.text||'';var start=text.indexOf('{'),end=text.lastIndexOf('}');
     var impact={fl:1,ec:0,st:1,reasoning:'Estimated based on project scope.'};
     if(start>=0&&end>start){try{impact=JSON.parse(text.substring(start,end+1));}catch(e){}}
-    var proj={id:Date.now(),name:name,description:desc,category:cat,peopleServed:people,place:window._newProjPlace,lat:window._newProjLat,lng:window._newProjLng,impactFl:impact.fl||0,impactEc:impact.ec||0,impactSt:impact.st||0,reasoning:impact.reasoning||'',date:new Date().toLocaleDateString()};
+    var proj={id:Date.now(),name:name,description:desc,category:cat,peopleServed:people,place:window._newProjPlace,lat:window._newProjLat,lng:window._newProjLng,impactFl:impact.fl||0,impactEc:impact.ec||0,impactSt:impact.st||0,reasoning:impact.reasoning||'',source:source,url:url,video:video,image:imageData,date:new Date().toLocaleDateString()};
     window._pendingProj=proj;
     // BUG 1 FIXED: single button, no duplicate
     result.innerHTML='<div style="background:#f0f8f4;border:1px solid #2a906044;border-radius:8px;padding:12px;margin-top:4px"><div style="font-size:11px;font-weight:600;color:#2a9060;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Estimated Impact</div><div style="display:flex;gap:12px;margin-bottom:8px"><span style="font-size:13px;color:#1a6b4a;font-weight:600">+'+proj.impactFl+' Flourishing</span><span style="font-size:13px;color:#b8922a;font-weight:600">+'+proj.impactEc+' Ecological</span><span style="font-size:13px;color:#5040a0;font-weight:600">+'+proj.impactSt+' Stability</span></div><div style="font-size:12px;color:#4a4640;line-height:1.5;margin-bottom:10px">'+proj.reasoning+'</div><button class="btn btn-dark btn-full" onclick="confirmAddCommunityProject(window._pendingProj)">Add to Map</button></div>';
@@ -2078,27 +2287,127 @@ function drawHeaderAvatar(){
 (function init(){
   recalc();
   BASE_METRICS=computeMetrics(getSliders());
-  renderCouncil();
-  renderGallery();
-  initGlobe();
   loadCommunityProjects();
   loadAvatar();
   drawHeaderAvatar();
   setOracleMode('personal');
 
-  // Init screens - show only home
-  ['home','oracle','forum','create','world','gallery','council','about','project','quiz'].forEach(function(s){
-    var el=document.getElementById('screen-'+s);
-    if(el) el.style.display=s==='home'?'block':'none';
-  });
+  // Always init map immediately
+  setTimeout(initWorldMap, 100);
 
-  // Init world map after short delay
-  setTimeout(function(){
-    if(document.getElementById('screen-world').style.display!=='none'){
-      if(!leafletMap) initWorldMap();
+  // Init globe in welcome overlay
+  setTimeout(initGlobe, 200);
+
+  // Check if first visit
+  try{
+    if(localStorage.getItem('wg_welcomed')){
+      var el=document.getElementById('welcomeOverlay');
+      if(el)el.classList.add('hidden');
     }
-  }, 300);
+  }catch(e){}
+
+  // Update header metrics
+  updateHeaderMetrics();
 })();
+
+function updateHeaderMetrics(){
+  var m=computeMetrics(getSliders());
+  var hFl=document.getElementById('hFl');
+  var hEc=document.getElementById('hEc');
+  var hSt=document.getElementById('hSt');
+  if(hFl)hFl.textContent=m.fl;
+  if(hEc)hEc.textContent=m.ec;
+  if(hSt)hSt.textContent=m.st;
+}
+
+// ── AI WRITING ASSIST ──
+var _aiAssistTarget=null,_aiAssistMode='polish';
+
+function openAiAssist(inputId){
+  _aiAssistTarget=inputId;_aiAssistMode='polish';
+  var el=document.getElementById(inputId);
+  var currentText=el?el.value.trim():'';
+  var overlay=document.getElementById('aiAssistOverlay');
+  if(!overlay){
+    overlay=document.createElement('div');overlay.id='aiAssistOverlay';overlay.className='ai-assist-overlay';
+    overlay.onclick=function(e){if(e.target===overlay)closeAiAssist();};
+    document.body.appendChild(overlay);
+  }
+  overlay.innerHTML='<div class="ai-assist-sheet">'
+    +'<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">'
+    +'<div class="ai-assist-sheet-title">AI Writing Assist</div>'
+    +'<button onclick="closeAiAssist()" style="background:none;border:none;cursor:pointer;font-size:18px;color:#8a8580;padding:0;line-height:1">x</button>'
+    +'</div>'
+    +'<div class="ai-assist-sheet-sub">Paste rough notes, a URL summary, or draft text. Choose how to improve it.</div>'
+    +'<div class="ai-assist-modes">'
+    +'<button class="ai-assist-mode active" id="aim-polish" onclick="setAiMode('polish',this)">Polish</button>'
+    +'<button class="ai-assist-mode" id="aim-expand" onclick="setAiMode('expand',this)">Expand</button>'
+    +'<button class="ai-assist-mode" id="aim-condense" onclick="setAiMode('condense',this)">Condense</button>'
+    +'<button class="ai-assist-mode" id="aim-summarize" onclick="setAiMode('summarize',this)">Summarize</button>'
+    +'<button class="ai-assist-mode" id="aim-formal" onclick="setAiMode('formal',this)">Formal</button>'
+    +'<button class="ai-assist-mode" id="aim-simple" onclick="setAiMode('simple',this)">Simplify</button>'
+    +'</div>'
+    +'<textarea id="aiAssistInput" placeholder="Paste your draft, notes, or a description here..." rows="4" style="width:100%;padding:10px 12px;border:1.5px solid #e8e4dc;border-radius:8px;font-size:14px;font-family:inherit;margin-bottom:10px;resize:none;box-sizing:border-box">'+(currentText||'')+'</textarea>'
+    +'<button class="btn btn-dark btn-full" onclick="runAiAssist()" id="aiAssistRunBtn" style="margin-bottom:10px">Improve this</button>'
+    +'<div id="aiAssistResult" style="display:none">'
+    +'<div class="ai-assist-result" id="aiAssistResultText"></div>'
+    +'<div style="display:flex;gap:8px">'
+    +'<button class="btn btn-dark" style="flex:1;font-size:13px" onclick="applyAiAssist()">Use this</button>'
+    +'<button class="btn btn-outline" style="flex:1;font-size:13px" onclick="runAiAssist()">Try again</button>'
+    +'</div>'
+    +'</div>'
+    +'</div>';
+  overlay.style.display='flex';
+}
+
+function setAiMode(mode,btn){
+  _aiAssistMode=mode;
+  var btns=document.querySelectorAll('.ai-assist-mode');
+  btns.forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+}
+
+function closeAiAssist(){
+  var overlay=document.getElementById('aiAssistOverlay');
+  if(overlay)overlay.style.display='none';
+  _aiAssistTarget=null;
+}
+
+async function runAiAssist(){
+  var input=document.getElementById('aiAssistInput');
+  if(!input||!input.value.trim()) return;
+  var text=input.value.trim();
+  var btn=document.getElementById('aiAssistRunBtn');
+  var resultEl=document.getElementById('aiAssistResult');
+  var resultText=document.getElementById('aiAssistResultText');
+  btn.disabled=true;btn.textContent='Improving...';
+  resultEl.style.display='none';
+  var instructions={
+    polish:'Rewrite this for clarity and impact. Keep the same meaning and approximate length. Return only the rewritten text.',
+    expand:'Expand this into a fuller, more detailed version. Add context and specifics. Return only the expanded text.',
+    condense:'Condense this to the most essential points. Make it punchy. Return only the condensed text.',
+    summarize:'Write a 2-3 sentence summary of the key points. Return only the summary.',
+    formal:'Rewrite this in a professional, formal tone suitable for a report or proposal. Return only the rewritten text.',
+    simple:'Rewrite this in plain, simple language that anyone can understand. Return only the rewritten text.'
+  };
+  var sys=instructions[_aiAssistMode]||instructions.polish;
+  try{
+    var resp=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system:sys,user:text,maxTokens:600})});
+    var data=await resp.json();
+    btn.disabled=false;btn.textContent='Improve this';
+    if(data.error){resultText.textContent='Error: '+data.error;resultEl.style.display='block';return;}
+    resultText.textContent=data.text;resultEl.style.display='block';
+    trackResource('Claude',150);
+  }catch(e){btn.disabled=false;btn.textContent='Improve this';resultText.textContent='Error: '+e.message;resultEl.style.display='block';}
+}
+
+function applyAiAssist(){
+  var resultText=document.getElementById('aiAssistResultText');
+  if(!resultText||!_aiAssistTarget) return;
+  var el=document.getElementById(_aiAssistTarget);
+  if(el)el.value=resultText.textContent;
+  closeAiAssist();
+}
 
 </script>
 </body>
