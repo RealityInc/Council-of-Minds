@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -144,7 +143,6 @@ textarea{resize:none;min-height:80px;}
 </div>
 
 <!-- HOME -->
-
 <div class="screen active" id="screen-home">
   <div class="home-hero">
     <div class="nasa-hero">
@@ -208,7 +206,6 @@ textarea{resize:none;min-height:80px;}
 </div>
 
 <!-- ORACLE -->
-
 <div class="screen" id="screen-oracle">
   <div class="card" style="margin-top:4px">
     <div class="card-hdr" style="justify-content:space-between">
@@ -252,7 +249,6 @@ textarea{resize:none;min-height:80px;}
 </div>
 
 <!-- FORUM -->
-
 <div class="screen" id="screen-forum">
   <div class="card">
     <div class="card-hdr"><span class="card-title">Forum</span></div>
@@ -279,7 +275,6 @@ textarea{resize:none;min-height:80px;}
 </div>
 
 <!-- CREATE -->
-
 <div class="screen" id="screen-create">
   <div class="card">
     <div class="card-hdr"><span class="card-title">Make Something</span></div>
@@ -306,7 +301,6 @@ textarea{resize:none;min-height:80px;}
 </div>
 
 <!-- WORLD GAME -->
-
 <div class="screen" id="screen-world">
   <div style="margin-bottom:14px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
@@ -395,7 +389,6 @@ textarea{resize:none;min-height:80px;}
 </div>
 
 <!-- GALLERY -->
-
 <div class="screen" id="screen-gallery">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px">
     <div>
@@ -415,7 +408,6 @@ textarea{resize:none;min-height:80px;}
 </div>
 
 <!-- COUNCIL -->
-
 <div class="screen" id="screen-council">
   <div class="card" style="margin-top:4px;margin-bottom:14px">
     <div class="card-body" style="padding:14px 16px">
@@ -473,7 +465,6 @@ textarea{resize:none;min-height:80px;}
 </div>
 
 <!-- ABOUT -->
-
 <div class="screen" id="screen-about">
   <div style="max-width:640px;margin:0 auto;padding:8px 0">
     <div style="padding:28px 20px;text-align:center;border-bottom:1px solid #e8e4dc;margin-bottom:20px">
@@ -489,7 +480,6 @@ textarea{resize:none;min-height:80px;}
 </div>
 
 <!-- FLOATING COUNCIL CHAT -->
-
 <div id="councilFloat">
   <button id="councilFloatBtn" onclick="toggleCouncilChat()" title="Ask your council">
     <svg viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -520,7 +510,6 @@ textarea{resize:none;min-height:80px;}
 </div>
 
 <!-- PROJECT -->
-
 <div class="screen" id="screen-project">
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding-top:4px">
     <button class="btn btn-outline" style="font-size:12px;padding:5px 12px" onclick="show('world')">&#8592; Map</button>
@@ -581,7 +570,6 @@ textarea{resize:none;min-height:80px;}
 </div>
 
 <!-- QUIZ/AVATAR -->
-
 <div class="screen" id="screen-quiz" style="padding:0;background:#0a0a0f;min-height:100vh"></div>
 
 <script>
@@ -1855,262 +1843,261 @@ function startAddCommunityProject(placeName,lat,lng){
   panel.style.display='block';
   var catOptions=['health','education','energy','environment','economic','other'].map(function(c){return '<option value="'+c+'">'+c.charAt(0).toUpperCase()+c.slice(1)+'</option>';}).join('');
   panel.innerHTML='<div style="padding:12px 14px;border-bottom:1px solid #2a906044;display:flex;justify-content:space-between;align-items:center"><span style="font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#2a9060">Add a Real Project</span><button onclick="hideAddProjectPanel()" style="background:none;border:none;cursor:pointer;font-size:16px;color:#8a8580">×</button></div><div style="padding:12px 14px;display:flex;flex-direction:column;gap:10px"><div style="font-size:12px;color:#8a8580;line-height:1.5">Add a real-world project in <strong>'+placeName+'</strong>.</div><input id="np-name" placeholder="Project name" style="font-size:13px;padding:10px 12px;border:1.5px solid #e8e4dc;border-radius:8px;font-family:inherit"><textarea id="np-desc" placeholder="What does it do? Who does it serve?" rows="2" style="font-size:13px;padding:10px 12px;border:1.5px solid #e8e4dc;border-radius:8px;font-family:inherit;resize:none"></textarea><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><div style="font-size:11px;color:#8a8580;margin-bottom:4px">Category</div><select id="np-cat" style="font-size:13px;padding:8px;border:1.5px solid #e8e4dc;border-radius:8px;font-family:inherit;background:#f8f7f4;width:100%">'+catOptions+'</select></div><div><div style="font-size:11px;color:#8a8580;margin-bottom:4px">People served / yr</div><input id="np-people" type="number" placeholder="e.g. 2000" style="font-size:13px;padding:8px;border:1.5px solid #e8e4dc;border-radius:8px;font-family:inherit;width:100%;box-sizing:border-box"></div></div><button class="btn btn-dark btn-full" onclick="submitCommunityProject()" id="np-submit">Ask the Council to Estimate Impact</button><div id="np-result" style="display:none"></div></div>';
-
 }
 
 async function submitCommunityProject(){
-var name=document.getElementById(‘np-name’).value.trim();
-var desc=document.getElementById(‘np-desc’).value.trim();
-var cat=document.getElementById(‘np-cat’).value;
-var people=parseInt(document.getElementById(‘np-people’).value)||0;
-if(!name||!desc){alert(‘Please fill in the project name and description.’);return;}
-var btn=document.getElementById(‘np-submit’);var result=document.getElementById(‘np-result’);
-btn.disabled=true;btn.textContent=‘Estimating impact…’;result.style.display=‘block’;
-result.innerHTML=’<div class="thinking"><span>Council estimating…</span><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div></div>’;
-var sys=‘You are estimating the real-world impact of a community project on three scores (0-100): Flourishing, Ecological, Stability. Be conservative. Respond ONLY with valid JSON: {“fl”:2,“ec”:1,“st”:3,“reasoning”:“one sentence”}. No other text.’;
-var prompt=‘Project: ‘+name+’. Description: ‘+desc+’. Category: ‘+cat+’. People served: ‘+(people||‘unknown’)+’. Location: ‘+window._newProjPlace+’. Estimate realistic impact on scores (0-100 scale). Most projects: 0-5 points per metric.’;
-try{
-var response=await fetch(’/api/chat’,{method:‘POST’,headers:{‘Content-Type’:‘application/json’},body:JSON.stringify({system:sys,user:prompt,maxTokens:150})});
-var data=await response.json();trackResource(‘Claude’,150);
-var text=data.text||’’;var start=text.indexOf(’{’),end=text.lastIndexOf(’}’);
-var impact={fl:1,ec:0,st:1,reasoning:‘Estimated based on project scope.’};
-if(start>=0&&end>start){try{impact=JSON.parse(text.substring(start,end+1));}catch(e){}}
-var proj={id:Date.now(),name:name,description:desc,category:cat,peopleServed:people,place:window._newProjPlace,lat:window._newProjLat,lng:window._newProjLng,impactFl:impact.fl||0,impactEc:impact.ec||0,impactSt:impact.st||0,reasoning:impact.reasoning||’’,date:new Date().toLocaleDateString()};
-window._pendingProj=proj;
-// BUG 1 FIXED: single button, no duplicate
-result.innerHTML=’<div style="background:#f0f8f4;border:1px solid #2a906044;border-radius:8px;padding:12px;margin-top:4px"><div style="font-size:11px;font-weight:600;color:#2a9060;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Estimated Impact</div><div style="display:flex;gap:12px;margin-bottom:8px"><span style="font-size:13px;color:#1a6b4a;font-weight:600">+’+proj.impactFl+’ Flourishing</span><span style="font-size:13px;color:#b8922a;font-weight:600">+’+proj.impactEc+’ Ecological</span><span style="font-size:13px;color:#5040a0;font-weight:600">+’+proj.impactSt+’ Stability</span></div><div style="font-size:12px;color:#4a4640;line-height:1.5;margin-bottom:10px">’+proj.reasoning+’</div><button class="btn btn-dark btn-full" onclick="confirmAddCommunityProject(window._pendingProj)">Add to Map</button></div>’;
-btn.disabled=false;btn.textContent=‘Re-estimate’;
-}catch(e){result.innerHTML=’<div style="color:#c04020;font-size:12px">Could not estimate. ‘+e.message+’</div>’;btn.disabled=false;btn.textContent=‘Try Again’;}
+  var name=document.getElementById('np-name').value.trim();
+  var desc=document.getElementById('np-desc').value.trim();
+  var cat=document.getElementById('np-cat').value;
+  var people=parseInt(document.getElementById('np-people').value)||0;
+  if(!name||!desc){alert('Please fill in the project name and description.');return;}
+  var btn=document.getElementById('np-submit');var result=document.getElementById('np-result');
+  btn.disabled=true;btn.textContent='Estimating impact...';result.style.display='block';
+  result.innerHTML='<div class="thinking"><span>Council estimating...</span><div class="dots"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div></div>';
+  var sys='You are estimating the real-world impact of a community project on three scores (0-100): Flourishing, Ecological, Stability. Be conservative. Respond ONLY with valid JSON: {"fl":2,"ec":1,"st":3,"reasoning":"one sentence"}. No other text.';
+  var prompt='Project: '+name+'. Description: '+desc+'. Category: '+cat+'. People served: '+(people||'unknown')+'. Location: '+window._newProjPlace+'. Estimate realistic impact on scores (0-100 scale). Most projects: 0-5 points per metric.';
+  try{
+    var response=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({system:sys,user:prompt,maxTokens:150})});
+    var data=await response.json();trackResource('Claude',150);
+    var text=data.text||'';var start=text.indexOf('{'),end=text.lastIndexOf('}');
+    var impact={fl:1,ec:0,st:1,reasoning:'Estimated based on project scope.'};
+    if(start>=0&&end>start){try{impact=JSON.parse(text.substring(start,end+1));}catch(e){}}
+    var proj={id:Date.now(),name:name,description:desc,category:cat,peopleServed:people,place:window._newProjPlace,lat:window._newProjLat,lng:window._newProjLng,impactFl:impact.fl||0,impactEc:impact.ec||0,impactSt:impact.st||0,reasoning:impact.reasoning||'',date:new Date().toLocaleDateString()};
+    window._pendingProj=proj;
+    // BUG 1 FIXED: single button, no duplicate
+    result.innerHTML='<div style="background:#f0f8f4;border:1px solid #2a906044;border-radius:8px;padding:12px;margin-top:4px"><div style="font-size:11px;font-weight:600;color:#2a9060;margin-bottom:6px;text-transform:uppercase;letter-spacing:1px">Estimated Impact</div><div style="display:flex;gap:12px;margin-bottom:8px"><span style="font-size:13px;color:#1a6b4a;font-weight:600">+'+proj.impactFl+' Flourishing</span><span style="font-size:13px;color:#b8922a;font-weight:600">+'+proj.impactEc+' Ecological</span><span style="font-size:13px;color:#5040a0;font-weight:600">+'+proj.impactSt+' Stability</span></div><div style="font-size:12px;color:#4a4640;line-height:1.5;margin-bottom:10px">'+proj.reasoning+'</div><button class="btn btn-dark btn-full" onclick="confirmAddCommunityProject(window._pendingProj)">Add to Map</button></div>';
+    btn.disabled=false;btn.textContent='Re-estimate';
+  }catch(e){result.innerHTML='<div style="color:#c04020;font-size:12px">Could not estimate. '+e.message+'</div>';btn.disabled=false;btn.textContent='Try Again';}
 }
 function confirmAddCommunityProject(proj){
-communityProjects.push(proj);saveCommunityProjects();renderCommunityMarkers();
-document.getElementById(‘addProjectPanel’).style.display=‘none’;
-shareToGallery(‘scenario’,proj.name+’ (’+proj.place+’)’,proj.description+’ Estimated impact: +’+proj.impactFl+’ FL, +’+proj.impactEc+’ EC, +’+proj.impactSt+’ ST.’);
-setMapStatus(‘Project added to map!’);
+  communityProjects.push(proj);saveCommunityProjects();renderCommunityMarkers();
+  document.getElementById('addProjectPanel').style.display='none';
+  shareToGallery('scenario',proj.name+' ('+proj.place+')',proj.description+' Estimated impact: +'+proj.impactFl+' FL, +'+proj.impactEc+' EC, +'+proj.impactSt+' ST.');
+  setMapStatus('Project added to map!');
 }
 
-// – RESOURCE TRACKER –
+// -- RESOURCE TRACKER --
 var resourceUsage={apiCalls:0,dataSources:{},tokensEst:0};
 function trackResource(source,tokens){resourceUsage.apiCalls++;resourceUsage.dataSources[source]=(resourceUsage.dataSources[source]||0)+1;resourceUsage.tokensEst+=tokens||0;updateResourceBar();}
 function updateResourceBar(){
-var el=document.getElementById(‘resourceChips’);if(!el) return;
-var sources=Object.keys(resourceUsage.dataSources);if(sources.length===0) return;
-var chips=[];
-if(resourceUsage.tokensEst>0)chips.push(’<span style="font-size:9px;background:#f4f0e8;border:1px solid #e8e4dc;border-radius:10px;padding:2px 7px;color:#8a8580;white-space:nowrap">~’+(resourceUsage.tokensEst>1000?Math.round(resourceUsage.tokensEst/1000)+‘k’:resourceUsage.tokensEst)+’ tokens</span>’);
-sources.forEach(function(s){var colors={‘World Bank’:’#2a9060’,‘Census’:’#b8922a’,‘BLS’:’#5040a0’,‘OSM’:’#c04020’,‘Claude’:’#7060c0’,‘User Data’:’#1a6b4a’};var color=colors[s]||’#8a8580’;chips.push(’<span style="font-size:9px;background:'+color+'18;border:1px solid '+color+'44;border-radius:10px;padding:2px 7px;color:'+color+';white-space:nowrap">’+s+’</span>’);});
-el.innerHTML=chips.join(’’);
+  var el=document.getElementById('resourceChips');if(!el) return;
+  var sources=Object.keys(resourceUsage.dataSources);if(sources.length===0) return;
+  var chips=[];
+  if(resourceUsage.tokensEst>0)chips.push('<span style="font-size:9px;background:#f4f0e8;border:1px solid #e8e4dc;border-radius:10px;padding:2px 7px;color:#8a8580;white-space:nowrap">~'+(resourceUsage.tokensEst>1000?Math.round(resourceUsage.tokensEst/1000)+'k':resourceUsage.tokensEst)+' tokens</span>');
+  sources.forEach(function(s){var colors={'World Bank':'#2a9060','Census':'#b8922a','BLS':'#5040a0','OSM':'#c04020','Claude':'#7060c0','User Data':'#1a6b4a'};var color=colors[s]||'#8a8580';chips.push('<span style="font-size:9px;background:'+color+'18;border:1px solid '+color+'44;border-radius:10px;padding:2px 7px;color:'+color+';white-space:nowrap">'+s+'</span>');});
+  el.innerHTML=chips.join('');
 }
 
-// – AVATAR SYSTEM –
-var TYPES={analyst:{name:‘The Analyst’,tagline:‘You see the signal in everything. Others see noise.’,color:’#4a90d9’,glow:’#1a3a6a’,silhouette:‘analyst’,animal:‘owl’,tech:‘visor’,paletteIdx:0,council:[‘Carroll Quigley’,‘Hannah Arendt’,‘Claude’]},probe:{name:‘The Probe’,tagline:‘You go first. You always have.’,color:’#d4aa44’,glow:’#6a4a10’,silhouette:‘probe’,animal:‘fox’,tech:‘antenna’,paletteIdx:1,council:[‘Buckminster Fuller’,‘Nikola Tesla’,‘Claude’]},synthesizer:{name:‘The Synthesizer’,tagline:‘You combine what others keep separate.’,color:’#9060d0’,glow:’#401080’,silhouette:‘synthesizer’,animal:‘octopus’,tech:‘circuit’,paletteIdx:2,council:[‘Carl Jung’,‘Alan Watts’,‘Claude’]},vector:{name:‘The Vector’,tagline:‘Force with direction. You make things move.’,color:’#d04030’,glow:’#601010’,silhouette:‘probe’,animal:‘wolf’,tech:‘exhaust’,paletteIdx:3,council:[‘Frantz Fanon’,‘Rosa Luxemburg’,‘Claude’]},anomaly:{name:‘The Anomaly’,tagline:‘You are the data point that breaks the model.’,color:’#20c080’,glow:’#0a4030’,silhouette:‘anomaly’,animal:‘crow’,tech:‘glitch’,paletteIdx:4,council:[‘Jean Baudrillard’,‘Emma Goldman’,‘Claude’]},module:{name:‘The Module’,tagline:‘Self-contained. The whole works because you do.’,color:’#c08030’,glow:’#503010’,silhouette:‘analyst’,animal:‘deer’,tech:‘receiver’,paletteIdx:5,council:[‘Bell Hooks’,‘Vandana Shiva’,‘Claude’]},signal:{name:‘The Signal’,tagline:‘Broadcasting into the unknown. Someone will hear.’,color:’#40b0c0’,glow:’#104050’,silhouette:‘synthesizer’,animal:‘moth’,tech:‘lens’,paletteIdx:6,council:[‘Buddha’,‘Rumi’,‘Claude’]},static:{name:‘The Static’,tagline:‘The noise that turns out to be the message.’,color:’#a0a0a0’,glow:’#303030’,silhouette:‘anomaly’,animal:‘mantis’,tech:‘wave’,paletteIdx:7,council:[‘Alan Watts’,‘Jean Baudrillard’,‘Claude’]}};
-var QUIZ=[{q:‘A system is failing. You:’,opts:[{text:‘Find out exactly why before touching anything’,type:‘analyst’},{text:‘Start pulling it apart to see what happens’,type:‘probe’},{text:‘Look for the one piece connecting everything’,type:‘synthesizer’},{text:‘Fix the most broken part and see what follows’,type:‘vector’},{text:‘Let it finish failing – something better will come’,type:‘anomaly’},{text:‘Make sure the people depending on it are okay’,type:‘module’},{text:‘Tell everyone what you see happening’,type:‘signal’},{text:‘Do the unexpected thing and watch what shifts’,type:‘static’}]},{q:‘You have one hour that belongs to no one. It becomes:’,opts:[{text:‘A quiet review of everything on your mind’,type:‘analyst’},{text:‘The start of something you never planned’,type:‘probe’},{text:‘Three projects suddenly connected’,type:‘synthesizer’},{text:‘Something that needed doing finally done’,type:‘vector’},{text:‘Gone. You lost track completely.’,type:‘anomaly’},{text:‘Time with someone who needed it’,type:‘module’},{text:‘A message you finally had time to write’,type:‘signal’},{text:‘Weird. Productively weird.’,type:‘static’}]},{q:‘Someone hands you something broken. You:’,opts:[{text:‘Immediately understand what happened to it’,type:‘analyst’},{text:‘Try to use it anyway’,type:‘probe’},{text:‘See it as something else entirely’,type:‘synthesizer’},{text:‘Fix it or replace it. Quickly.’,type:‘vector’},{text:‘Wonder if broken is the wrong word’,type:‘anomaly’},{text:‘Ask who it belongs to and what they need’,type:‘module’},{text:‘Tell the story of how it broke’,type:‘signal’},{text:‘Make it into something it was not’,type:‘static’}]},{q:‘The map is wrong. You:’,opts:[{text:‘Correct it methodically’,type:‘analyst’},{text:‘Ignore it and navigate by feel’,type:‘probe’},{text:‘Cross-reference three other maps’,type:‘synthesizer’},{text:‘Go anyway. You can adapt.’,type:‘vector’},{text:‘Question whether the territory is right either’,type:‘anomaly’},{text:‘Make sure no one else gets lost’,type:‘module’},{text:‘Mark the error for everyone who comes after’,type:‘signal’},{text:‘Draw a better one from scratch’,type:‘static’}]},{q:‘It is very quiet. You feel:’,opts:[{text:‘Finally able to think’,type:‘analyst’},{text:‘Slightly restless’,type:‘probe’},{text:‘Like something is about to connect’,type:‘synthesizer’},{text:‘Ready’,type:‘vector’},{text:‘Like the quiet is saying something’,type:‘anomaly’},{text:‘Aware of everyone who is not here’,type:‘module’},{text:‘Like a frequency waiting to be found’,type:‘signal’},{text:‘Uncertain in a way that feels important’,type:‘static’}]}];
-var ANIMALS=[‘owl’,‘fox’,‘octopus’,‘wolf’,‘crow’,‘deer’,‘moth’,‘mantis’,‘raven’,‘lynx’];
-var TECH_PARTS=[‘visor’,‘antenna’,‘circuit’,‘exhaust’,‘receiver’,‘lens’,‘wave’,‘glitch’,‘scope’,‘node’];
-var PALETTES=[{name:‘Deep Space’,p:’#4a90d9’,s:’#0a0a2a’,g:’#1a3a6a’},{name:‘Solar’,p:’#d4aa44’,s:’#1a0e00’,g:’#6a4a10’},{name:‘Void’,p:’#9060d0’,s:’#0e0018’,g:’#401080’},{name:‘Critical’,p:’#d04030’,s:’#1a0000’,g:’#601010’},{name:‘Emergence’,p:’#20c080’,s:’#001a10’,g:’#0a4030’},{name:‘Amber’,p:’#c08030’,s:’#1a0e00’,g:’#503010’},{name:‘Broadcast’,p:’#40b0c0’,s:’#001018’,g:’#104050’},{name:‘Static’,p:’#a0a0a0’,s:’#0a0a0a’,g:’#303030’},{name:‘Aurora’,p:’#60d0a0’,s:’#001a14’,g:’#20604a’},{name:‘Pulse’,p:’#d060a0’,s:’#18000e’,g:’#602040’}];
-var SHAPES=[‘geometric’,‘angular’,‘smooth’,‘fragmented’];
-var SYMBOLS=[‘hexagon’,‘circle’,‘triangle’,‘cross’,‘wave’,‘spiral’,‘grid’,‘arc’];
-var BG_FIELDS=[‘starfield’,‘grid’,‘pulse’,‘nebula’,‘void’,‘circuit’,‘signal’,‘static’];
-var avatarState={type:null,username:’’,animal:‘owl’,tech:‘visor’,paletteIdx:0,shape:‘geometric’,symbol:‘hexagon’,bgField:‘starfield’};
+// -- AVATAR SYSTEM --
+var TYPES={analyst:{name:'The Analyst',tagline:'You see the signal in everything. Others see noise.',color:'#4a90d9',glow:'#1a3a6a',silhouette:'analyst',animal:'owl',tech:'visor',paletteIdx:0,council:['Carroll Quigley','Hannah Arendt','Claude']},probe:{name:'The Probe',tagline:'You go first. You always have.',color:'#d4aa44',glow:'#6a4a10',silhouette:'probe',animal:'fox',tech:'antenna',paletteIdx:1,council:['Buckminster Fuller','Nikola Tesla','Claude']},synthesizer:{name:'The Synthesizer',tagline:'You combine what others keep separate.',color:'#9060d0',glow:'#401080',silhouette:'synthesizer',animal:'octopus',tech:'circuit',paletteIdx:2,council:['Carl Jung','Alan Watts','Claude']},vector:{name:'The Vector',tagline:'Force with direction. You make things move.',color:'#d04030',glow:'#601010',silhouette:'probe',animal:'wolf',tech:'exhaust',paletteIdx:3,council:['Frantz Fanon','Rosa Luxemburg','Claude']},anomaly:{name:'The Anomaly',tagline:'You are the data point that breaks the model.',color:'#20c080',glow:'#0a4030',silhouette:'anomaly',animal:'crow',tech:'glitch',paletteIdx:4,council:['Jean Baudrillard','Emma Goldman','Claude']},module:{name:'The Module',tagline:'Self-contained. The whole works because you do.',color:'#c08030',glow:'#503010',silhouette:'analyst',animal:'deer',tech:'receiver',paletteIdx:5,council:['Bell Hooks','Vandana Shiva','Claude']},signal:{name:'The Signal',tagline:'Broadcasting into the unknown. Someone will hear.',color:'#40b0c0',glow:'#104050',silhouette:'synthesizer',animal:'moth',tech:'lens',paletteIdx:6,council:['Buddha','Rumi','Claude']},static:{name:'The Static',tagline:'The noise that turns out to be the message.',color:'#a0a0a0',glow:'#303030',silhouette:'anomaly',animal:'mantis',tech:'wave',paletteIdx:7,council:['Alan Watts','Jean Baudrillard','Claude']}};
+var QUIZ=[{q:'A system is failing. You:',opts:[{text:'Find out exactly why before touching anything',type:'analyst'},{text:'Start pulling it apart to see what happens',type:'probe'},{text:'Look for the one piece connecting everything',type:'synthesizer'},{text:'Fix the most broken part and see what follows',type:'vector'},{text:'Let it finish failing -- something better will come',type:'anomaly'},{text:'Make sure the people depending on it are okay',type:'module'},{text:'Tell everyone what you see happening',type:'signal'},{text:'Do the unexpected thing and watch what shifts',type:'static'}]},{q:'You have one hour that belongs to no one. It becomes:',opts:[{text:'A quiet review of everything on your mind',type:'analyst'},{text:'The start of something you never planned',type:'probe'},{text:'Three projects suddenly connected',type:'synthesizer'},{text:'Something that needed doing finally done',type:'vector'},{text:'Gone. You lost track completely.',type:'anomaly'},{text:'Time with someone who needed it',type:'module'},{text:'A message you finally had time to write',type:'signal'},{text:'Weird. Productively weird.',type:'static'}]},{q:'Someone hands you something broken. You:',opts:[{text:'Immediately understand what happened to it',type:'analyst'},{text:'Try to use it anyway',type:'probe'},{text:'See it as something else entirely',type:'synthesizer'},{text:'Fix it or replace it. Quickly.',type:'vector'},{text:'Wonder if broken is the wrong word',type:'anomaly'},{text:'Ask who it belongs to and what they need',type:'module'},{text:'Tell the story of how it broke',type:'signal'},{text:'Make it into something it was not',type:'static'}]},{q:'The map is wrong. You:',opts:[{text:'Correct it methodically',type:'analyst'},{text:'Ignore it and navigate by feel',type:'probe'},{text:'Cross-reference three other maps',type:'synthesizer'},{text:'Go anyway. You can adapt.',type:'vector'},{text:'Question whether the territory is right either',type:'anomaly'},{text:'Make sure no one else gets lost',type:'module'},{text:'Mark the error for everyone who comes after',type:'signal'},{text:'Draw a better one from scratch',type:'static'}]},{q:'It is very quiet. You feel:',opts:[{text:'Finally able to think',type:'analyst'},{text:'Slightly restless',type:'probe'},{text:'Like something is about to connect',type:'synthesizer'},{text:'Ready',type:'vector'},{text:'Like the quiet is saying something',type:'anomaly'},{text:'Aware of everyone who is not here',type:'module'},{text:'Like a frequency waiting to be found',type:'signal'},{text:'Uncertain in a way that feels important',type:'static'}]}];
+var ANIMALS=['owl','fox','octopus','wolf','crow','deer','moth','mantis','raven','lynx'];
+var TECH_PARTS=['visor','antenna','circuit','exhaust','receiver','lens','wave','glitch','scope','node'];
+var PALETTES=[{name:'Deep Space',p:'#4a90d9',s:'#0a0a2a',g:'#1a3a6a'},{name:'Solar',p:'#d4aa44',s:'#1a0e00',g:'#6a4a10'},{name:'Void',p:'#9060d0',s:'#0e0018',g:'#401080'},{name:'Critical',p:'#d04030',s:'#1a0000',g:'#601010'},{name:'Emergence',p:'#20c080',s:'#001a10',g:'#0a4030'},{name:'Amber',p:'#c08030',s:'#1a0e00',g:'#503010'},{name:'Broadcast',p:'#40b0c0',s:'#001018',g:'#104050'},{name:'Static',p:'#a0a0a0',s:'#0a0a0a',g:'#303030'},{name:'Aurora',p:'#60d0a0',s:'#001a14',g:'#20604a'},{name:'Pulse',p:'#d060a0',s:'#18000e',g:'#602040'}];
+var SHAPES=['geometric','angular','smooth','fragmented'];
+var SYMBOLS=['hexagon','circle','triangle','cross','wave','spiral','grid','arc'];
+var BG_FIELDS=['starfield','grid','pulse','nebula','void','circuit','signal','static'];
+var avatarState={type:null,username:'',animal:'owl',tech:'visor',paletteIdx:0,shape:'geometric',symbol:'hexagon',bgField:'starfield'};
 var quizStep=0,quizScores={};
 
-function skipQuiz(){show(‘home’);}
-function openProfile(){if(avatarState.type){show(‘quiz’);setTimeout(showAvatarBuilder,50);}else{startQuiz();}}
-function startQuiz(){quizStep=0;quizScores={};Object.keys(TYPES).forEach(function(t){quizScores[t]=0;});show(‘quiz’);setTimeout(renderQuizStep,50);}
+function skipQuiz(){show('home');}
+function openProfile(){if(avatarState.type){show('quiz');setTimeout(showAvatarBuilder,50);}else{startQuiz();}}
+function startQuiz(){quizStep=0;quizScores={};Object.keys(TYPES).forEach(function(t){quizScores[t]=0;});show('quiz');setTimeout(renderQuizStep,50);}
 function renderQuizStep(){
-var screen=document.getElementById(‘screen-quiz’);if(!screen) return;
-var q=QUIZ[quizStep];
-var pips=QUIZ.map(function(_,i){return ‘<div class="quiz-pip'+(i<=quizStep?' done':'')+'"></div>’;}).join(’’);
-var opts=q.opts.slice();for(var i=opts.length-1;i>0;i–){var j=Math.floor(Math.random()*(i+1));var tmp=opts[i];opts[i]=opts[j];opts[j]=tmp;}opts=opts.slice(0,4);
-screen.innerHTML=’<div class="quiz-screen"><div style="font-size:10px;font-weight:600;letter-spacing:2px;color:#3a3830;margin-bottom:20px;text-transform:uppercase">Character Creation ‘+(quizStep+1)+’ of ‘+QUIZ.length+’</div><div class="quiz-progress">’+pips+’</div><div class="quiz-q">’+q.q+’</div><div class="quiz-opts">’+opts.map(function(opt){return ‘<button class="quiz-opt" data-t="'+opt.type+'" onclick="quizAnswer(this.dataset.t)">’+opt.text+’</button>’;}).join(’’)+’</div><button onclick="skipQuiz()" style="margin-top:24px;background:transparent;border:none;color:#3a3830;font-size:13px;cursor:pointer;touch-action:manipulation">Skip for now</button></div>’;
+  var screen=document.getElementById('screen-quiz');if(!screen) return;
+  var q=QUIZ[quizStep];
+  var pips=QUIZ.map(function(_,i){return '<div class="quiz-pip'+(i<=quizStep?' done':'')+'"></div>';}).join('');
+  var opts=q.opts.slice();for(var i=opts.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var tmp=opts[i];opts[i]=opts[j];opts[j]=tmp;}opts=opts.slice(0,4);
+  screen.innerHTML='<div class="quiz-screen"><div style="font-size:10px;font-weight:600;letter-spacing:2px;color:#3a3830;margin-bottom:20px;text-transform:uppercase">Character Creation '+(quizStep+1)+' of '+QUIZ.length+'</div><div class="quiz-progress">'+pips+'</div><div class="quiz-q">'+q.q+'</div><div class="quiz-opts">'+opts.map(function(opt){return '<button class="quiz-opt" data-t="'+opt.type+'" onclick="quizAnswer(this.dataset.t)">'+opt.text+'</button>';}).join('')+'</div><button onclick="skipQuiz()" style="margin-top:24px;background:transparent;border:none;color:#3a3830;font-size:13px;cursor:pointer;touch-action:manipulation">Skip for now</button></div>';
 }
 function quizAnswer(type){quizScores[type]=(quizScores[type]||0)+1;quizStep++;if(quizStep>=QUIZ.length)finishQuiz();else renderQuizStep();}
 function finishQuiz(){var winner=Object.keys(quizScores).reduce(function(a,b){return (quizScores[a]||0)>=(quizScores[b]||0)?a:b;});avatarState.type=winner;var td=TYPES[winner];avatarState.animal=td.animal;avatarState.tech=td.tech;avatarState.paletteIdx=td.paletteIdx;showTypeReveal();}
 function showTypeReveal(){
-show(‘quiz’);setTimeout(function(){
-var screen=document.getElementById(‘screen-quiz’);if(!screen) return;
-var td=TYPES[avatarState.type]||TYPES.analyst;
-screen.innerHTML=’<div style="display:flex;flex-direction:column;align-items:center;padding:40px 20px;background:#0a0a0f;min-height:100vh"><div style="font-size:10px;font-weight:600;letter-spacing:2px;color:#3a3830;margin-bottom:28px;text-transform:uppercase">You are</div><canvas id="revealCanvas" width="160" height="160" style="margin-bottom:24px;border-radius:50%"></canvas><div style="font-size:32px;font-weight:800;color:'+td.color+';margin-bottom:8px;font-family:inherit">’+td.name+’</div><div style="font-size:15px;color:#5a5650;margin-bottom:36px;font-style:italic;max-width:260px;text-align:center;line-height:1.6">’+td.tagline+’</div><button onclick="showAvatarBuilder()" style="padding:14px 32px;background:'+td.color+';color:#fff;border:none;border-radius:24px;font-size:15px;font-weight:600;cursor:pointer;touch-action:manipulation;width:240px;margin-bottom:12px;font-family:inherit">Customize your avatar</button><button onclick="saveAvatar()" style="padding:12px 32px;background:transparent;color:#5a5650;border:1px solid #2a2820;border-radius:24px;font-size:14px;cursor:pointer;touch-action:manipulation;width:240px;margin-bottom:12px;font-family:inherit">Use this and continue</button><button onclick="startQuiz()" style="background:transparent;border:none;color:#3a3830;font-size:13px;cursor:pointer;touch-action:manipulation;font-family:inherit">Retake quiz</button></div>’;
-setTimeout(function(){drawAvatar(‘revealCanvas’,avatarState);},80);
-},30);
+  show('quiz');setTimeout(function(){
+  var screen=document.getElementById('screen-quiz');if(!screen) return;
+  var td=TYPES[avatarState.type]||TYPES.analyst;
+  screen.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;padding:40px 20px;background:#0a0a0f;min-height:100vh"><div style="font-size:10px;font-weight:600;letter-spacing:2px;color:#3a3830;margin-bottom:28px;text-transform:uppercase">You are</div><canvas id="revealCanvas" width="160" height="160" style="margin-bottom:24px;border-radius:50%"></canvas><div style="font-size:32px;font-weight:800;color:'+td.color+';margin-bottom:8px;font-family:inherit">'+td.name+'</div><div style="font-size:15px;color:#5a5650;margin-bottom:36px;font-style:italic;max-width:260px;text-align:center;line-height:1.6">'+td.tagline+'</div><button onclick="showAvatarBuilder()" style="padding:14px 32px;background:'+td.color+';color:#fff;border:none;border-radius:24px;font-size:15px;font-weight:600;cursor:pointer;touch-action:manipulation;width:240px;margin-bottom:12px;font-family:inherit">Customize your avatar</button><button onclick="saveAvatar()" style="padding:12px 32px;background:transparent;color:#5a5650;border:1px solid #2a2820;border-radius:24px;font-size:14px;cursor:pointer;touch-action:manipulation;width:240px;margin-bottom:12px;font-family:inherit">Use this and continue</button><button onclick="startQuiz()" style="background:transparent;border:none;color:#3a3830;font-size:13px;cursor:pointer;touch-action:manipulation;font-family:inherit">Retake quiz</button></div>';
+  setTimeout(function(){drawAvatar('revealCanvas',avatarState);},80);
+  },30);
 }
 
-// – AVATAR BUILDER –
+// -- AVATAR BUILDER --
 function showAvatarBuilder(){
-show(‘quiz’);setTimeout(function(){
-var screen=document.getElementById(‘screen-quiz’);if(!screen)return;
-var td=TYPES[avatarState.type]||TYPES.analyst;
-var animalOpts=ANIMALS.map(function(a){return ‘<button class="builder-opt'+(avatarState.animal===a?' sel':'')+'" onclick="setAv(\'animal\',\''+a+'\',this)">’+a+’</button>’;}).join(’’);
-var techOpts=TECH_PARTS.map(function(t){return ‘<button class="builder-opt'+(avatarState.tech===t?' sel':'')+'" onclick="setAv(\'tech\',\''+t+'\',this)">’+t+’</button>’;}).join(’’);
-var paletteOpts=PALETTES.map(function(p,i){return ‘<div class="color-dot'+(avatarState.paletteIdx===i?' sel':'')+'" style="background:'+p.p+'" onclick="setAvPalette('+i+',this)" title="'+p.name+'"></div>’;}).join(’’);
-var shapeOpts=SHAPES.map(function(s){return ‘<button class="builder-opt'+(avatarState.shape===s?' sel':'')+'" onclick="setAv(\'shape\',\''+s+'\',this)">’+s+’</button>’;}).join(’’);
-var symbolOpts=SYMBOLS.map(function(s){return ‘<button class="builder-opt'+(avatarState.symbol===s?' sel':'')+'" onclick="setAv(\'symbol\',\''+s+'\',this)">’+s+’</button>’;}).join(’’);
-var bgOpts=BG_FIELDS.map(function(b){return ‘<button class="builder-opt'+(avatarState.bgField===b?' sel':'')+'" onclick="setAv(\'bgField\',\''+b+'\',this)">’+b+’</button>’;}).join(’’);
-screen.innerHTML=’<div style="min-height:100vh;background:#0a0a0f;padding:24px 16px 40px"><div style="max-width:400px;margin:0 auto"><div style="text-align:center;margin-bottom:20px"><div style="font-size:11px;color:#3a3830;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Avatar Builder</div><canvas id="builderCanvas" width="120" height="120" style="border-radius:50%;border:2px solid '+td.color+'22"></canvas><div style="font-size:14px;font-weight:700;color:'+td.color+';margin-top:10px">’+td.name+’</div><div id="builderUsername" style="font-size:12px;color:#5a5650;margin-top:4px">’+( avatarState.username||‘tap to set username’)+’</div></div><div style="background:#111118;border:1px solid #1a1820;border-radius:12px;padding:16px;margin-bottom:12px"><div style="font-size:9px;font-weight:600;letter-spacing:2px;color:#3a3830;text-transform:uppercase;margin-bottom:10px">Animal</div><div style="display:flex;flex-wrap:wrap;gap:6px">’+animalOpts+’</div></div><div style="background:#111118;border:1px solid #1a1820;border-radius:12px;padding:16px;margin-bottom:12px"><div style="font-size:9px;font-weight:600;letter-spacing:2px;color:#3a3830;text-transform:uppercase;margin-bottom:10px">Tech</div><div style="display:flex;flex-wrap:wrap;gap:6px">’+techOpts+’</div></div><div style="background:#111118;border:1px solid #1a1820;border-radius:12px;padding:16px;margin-bottom:12px"><div style="font-size:9px;font-weight:600;letter-spacing:2px;color:#3a3830;text-transform:uppercase;margin-bottom:10px">Color Palette</div><div style="display:flex;flex-wrap:wrap;gap:8px">’+paletteOpts+’</div></div><div style="background:#111118;border:1px solid #1a1820;border-radius:12px;padding:16px;margin-bottom:12px"><div style="font-size:9px;font-weight:600;letter-spacing:2px;color:#3a3830;text-transform:uppercase;margin-bottom:10px">Shape</div><div style="display:flex;flex-wrap:wrap;gap:6px">’+shapeOpts+’</div></div><div style="background:#111118;border:1px solid #1a1820;border-radius:12px;padding:16px;margin-bottom:12px"><div style="font-size:9px;font-weight:600;letter-spacing:2px;color:#3a3830;text-transform:uppercase;margin-bottom:10px">Symbol</div><div style="display:flex;flex-wrap:wrap;gap:6px">’+symbolOpts+’</div></div><div style="background:#111118;border:1px solid #1a1820;border-radius:12px;padding:16px;margin-bottom:20px"><div style="font-size:9px;font-weight:600;letter-spacing:2px;color:#3a3830;text-transform:uppercase;margin-bottom:10px">Background</div><div style="display:flex;flex-wrap:wrap;gap:6px">’+bgOpts+’</div></div><button onclick="saveAvatar()" style="width:100%;padding:14px;background:'+td.color+';color:#fff;border:none;border-radius:24px;font-size:15px;font-weight:600;cursor:pointer;touch-action:manipulation;font-family:inherit;margin-bottom:10px">Save & Continue</button><button onclick="show(\'home\')" style="width:100%;padding:12px;background:transparent;color:#3a3830;border:1px solid #2a2820;border-radius:24px;font-size:14px;cursor:pointer;touch-action:manipulation;font-family:inherit">Back to the Game</button></div></div>’;
-setTimeout(function(){refreshBuilderUI();},60);
-},30);
+  show('quiz');setTimeout(function(){
+  var screen=document.getElementById('screen-quiz');if(!screen)return;
+  var td=TYPES[avatarState.type]||TYPES.analyst;
+  var animalOpts=ANIMALS.map(function(a){return '<button class="builder-opt'+(avatarState.animal===a?' sel':'')+'" onclick="setAv(\'animal\',\''+a+'\',this)">'+a+'</button>';}).join('');
+  var techOpts=TECH_PARTS.map(function(t){return '<button class="builder-opt'+(avatarState.tech===t?' sel':'')+'" onclick="setAv(\'tech\',\''+t+'\',this)">'+t+'</button>';}).join('');
+  var paletteOpts=PALETTES.map(function(p,i){return '<div class="color-dot'+(avatarState.paletteIdx===i?' sel':'')+'" style="background:'+p.p+'" onclick="setAvPalette('+i+',this)" title="'+p.name+'"></div>';}).join('');
+  var shapeOpts=SHAPES.map(function(s){return '<button class="builder-opt'+(avatarState.shape===s?' sel':'')+'" onclick="setAv(\'shape\',\''+s+'\',this)">'+s+'</button>';}).join('');
+  var symbolOpts=SYMBOLS.map(function(s){return '<button class="builder-opt'+(avatarState.symbol===s?' sel':'')+'" onclick="setAv(\'symbol\',\''+s+'\',this)">'+s+'</button>';}).join('');
+  var bgOpts=BG_FIELDS.map(function(b){return '<button class="builder-opt'+(avatarState.bgField===b?' sel':'')+'" onclick="setAv(\'bgField\',\''+b+'\',this)">'+b+'</button>';}).join('');
+  screen.innerHTML='<div style="min-height:100vh;background:#0a0a0f;padding:24px 16px 40px"><div style="max-width:400px;margin:0 auto"><div style="text-align:center;margin-bottom:20px"><div style="font-size:11px;color:#3a3830;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px">Avatar Builder</div><canvas id="builderCanvas" width="120" height="120" style="border-radius:50%;border:2px solid '+td.color+'22"></canvas><div style="font-size:14px;font-weight:700;color:'+td.color+';margin-top:10px">'+td.name+'</div><div id="builderUsername" style="font-size:12px;color:#5a5650;margin-top:4px">'+( avatarState.username||'tap to set username')+'</div></div><div style="background:#111118;border:1px solid #1a1820;border-radius:12px;padding:16px;margin-bottom:12px"><div style="font-size:9px;font-weight:600;letter-spacing:2px;color:#3a3830;text-transform:uppercase;margin-bottom:10px">Animal</div><div style="display:flex;flex-wrap:wrap;gap:6px">'+animalOpts+'</div></div><div style="background:#111118;border:1px solid #1a1820;border-radius:12px;padding:16px;margin-bottom:12px"><div style="font-size:9px;font-weight:600;letter-spacing:2px;color:#3a3830;text-transform:uppercase;margin-bottom:10px">Tech</div><div style="display:flex;flex-wrap:wrap;gap:6px">'+techOpts+'</div></div><div style="background:#111118;border:1px solid #1a1820;border-radius:12px;padding:16px;margin-bottom:12px"><div style="font-size:9px;font-weight:600;letter-spacing:2px;color:#3a3830;text-transform:uppercase;margin-bottom:10px">Color Palette</div><div style="display:flex;flex-wrap:wrap;gap:8px">'+paletteOpts+'</div></div><div style="background:#111118;border:1px solid #1a1820;border-radius:12px;padding:16px;margin-bottom:12px"><div style="font-size:9px;font-weight:600;letter-spacing:2px;color:#3a3830;text-transform:uppercase;margin-bottom:10px">Shape</div><div style="display:flex;flex-wrap:wrap;gap:6px">'+shapeOpts+'</div></div><div style="background:#111118;border:1px solid #1a1820;border-radius:12px;padding:16px;margin-bottom:12px"><div style="font-size:9px;font-weight:600;letter-spacing:2px;color:#3a3830;text-transform:uppercase;margin-bottom:10px">Symbol</div><div style="display:flex;flex-wrap:wrap;gap:6px">'+symbolOpts+'</div></div><div style="background:#111118;border:1px solid #1a1820;border-radius:12px;padding:16px;margin-bottom:20px"><div style="font-size:9px;font-weight:600;letter-spacing:2px;color:#3a3830;text-transform:uppercase;margin-bottom:10px">Background</div><div style="display:flex;flex-wrap:wrap;gap:6px">'+bgOpts+'</div></div><button onclick="saveAvatar()" style="width:100%;padding:14px;background:'+td.color+';color:#fff;border:none;border-radius:24px;font-size:15px;font-weight:600;cursor:pointer;touch-action:manipulation;font-family:inherit;margin-bottom:10px">Save & Continue</button><button onclick="show(\'home\')" style="width:100%;padding:12px;background:transparent;color:#3a3830;border:1px solid #2a2820;border-radius:24px;font-size:14px;cursor:pointer;touch-action:manipulation;font-family:inherit">Back to the Game</button></div></div>';
+  setTimeout(function(){refreshBuilderUI();},60);
+  },30);
 }
 
 function setAv(key,val,btn){
-avatarState[key]=val;
-if(btn){var siblings=btn.parentNode.querySelectorAll(’.builder-opt’);siblings.forEach(function(b){b.classList.remove(‘sel’);});btn.classList.add(‘sel’);}
-refreshBuilderUI();
+  avatarState[key]=val;
+  if(btn){var siblings=btn.parentNode.querySelectorAll('.builder-opt');siblings.forEach(function(b){b.classList.remove('sel');});btn.classList.add('sel');}
+  refreshBuilderUI();
 }
 function setAvPalette(idx,dot){
-avatarState.paletteIdx=idx;
-if(dot){var siblings=dot.parentNode.querySelectorAll(’.color-dot’);siblings.forEach(function(d){d.classList.remove(‘sel’);});dot.classList.add(‘sel’);}
-refreshBuilderUI();
+  avatarState.paletteIdx=idx;
+  if(dot){var siblings=dot.parentNode.querySelectorAll('.color-dot');siblings.forEach(function(d){d.classList.remove('sel');});dot.classList.add('sel');}
+  refreshBuilderUI();
 }
-function refreshBuilderUI(){drawAvatar(‘builderCanvas’,avatarState);}
+function refreshBuilderUI(){drawAvatar('builderCanvas',avatarState);}
 
 function saveAvatar(){
-if(!avatarState.username)avatarState.username=generateUsername();
-try{localStorage.setItem(‘wg_avatar’,JSON.stringify(avatarState));}catch(e){}
-var td=TYPES[avatarState.type];
-if(td){
-var allThinkers=BASE.concat(POOL);
-var newCouncil=[];
-td.council.forEach(function(name){
-if(name===‘Claude’){newCouncil.push(BASE[BASE.length-1]);return;}
-for(var i=0;i<allThinkers.length;i++){if(allThinkers[i].name===name){newCouncil.push(allThinkers[i]);return;}}
-newCouncil.push({name:name,era:’’,domain:‘Council member’});
-});
-council=newCouncil;
-}
-drawHeaderAvatar();
-show(‘home’);
+  if(!avatarState.username)avatarState.username=generateUsername();
+  try{localStorage.setItem('wg_avatar',JSON.stringify(avatarState));}catch(e){}
+  var td=TYPES[avatarState.type];
+  if(td){
+    var allThinkers=BASE.concat(POOL);
+    var newCouncil=[];
+    td.council.forEach(function(name){
+      if(name==='Claude'){newCouncil.push(BASE[BASE.length-1]);return;}
+      for(var i=0;i<allThinkers.length;i++){if(allThinkers[i].name===name){newCouncil.push(allThinkers[i]);return;}}
+      newCouncil.push({name:name,era:'',domain:'Council member'});
+    });
+    council=newCouncil;
+  }
+  drawHeaderAvatar();
+  show('home');
 }
 
 function loadAvatar(){
-try{
-var saved=localStorage.getItem(‘wg_avatar’);
-if(saved){avatarState=JSON.parse(saved);drawHeaderAvatar();}
-}catch(e){}
+  try{
+    var saved=localStorage.getItem('wg_avatar');
+    if(saved){avatarState=JSON.parse(saved);drawHeaderAvatar();}
+  }catch(e){}
 }
 
 function generateUsername(){
-var adj=[‘critical’,‘emergent’,‘liminal’,‘recursive’,‘tensegral’,‘synergetic’,‘stochastic’,‘resonant’,‘oblique’,‘orthogonal’,‘entropic’,‘coherent’,‘lateral’];
-var noun=[‘signal’,‘probe’,‘vector’,‘node’,‘field’,‘aperture’,‘lattice’,‘module’,‘frame’,‘circuit’,‘interface’,‘threshold’,‘relay’];
-return adj[Math.floor(Math.random()*adj.length)]+’.’+noun[Math.floor(Math.random()*noun.length)];
+  var adj=['critical','emergent','liminal','recursive','tensegral','synergetic','stochastic','resonant','oblique','orthogonal','entropic','coherent','lateral'];
+  var noun=['signal','probe','vector','node','field','aperture','lattice','module','frame','circuit','interface','threshold','relay'];
+  return adj[Math.floor(Math.random()*adj.length)]+'.'+noun[Math.floor(Math.random()*noun.length)];
 }
 
-// – DRAW AVATAR –
+// -- DRAW AVATAR --
 function drawAvatar(canvasId,state){
-var canvas=document.getElementById(canvasId);if(!canvas) return;
-var ctx=canvas.getContext(‘2d’);var w=canvas.width,h=canvas.height;
-ctx.clearRect(0,0,w,h);
-var palette=PALETTES[state.paletteIdx]||PALETTES[0];
-drawBG(ctx,w,h,palette,state.bgField||‘starfield’);
-drawSilhouette(ctx,w,h,palette,state.shape||‘geometric’);
-drawSymbol(ctx,w,h,palette,state.symbol||‘hexagon’);
-drawAnimal(ctx,w,h,palette,state.animal||‘owl’);
-drawTech(ctx,w,h,palette,state.tech||‘visor’);
+  var canvas=document.getElementById(canvasId);if(!canvas) return;
+  var ctx=canvas.getContext('2d');var w=canvas.width,h=canvas.height;
+  ctx.clearRect(0,0,w,h);
+  var palette=PALETTES[state.paletteIdx]||PALETTES[0];
+  drawBG(ctx,w,h,palette,state.bgField||'starfield');
+  drawSilhouette(ctx,w,h,palette,state.shape||'geometric');
+  drawSymbol(ctx,w,h,palette,state.symbol||'hexagon');
+  drawAnimal(ctx,w,h,palette,state.animal||'owl');
+  drawTech(ctx,w,h,palette,state.tech||'visor');
 }
 
 function drawBG(ctx,w,h,palette,field){
-var grad=ctx.createRadialGradient(w/2,h/2,0,w/2,h/2,w/1.5);
-grad.addColorStop(0,palette.g);grad.addColorStop(1,palette.s);
-ctx.fillStyle=grad;ctx.fillRect(0,0,w,h);
-ctx.save();ctx.globalAlpha=0.18;
-if(field===‘starfield’){for(var i=0;i<40;i++){ctx.beginPath();ctx.arc(Math.random()*w,Math.random()*h,Math.random()*1.2+0.3,0,Math.PI*2);ctx.fillStyle=palette.p;ctx.fill();}}
-else if(field===‘grid’){ctx.strokeStyle=palette.p;ctx.lineWidth=0.4;for(var x=0;x<w;x+=12){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}for(var y=0;y<h;y+=12){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}}
-else if(field===‘pulse’){ctx.strokeStyle=palette.p;ctx.lineWidth=0.6;for(var r=10;r<w;r+=18){ctx.beginPath();ctx.arc(w/2,h/2,r,0,Math.PI*2);ctx.stroke();}}
-else if(field===‘nebula’){for(var nb=0;nb<6;nb++){var ng=ctx.createRadialGradient(Math.random()*w,Math.random()*h,0,Math.random()*w,Math.random()*h,30+Math.random()*40);ng.addColorStop(0,palette.p+‘55’);ng.addColorStop(1,‘transparent’);ctx.fillStyle=ng;ctx.fillRect(0,0,w,h);}}
-else if(field===‘circuit’){ctx.strokeStyle=palette.p;ctx.lineWidth=0.5;for(var ci=0;ci<8;ci++){var cx=Math.random()*w,cy=Math.random()*h;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+(Math.random()-0.5)*40,cy+(Math.random()-0.5)*40);ctx.stroke();}}
-else if(field===‘signal’){ctx.strokeStyle=palette.p;ctx.lineWidth=0.6;ctx.beginPath();for(var sx=0;sx<w;sx+=2){ctx.lineTo(sx,h/2+Math.sin(sx*0.3)*8*(Math.random()*0.4+0.8));}ctx.stroke();}
-else if(field===‘wave’){ctx.strokeStyle=palette.p;ctx.lineWidth=0.5;for(var wl=0;wl<4;wl++){ctx.beginPath();for(var wx=0;wx<w;wx+=2){ctx.lineTo(wx,h/2+Math.sin(wx*0.15+wl*1.5)*12);}ctx.stroke();}}
-else if(field===‘static’){for(var pi=0;pi<200;pi++){ctx.fillStyle=palette.p+(Math.random()>0.5?‘88’:‘44’);ctx.fillRect(Math.random()*w,Math.random()*h,1,1);}}
-ctx.restore();
+  var grad=ctx.createRadialGradient(w/2,h/2,0,w/2,h/2,w/1.5);
+  grad.addColorStop(0,palette.g);grad.addColorStop(1,palette.s);
+  ctx.fillStyle=grad;ctx.fillRect(0,0,w,h);
+  ctx.save();ctx.globalAlpha=0.18;
+  if(field==='starfield'){for(var i=0;i<40;i++){ctx.beginPath();ctx.arc(Math.random()*w,Math.random()*h,Math.random()*1.2+0.3,0,Math.PI*2);ctx.fillStyle=palette.p;ctx.fill();}}
+  else if(field==='grid'){ctx.strokeStyle=palette.p;ctx.lineWidth=0.4;for(var x=0;x<w;x+=12){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}for(var y=0;y<h;y+=12){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}}
+  else if(field==='pulse'){ctx.strokeStyle=palette.p;ctx.lineWidth=0.6;for(var r=10;r<w;r+=18){ctx.beginPath();ctx.arc(w/2,h/2,r,0,Math.PI*2);ctx.stroke();}}
+  else if(field==='nebula'){for(var nb=0;nb<6;nb++){var ng=ctx.createRadialGradient(Math.random()*w,Math.random()*h,0,Math.random()*w,Math.random()*h,30+Math.random()*40);ng.addColorStop(0,palette.p+'55');ng.addColorStop(1,'transparent');ctx.fillStyle=ng;ctx.fillRect(0,0,w,h);}}
+  else if(field==='circuit'){ctx.strokeStyle=palette.p;ctx.lineWidth=0.5;for(var ci=0;ci<8;ci++){var cx=Math.random()*w,cy=Math.random()*h;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+(Math.random()-0.5)*40,cy+(Math.random()-0.5)*40);ctx.stroke();}}
+  else if(field==='signal'){ctx.strokeStyle=palette.p;ctx.lineWidth=0.6;ctx.beginPath();for(var sx=0;sx<w;sx+=2){ctx.lineTo(sx,h/2+Math.sin(sx*0.3)*8*(Math.random()*0.4+0.8));}ctx.stroke();}
+  else if(field==='wave'){ctx.strokeStyle=palette.p;ctx.lineWidth=0.5;for(var wl=0;wl<4;wl++){ctx.beginPath();for(var wx=0;wx<w;wx+=2){ctx.lineTo(wx,h/2+Math.sin(wx*0.15+wl*1.5)*12);}ctx.stroke();}}
+  else if(field==='static'){for(var pi=0;pi<200;pi++){ctx.fillStyle=palette.p+(Math.random()>0.5?'88':'44');ctx.fillRect(Math.random()*w,Math.random()*h,1,1);}}
+  ctx.restore();
 }
 
 function drawSilhouette(ctx,w,h,palette,shape){
-var cx=w/2,cy=h*0.52,r=w*0.28;
-ctx.save();ctx.globalAlpha=0.22;
-ctx.fillStyle=palette.p;
-if(shape===‘geometric’){ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();}
-else if(shape===‘angular’){ctx.beginPath();ctx.moveTo(cx,cy-r);ctx.lineTo(cx+r*0.86,cy+r*0.5);ctx.lineTo(cx-r*0.86,cy+r*0.5);ctx.closePath();ctx.fill();}
-else if(shape===‘smooth’){ctx.beginPath();ctx.ellipse(cx,cy,r*1.1,r*0.85,0,0,Math.PI*2);ctx.fill();}
-else if(shape===‘fragmented’){for(var fi=0;fi<5;fi++){ctx.beginPath();var angle=fi*Math.PI*2/5;ctx.arc(cx+Math.cos(angle)*r*0.4,cy+Math.sin(angle)*r*0.4,r*0.22,0,Math.PI*2);ctx.fill();}}
-ctx.restore();
+  var cx=w/2,cy=h*0.52,r=w*0.28;
+  ctx.save();ctx.globalAlpha=0.22;
+  ctx.fillStyle=palette.p;
+  if(shape==='geometric'){ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();}
+  else if(shape==='angular'){ctx.beginPath();ctx.moveTo(cx,cy-r);ctx.lineTo(cx+r*0.86,cy+r*0.5);ctx.lineTo(cx-r*0.86,cy+r*0.5);ctx.closePath();ctx.fill();}
+  else if(shape==='smooth'){ctx.beginPath();ctx.ellipse(cx,cy,r*1.1,r*0.85,0,0,Math.PI*2);ctx.fill();}
+  else if(shape==='fragmented'){for(var fi=0;fi<5;fi++){ctx.beginPath();var angle=fi*Math.PI*2/5;ctx.arc(cx+Math.cos(angle)*r*0.4,cy+Math.sin(angle)*r*0.4,r*0.22,0,Math.PI*2);ctx.fill();}}
+  ctx.restore();
 }
 
 function drawSymbol(ctx,w,h,palette,sym){
-var cx=w/2,cy=h*0.52,r=w*0.18;
-ctx.save();ctx.strokeStyle=palette.p;ctx.lineWidth=1.2;ctx.globalAlpha=0.5;
-if(sym===‘hexagon’){ctx.beginPath();for(var hi=0;hi<6;hi++){var a=hi*Math.PI/3-Math.PI/6;ctx.lineTo(cx+r*Math.cos(a),cy+r*Math.sin(a));}ctx.closePath();ctx.stroke();}
-else if(sym===‘circle’){ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.stroke();}
-else if(sym===‘triangle’){ctx.beginPath();ctx.moveTo(cx,cy-r);ctx.lineTo(cx+r*0.86,cy+r*0.5);ctx.lineTo(cx-r*0.86,cy+r*0.5);ctx.closePath();ctx.stroke();}
-else if(sym===‘cross’){ctx.beginPath();ctx.moveTo(cx,cy-r);ctx.lineTo(cx,cy+r);ctx.moveTo(cx-r,cy);ctx.lineTo(cx+r,cy);ctx.stroke();}
-else if(sym===‘wave’){ctx.beginPath();for(var wx=cx-r;wx<=cx+r;wx+=2){ctx.lineTo(wx,cy+Math.sin((wx-cx)*0.15)*r*0.4);}ctx.stroke();}
-else if(sym===‘spiral’){ctx.beginPath();for(var a2=0;a2<Math.PI*4;a2+=0.1){var sr=a2/(Math.PI*4)*r;ctx.lineTo(cx+sr*Math.cos(a2),cy+sr*Math.sin(a2));}ctx.stroke();}
-else if(sym===‘grid’){for(var gi=-1;gi<=1;gi++){ctx.beginPath();ctx.moveTo(cx+gi*r*0.5,cy-r);ctx.lineTo(cx+gi*r*0.5,cy+r);ctx.stroke();ctx.beginPath();ctx.moveTo(cx-r,cy+gi*r*0.5);ctx.lineTo(cx+r,cy+gi*r*0.5);ctx.stroke();}}
-else if(sym===‘arc’){ctx.beginPath();ctx.arc(cx,cy,r,Math.PI*0.8,Math.PI*2.2);ctx.stroke();ctx.beginPath();ctx.arc(cx,cy,r*0.6,Math.PI*1.0,Math.PI*2.0);ctx.stroke();}
-ctx.restore();
+  var cx=w/2,cy=h*0.52,r=w*0.18;
+  ctx.save();ctx.strokeStyle=palette.p;ctx.lineWidth=1.2;ctx.globalAlpha=0.5;
+  if(sym==='hexagon'){ctx.beginPath();for(var hi=0;hi<6;hi++){var a=hi*Math.PI/3-Math.PI/6;ctx.lineTo(cx+r*Math.cos(a),cy+r*Math.sin(a));}ctx.closePath();ctx.stroke();}
+  else if(sym==='circle'){ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.stroke();}
+  else if(sym==='triangle'){ctx.beginPath();ctx.moveTo(cx,cy-r);ctx.lineTo(cx+r*0.86,cy+r*0.5);ctx.lineTo(cx-r*0.86,cy+r*0.5);ctx.closePath();ctx.stroke();}
+  else if(sym==='cross'){ctx.beginPath();ctx.moveTo(cx,cy-r);ctx.lineTo(cx,cy+r);ctx.moveTo(cx-r,cy);ctx.lineTo(cx+r,cy);ctx.stroke();}
+  else if(sym==='wave'){ctx.beginPath();for(var wx=cx-r;wx<=cx+r;wx+=2){ctx.lineTo(wx,cy+Math.sin((wx-cx)*0.15)*r*0.4);}ctx.stroke();}
+  else if(sym==='spiral'){ctx.beginPath();for(var a2=0;a2<Math.PI*4;a2+=0.1){var sr=a2/(Math.PI*4)*r;ctx.lineTo(cx+sr*Math.cos(a2),cy+sr*Math.sin(a2));}ctx.stroke();}
+  else if(sym==='grid'){for(var gi=-1;gi<=1;gi++){ctx.beginPath();ctx.moveTo(cx+gi*r*0.5,cy-r);ctx.lineTo(cx+gi*r*0.5,cy+r);ctx.stroke();ctx.beginPath();ctx.moveTo(cx-r,cy+gi*r*0.5);ctx.lineTo(cx+r,cy+gi*r*0.5);ctx.stroke();}}
+  else if(sym==='arc'){ctx.beginPath();ctx.arc(cx,cy,r,Math.PI*0.8,Math.PI*2.2);ctx.stroke();ctx.beginPath();ctx.arc(cx,cy,r*0.6,Math.PI*1.0,Math.PI*2.0);ctx.stroke();}
+  ctx.restore();
 }
 
 function drawAnimal(ctx,w,h,palette,animal){
-var cx=w/2,cy=h*0.44,r=w*0.12;
-ctx.save();ctx.fillStyle=palette.p;ctx.globalAlpha=0.85;
-// All animals render as stylized abstract form in their color
-ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
-ctx.globalAlpha=0.5;ctx.fillStyle=’#fff’;
-// Eyes
-ctx.beginPath();ctx.arc(cx-r*0.3,cy-r*0.1,r*0.18,0,Math.PI*2);ctx.fill();
-ctx.beginPath();ctx.arc(cx+r*0.3,cy-r*0.1,r*0.18,0,Math.PI*2);ctx.fill();
-// Distinct ear/feature per animal
-ctx.globalAlpha=0.7;ctx.fillStyle=palette.p;
-if(animal===‘owl’||animal===‘crow’||animal===‘raven’){ctx.beginPath();ctx.moveTo(cx-r*0.35,cy-r);ctx.lineTo(cx-r*0.15,cy-r*0.55);ctx.lineTo(cx-r*0.55,cy-r*0.55);ctx.closePath();ctx.fill();ctx.beginPath();ctx.moveTo(cx+r*0.35,cy-r);ctx.lineTo(cx+r*0.15,cy-r*0.55);ctx.lineTo(cx+r*0.55,cy-r*0.55);ctx.closePath();ctx.fill();}
-else if(animal===‘fox’||animal===‘wolf’||animal===‘lynx’){ctx.beginPath();ctx.moveTo(cx-r*0.4,cy-r);ctx.lineTo(cx-r*0.1,cy-r*0.5);ctx.lineTo(cx-r*0.7,cy-r*0.5);ctx.closePath();ctx.fill();ctx.beginPath();ctx.moveTo(cx+r*0.4,cy-r);ctx.lineTo(cx+r*0.1,cy-r*0.5);ctx.lineTo(cx+r*0.7,cy-r*0.5);ctx.closePath();ctx.fill();}
-else if(animal===‘octopus’){for(var ti=0;ti<6;ti++){ctx.beginPath();var ta=ti*Math.PI/3;ctx.moveTo(cx,cy+r);ctx.quadraticCurveTo(cx+Math.cos(ta)*r*1.2,cy+r+Math.sin(ta)*r*0.8,cx+Math.cos(ta)*r,cy+r+Math.sin(ta)*r*1.4);ctx.stroke();}}
-else if(animal===‘deer’){ctx.beginPath();ctx.moveTo(cx-r*0.2,cy-r);ctx.lineTo(cx-r*0.6,cy-r*1.8);ctx.moveTo(cx-r*0.2,cy-r);ctx.lineTo(cx-r*0.9,cy-r*1.2);ctx.moveTo(cx+r*0.2,cy-r);ctx.lineTo(cx+r*0.6,cy-r*1.8);ctx.moveTo(cx+r*0.2,cy-r);ctx.lineTo(cx+r*0.9,cy-r*1.2);ctx.strokeStyle=palette.p;ctx.lineWidth=1.5;ctx.stroke();}
-else if(animal===‘moth’||animal===‘mantis’){ctx.beginPath();ctx.ellipse(cx-r*0.8,cy-r*0.2,r*0.6,r*0.3,Math.PI*0.3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(cx+r*0.8,cy-r*0.2,r*0.6,r*0.3,-Math.PI*0.3,0,Math.PI*2);ctx.fill();}
-ctx.restore();
+  var cx=w/2,cy=h*0.44,r=w*0.12;
+  ctx.save();ctx.fillStyle=palette.p;ctx.globalAlpha=0.85;
+  // All animals render as stylized abstract form in their color
+  ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fill();
+  ctx.globalAlpha=0.5;ctx.fillStyle='#fff';
+  // Eyes
+  ctx.beginPath();ctx.arc(cx-r*0.3,cy-r*0.1,r*0.18,0,Math.PI*2);ctx.fill();
+  ctx.beginPath();ctx.arc(cx+r*0.3,cy-r*0.1,r*0.18,0,Math.PI*2);ctx.fill();
+  // Distinct ear/feature per animal
+  ctx.globalAlpha=0.7;ctx.fillStyle=palette.p;
+  if(animal==='owl'||animal==='crow'||animal==='raven'){ctx.beginPath();ctx.moveTo(cx-r*0.35,cy-r);ctx.lineTo(cx-r*0.15,cy-r*0.55);ctx.lineTo(cx-r*0.55,cy-r*0.55);ctx.closePath();ctx.fill();ctx.beginPath();ctx.moveTo(cx+r*0.35,cy-r);ctx.lineTo(cx+r*0.15,cy-r*0.55);ctx.lineTo(cx+r*0.55,cy-r*0.55);ctx.closePath();ctx.fill();}
+  else if(animal==='fox'||animal==='wolf'||animal==='lynx'){ctx.beginPath();ctx.moveTo(cx-r*0.4,cy-r);ctx.lineTo(cx-r*0.1,cy-r*0.5);ctx.lineTo(cx-r*0.7,cy-r*0.5);ctx.closePath();ctx.fill();ctx.beginPath();ctx.moveTo(cx+r*0.4,cy-r);ctx.lineTo(cx+r*0.1,cy-r*0.5);ctx.lineTo(cx+r*0.7,cy-r*0.5);ctx.closePath();ctx.fill();}
+  else if(animal==='octopus'){for(var ti=0;ti<6;ti++){ctx.beginPath();var ta=ti*Math.PI/3;ctx.moveTo(cx,cy+r);ctx.quadraticCurveTo(cx+Math.cos(ta)*r*1.2,cy+r+Math.sin(ta)*r*0.8,cx+Math.cos(ta)*r,cy+r+Math.sin(ta)*r*1.4);ctx.stroke();}}
+  else if(animal==='deer'){ctx.beginPath();ctx.moveTo(cx-r*0.2,cy-r);ctx.lineTo(cx-r*0.6,cy-r*1.8);ctx.moveTo(cx-r*0.2,cy-r);ctx.lineTo(cx-r*0.9,cy-r*1.2);ctx.moveTo(cx+r*0.2,cy-r);ctx.lineTo(cx+r*0.6,cy-r*1.8);ctx.moveTo(cx+r*0.2,cy-r);ctx.lineTo(cx+r*0.9,cy-r*1.2);ctx.strokeStyle=palette.p;ctx.lineWidth=1.5;ctx.stroke();}
+  else if(animal==='moth'||animal==='mantis'){ctx.beginPath();ctx.ellipse(cx-r*0.8,cy-r*0.2,r*0.6,r*0.3,Math.PI*0.3,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.ellipse(cx+r*0.8,cy-r*0.2,r*0.6,r*0.3,-Math.PI*0.3,0,Math.PI*2);ctx.fill();}
+  ctx.restore();
 }
 
 function drawTech(ctx,w,h,palette,tech){
-var cx=w/2,cy=h*0.44,r=w*0.12;
-ctx.save();ctx.strokeStyle=palette.p;ctx.lineWidth=1.5;ctx.globalAlpha=0.8;
-if(tech===‘visor’){ctx.beginPath();ctx.moveTo(cx-r*0.8,cy+r*0.05);ctx.lineTo(cx-r*0.3,cy-r*0.05);ctx.lineTo(cx+r*0.3,cy-r*0.05);ctx.lineTo(cx+r*0.8,cy+r*0.05);ctx.stroke();}
-else if(tech===‘antenna’){ctx.beginPath();ctx.moveTo(cx,cy-r);ctx.lineTo(cx,cy-r*1.8);ctx.moveTo(cx-r*0.3,cy-r*1.5);ctx.lineTo(cx+r*0.3,cy-r*1.5);ctx.stroke();}
-else if(tech===‘circuit’){ctx.beginPath();ctx.moveTo(cx-r*1.2,cy);ctx.lineTo(cx-r*0.8,cy);ctx.lineTo(cx-r*0.8,cy-r*0.3);ctx.lineTo(cx+r*0.8,cy-r*0.3);ctx.lineTo(cx+r*0.8,cy);ctx.lineTo(cx+r*1.2,cy);ctx.stroke();}
-else if(tech===‘exhaust’){for(var ei=0;ei<3;ei++){ctx.beginPath();ctx.arc(cx+(ei-1)*r*0.5,cy+r*1.1,r*0.12,0,Math.PI*2);ctx.stroke();}}
-else if(tech===‘receiver’){ctx.beginPath();ctx.arc(cx+r*0.8,cy-r*0.2,r*0.3,Math.PI*0.5,Math.PI*1.5);ctx.stroke();}
-else if(tech===‘lens’){ctx.beginPath();ctx.arc(cx,cy,r*1.1,0,Math.PI*2);ctx.globalAlpha=0.25;ctx.stroke();}
-else if(tech===‘wave’){for(var wi=1;wi<=3;wi++){ctx.beginPath();ctx.arc(cx+r*0.8,cy,r*wi*0.25,Math.PI*0.6,Math.PI*1.4,true);ctx.stroke();}}
-else if(tech===‘glitch’){ctx.globalAlpha=0.6;ctx.fillStyle=palette.p;for(var gi=0;gi<5;gi++){ctx.fillRect(cx+Math.random()*r*1.6-r*0.8,cy-r+Math.random()*r*2,Math.random()*r*0.5+2,2);}}
-else if(tech===‘scope’){ctx.beginPath();ctx.moveTo(cx-r*1.2,cy-r*0.3);ctx.lineTo(cx-r*0.4,cy-r*0.3);ctx.lineTo(cx-r*0.4,cy+r*0.3);ctx.lineTo(cx-r*1.2,cy+r*0.3);ctx.closePath();ctx.stroke();}
-else if(tech===‘node’){for(var ni=0;ni<4;ni++){var na=ni*Math.PI/2;ctx.beginPath();ctx.arc(cx+Math.cos(na)*r*0.9,cy+Math.sin(na)*r*0.9,r*0.1,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(na)*r*0.8,cy+Math.sin(na)*r*0.8);ctx.stroke();}}
-ctx.restore();
+  var cx=w/2,cy=h*0.44,r=w*0.12;
+  ctx.save();ctx.strokeStyle=palette.p;ctx.lineWidth=1.5;ctx.globalAlpha=0.8;
+  if(tech==='visor'){ctx.beginPath();ctx.moveTo(cx-r*0.8,cy+r*0.05);ctx.lineTo(cx-r*0.3,cy-r*0.05);ctx.lineTo(cx+r*0.3,cy-r*0.05);ctx.lineTo(cx+r*0.8,cy+r*0.05);ctx.stroke();}
+  else if(tech==='antenna'){ctx.beginPath();ctx.moveTo(cx,cy-r);ctx.lineTo(cx,cy-r*1.8);ctx.moveTo(cx-r*0.3,cy-r*1.5);ctx.lineTo(cx+r*0.3,cy-r*1.5);ctx.stroke();}
+  else if(tech==='circuit'){ctx.beginPath();ctx.moveTo(cx-r*1.2,cy);ctx.lineTo(cx-r*0.8,cy);ctx.lineTo(cx-r*0.8,cy-r*0.3);ctx.lineTo(cx+r*0.8,cy-r*0.3);ctx.lineTo(cx+r*0.8,cy);ctx.lineTo(cx+r*1.2,cy);ctx.stroke();}
+  else if(tech==='exhaust'){for(var ei=0;ei<3;ei++){ctx.beginPath();ctx.arc(cx+(ei-1)*r*0.5,cy+r*1.1,r*0.12,0,Math.PI*2);ctx.stroke();}}
+  else if(tech==='receiver'){ctx.beginPath();ctx.arc(cx+r*0.8,cy-r*0.2,r*0.3,Math.PI*0.5,Math.PI*1.5);ctx.stroke();}
+  else if(tech==='lens'){ctx.beginPath();ctx.arc(cx,cy,r*1.1,0,Math.PI*2);ctx.globalAlpha=0.25;ctx.stroke();}
+  else if(tech==='wave'){for(var wi=1;wi<=3;wi++){ctx.beginPath();ctx.arc(cx+r*0.8,cy,r*wi*0.25,Math.PI*0.6,Math.PI*1.4,true);ctx.stroke();}}
+  else if(tech==='glitch'){ctx.globalAlpha=0.6;ctx.fillStyle=palette.p;for(var gi=0;gi<5;gi++){ctx.fillRect(cx+Math.random()*r*1.6-r*0.8,cy-r+Math.random()*r*2,Math.random()*r*0.5+2,2);}}
+  else if(tech==='scope'){ctx.beginPath();ctx.moveTo(cx-r*1.2,cy-r*0.3);ctx.lineTo(cx-r*0.4,cy-r*0.3);ctx.lineTo(cx-r*0.4,cy+r*0.3);ctx.lineTo(cx-r*1.2,cy+r*0.3);ctx.closePath();ctx.stroke();}
+  else if(tech==='node'){for(var ni=0;ni<4;ni++){var na=ni*Math.PI/2;ctx.beginPath();ctx.arc(cx+Math.cos(na)*r*0.9,cy+Math.sin(na)*r*0.9,r*0.1,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+Math.cos(na)*r*0.8,cy+Math.sin(na)*r*0.8);ctx.stroke();}}
+  ctx.restore();
 }
 
 function drawHeaderAvatar(){
-var canvas=document.getElementById(‘headerAvatarCanvas’);if(!canvas) return;
-drawAvatar(‘headerAvatarCanvas’,avatarState);
+  var canvas=document.getElementById('headerAvatarCanvas');if(!canvas) return;
+  drawAvatar('headerAvatarCanvas',avatarState);
 }
 
-// – INIT –
+// -- INIT --
 (function init(){
-recalc();
-BASE_METRICS=computeMetrics(getSliders());
-renderCouncil();
-renderGallery();
-initGlobe();
-loadCommunityProjects();
-loadAvatar();
-drawHeaderAvatar();
-setOracleMode(‘personal’);
+  recalc();
+  BASE_METRICS=computeMetrics(getSliders());
+  renderCouncil();
+  renderGallery();
+  initGlobe();
+  loadCommunityProjects();
+  loadAvatar();
+  drawHeaderAvatar();
+  setOracleMode('personal');
 
-// Init screens - show only home
-[‘home’,‘oracle’,‘forum’,‘create’,‘world’,‘gallery’,‘council’,‘about’,‘project’,‘quiz’].forEach(function(s){
-var el=document.getElementById(‘screen-’+s);
-if(el) el.style.display=s===‘home’?‘block’:‘none’;
-});
+  // Init screens - show only home
+  ['home','oracle','forum','create','world','gallery','council','about','project','quiz'].forEach(function(s){
+    var el=document.getElementById('screen-'+s);
+    if(el) el.style.display=s==='home'?'block':'none';
+  });
 
-// Init world map after short delay
-setTimeout(function(){
-if(document.getElementById(‘screen-world’).style.display!==‘none’){
-if(!leafletMap) initWorldMap();
-}
-}, 300);
+  // Init world map after short delay
+  setTimeout(function(){
+    if(document.getElementById('screen-world').style.display!=='none'){
+      if(!leafletMap) initWorldMap();
+    }
+  }, 300);
 })();
 
 </script>
